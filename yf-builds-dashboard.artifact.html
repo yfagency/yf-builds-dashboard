@@ -1,0 +1,715 @@
+<title>YF Builds</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --paper: #f2f3f7;
+  --surface: #ffffff;
+  --surface-2: #e9ebf1;
+  --rule: #dcdfe8;
+  --rule-soft: #e8eaf0;
+  --ink: #171a21;
+  --ink-2: #3b4250;
+  --muted: #5d6472;
+  --accent: #2b4acb;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6e9fb;
+  --ok: #1f8a4c;
+  --warn: #b4740e;
+  --crit: #b3261e;
+  --ok-soft: #e2f2e8;
+  --warn-soft: #f8eedb;
+  --crit-soft: #f8e5e3;
+  --shadow: 0 1px 2px rgba(23, 26, 33, .05), 0 8px 24px rgba(23, 26, 33, .05);
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #101218;
+    --surface: #171a22;
+    --surface-2: #1e222c;
+    --rule: #2a2f3b;
+    --rule-soft: #232833;
+    --ink: #e7e9ef;
+    --ink-2: #c3c8d4;
+    --muted: #949cac;
+    --accent: #93a2ff;
+    --accent-ink: #10131c;
+    --accent-soft: #1d2340;
+    --ok: #5cc98a;
+    --warn: #e0a94a;
+    --crit: #f08a80;
+    --ok-soft: #16281d;
+    --warn-soft: #2b2214;
+    --crit-soft: #2e1a19;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #101218;
+  --surface: #171a22;
+  --surface-2: #1e222c;
+  --rule: #2a2f3b;
+  --rule-soft: #232833;
+  --ink: #e7e9ef;
+  --ink-2: #c3c8d4;
+  --muted: #949cac;
+  --accent: #93a2ff;
+  --accent-ink: #10131c;
+  --accent-soft: #1d2340;
+  --ok: #5cc98a;
+  --warn: #e0a94a;
+  --crit: #f08a80;
+  --ok-soft: #16281d;
+  --warn-soft: #2b2214;
+  --crit-soft: #2e1a19;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
+h1, h2, h3 { font-family: Archivo, "Public Sans", sans-serif; text-wrap: balance; margin: 0; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+.label {
+  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+}
+
+/* header */
+.masthead { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+.tagline { color: var(--muted); font-size: 14px; max-width: 62ch; margin-top: 4px; }
+
+/* instrument strip */
+.strip {
+  display: flex; flex-wrap: wrap; gap: 0;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  background: var(--surface); margin: 22px 0 18px; overflow: hidden;
+}
+.gauge { padding: 12px 18px; border-right: 1px solid var(--rule-soft); min-width: 104px; }
+.gauge:last-child { border-right: 0; }
+.gauge .n { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; font-size: 21px; font-weight: 500; display: block; line-height: 1.2; }
+.gauge.crit .n { color: var(--crit); }
+
+/* controls */
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+input, select, textarea, button { font: inherit; }
+input[type="text"], input[type="url"], select, textarea {
+  background: var(--surface); color: var(--ink); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 8px 11px; font-size: 14px;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+#search { flex: 1 1 220px; min-width: 180px; }
+.toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-family: Archivo, sans-serif; font-size: 13px; font-weight: 600;
+  padding: 8px 13px; border-radius: 8px; border: 1px solid var(--rule);
+  background: var(--surface); color: var(--ink); text-decoration: none;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.dead { opacity: .45; cursor: default; pointer-events: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* cards */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.card {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 18px; display: flex; flex-direction: column; gap: 11px; box-shadow: var(--shadow);
+}
+.card h3 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pill {
+  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  padding: 3px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent;
+}
+.pill.prototype { background: var(--surface-2); color: var(--ink-2); border-color: var(--rule); }
+.pill.progress  { background: var(--warn-soft); color: var(--warn); }
+.pill.review    { background: var(--accent-soft); color: var(--accent); }
+.pill.live      { background: var(--ok-soft); color: var(--ok); }
+.pill.archived  { background: var(--surface-2); color: var(--muted); border-color: var(--rule); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .03em;
+  padding: 2px 7px; border-radius: 5px; background: var(--surface-2); color: var(--ink-2);
+}
+.line { font-size: 13px; color: var(--muted); }
+.line strong { color: var(--ink); font-weight: 600; }
+.line .sha { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-2); }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); }
+.dot.crit { background: var(--crit); } .dot.none { background: var(--rule); border: 1px solid var(--muted); }
+.notes { font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--rule-soft); padding-top: 10px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
+
+/* states */
+.panel {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 28px; box-shadow: var(--shadow);
+}
+.panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.panel p { color: var(--ink-2); max-width: 64ch; }
+.panel.alert { border-color: var(--crit); }
+.panel.alert h2 { color: var(--crit); }
+.say {
+  font-family: Archivo, sans-serif; font-size: 16px; font-weight: 600; color: var(--ink);
+  background: var(--accent-soft); border-radius: 8px; padding: 12px 16px; margin: 14px 0;
+}
+kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.quiet { color: var(--muted); font-size: 13px; }
+.spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; animation: sp .8s linear infinite; vertical-align: -2px; margin-right: 8px; }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition: none !important; } }
+
+/* modal */
+.scrim {
+  position: fixed; inset: 0; background: rgba(16, 18, 24, .48); z-index: 40;
+  display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow: auto;
+}
+.scrim.open { display: flex; }
+.sheet {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
+  width: 100%; max-width: 540px; padding: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+}
+.sheet h2 { font-size: 19px; font-weight: 600; }
+.sheet > p.quiet { margin: 4px 0 18px; }
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; }
+.field > .label { color: var(--ink-2); }
+.field input, .field select, .field textarea { width: 100%; }
+.field textarea { min-height: 58px; resize: vertical; }
+.pair { display: flex; gap: 12px; flex-wrap: wrap; }
+.pair > .field { flex: 1 1 150px; }
+.checks { display: flex; flex-wrap: wrap; gap: 12px; }
+.checks label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
+.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.formmsg { font-size: 13px; min-height: 18px; margin-top: 8px; }
+.formmsg.bad { color: var(--crit); } .formmsg.good { color: var(--ok); }
+.help p { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); max-width: none; }
+.help p:last-of-type { margin-bottom: 0; }
+
+/* connection footer */
+.conn { margin-top: 32px; border-top: 1px solid var(--rule); padding-top: 16px; }
+.conn summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.conn summary::marker { color: var(--rule); }
+.conn .box {
+  margin-top: 12px; background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 8px; padding: 14px; overflow-x: auto;
+}
+.conn table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+.conn th, .conn td { text-align: left; padding: 5px 12px 5px 0; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
+.conn th { font-family: Archivo, sans-serif; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 78ch; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <h1>YF Builds</h1>
+      <p class="tagline">Every app, page and mock-up the team has built &mdash; who made it, what state it's in, and a one-click download of the latest version.</p>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn" id="helpBtn">How do I add a build?</button>
+      <button class="btn primary" id="addBtn">Add build</button>
+    </div>
+  </header>
+
+  <div class="strip" id="strip" hidden></div>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search name, builder or client">
+    <select id="fStatus"><option value="">All statuses</option></select>
+    <select id="fBuilder"><option value="">All builders</option></select>
+    <label class="toggle"><input type="checkbox" id="fArchived"> Show archived</label>
+    <span class="quiet mono" id="freshness"></span>
+  </div>
+
+  <main id="main"><div class="panel"><span class="spin"></span>Loading the registry&hellip;</div></main>
+
+  <details class="conn" id="conn">
+    <summary>Connection</summary>
+    <div class="box" id="connBox">Not checked yet.</div>
+  </details>
+  <p class="foot">Builds live in the YF Builds registry and the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads both through your own Notion connector &mdash; nothing is stored in the page. Commit, author and date are filled in by the daily 06:30 JST sync.</p>
+</div>
+
+<div class="scrim" id="helpScrim">
+  <div class="sheet">
+    <h2>Adding a build</h2>
+    <p class="quiet">Publishing happens in Claude Code. Everything else happens here.</p>
+    <div class="help">
+      <p class="say">&ldquo;log this build&rdquo; &mdash; said in Claude Code</p>
+      <p>It creates the GitHub repo, pushes the files, and registers the build. It asks what to call it and which client it's for if that isn't obvious from what you were working on.</p>
+      <p><strong>Why Claude Code and not here?</strong> Cowork can read GitHub but cannot push to it &mdash; a hard limit of its sandbox, not a setting anyone can change. Claude Code runs on your own machine with your own GitHub login, so it can.</p>
+      <p><strong>Get the skill.</strong> Ask ZF for <code>yf-builds-publish</code>. Once it's installed, the sentence above is the whole interface &mdash; no git commands, no repo settings.</p>
+      <p><strong>Updating something that already exists</strong> is identical. Say the same thing; it notices the build is already published and adds a version. Every earlier version stays recoverable.</p>
+      <p><strong>Nothing secret in a build.</strong> Builds are public, which is what makes Download latest work for anyone you send it to. No API keys, no client data, no credentials.</p>
+      <p class="quiet">A new build appears here after the next morning sync, or right away if you say &ldquo;sync the builds&rdquo; in Cowork. That same sync fills in the commit line on each card.</p>
+      <p class="quiet"><strong>Add build</strong> registers a card by hand without publishing anything &mdash; useful for something hosted elsewhere. Most people should ignore it.</p>
+    </div>
+    <div class="sheet-actions"><button class="btn" id="helpClose">Close</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="addScrim">
+  <div class="sheet">
+    <h2>Add a build</h2>
+    <p class="quiet">Saves straight to the registry. You don't need to open Notion.</p>
+    <div class="field"><span class="label">Name <span aria-hidden="true">*</span></span><input type="text" id="f_name" placeholder="TDK Town Hall microsite"></div>
+    <div class="field"><span class="label">GitHub repo URL</span><input type="url" id="f_repo" placeholder="https://github.com/yfagency/repo-name"></div>
+    <div class="pair">
+      <div class="field"><span class="label">Builder</span><input type="text" id="f_builder" placeholder="ZF"></div>
+      <div class="field"><span class="label">Branch</span><input type="text" id="f_branch" value="main"></div>
+    </div>
+    <div class="pair">
+      <div class="field"><span class="label">Status</span><select id="f_status">
+        <option>Prototype</option><option>In Progress</option><option>Needs Review</option><option>Live</option><option>Archived</option>
+      </select></div>
+      <div class="field"><span class="label">Latest version</span><input type="text" id="f_version" placeholder="v1.0"></div>
+    </div>
+    <div class="field"><span class="label">Tech stack</span><div class="checks" id="f_stack">
+      <label><input type="checkbox" value="HTML"> HTML</label>
+      <label><input type="checkbox" value="React"> React</label>
+      <label><input type="checkbox" value="Webflow"> Webflow</label>
+      <label><input type="checkbox" value="Node"> Node</label>
+      <label><input type="checkbox" value="Other"> Other</label>
+    </div></div>
+    <div class="field"><span class="label">Client</span><select id="f_client"><option value="">None</option></select></div>
+    <div class="field"><span class="label">Live URL</span><input type="url" id="f_live" placeholder="https://"></div>
+    <div class="field"><span class="label">Notes</span><textarea id="f_notes" placeholder="One line on what this is"></textarea></div>
+    <div class="field"><span class="label">Folder in repo (rarely needed)</span><input type="text" id="f_path" placeholder="leave empty unless the build sits in a subfolder"></div>
+    <p class="formmsg" id="formmsg"></p>
+    <div class="sheet-actions">
+      <button class="btn" id="addCancel">Cancel</button>
+      <button class="btn primary" id="addSave">Save build</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---- registry addressing (YF Builds, Clients, Projects) ---- */
+var SERVER_CANDIDATES = ["Notion", "notion", "Notion MCP"];
+var T_QUERY  = "notion-query-data-sources";
+var T_CREATE = "notion-create-pages";
+var BUILDS    = "collection://10d63098-3c9a-44a2-83fb-a98ce261eea1";
+var BUILDS_DS = "10d63098-3c9a-44a2-83fb-a98ce261eea1";
+var CLIENTS   = "collection://44f6ebf3-d835-4dc8-b3e1-263e47021b6e";
+var PROJECTS  = "collection://9e25d15a-b80a-4baf-90c1-cb7838757375";
+
+var Q_BUILDS = 'SELECT url, "Name", "Repo URL", "Branch", "Path", "Live URL", "Builder", "Status", ' +
+  '"Latest Version", "Tech Stack", "Client", "Project", "Notes", "Last Updated", "Commit", ' +
+  '"Last Committer", "date:Last Commit:start" FROM "' + BUILDS + '" ORDER BY "Last Updated" DESC';
+var Q_CLIENTS  = 'SELECT url, "Name" FROM "' + CLIENTS + '" LIMIT 300';
+var Q_PROJECTS = 'SELECT url, "Project Name" FROM "' + PROJECTS + '" LIMIT 300';
+
+function sqlInput(collection, query) {
+  return { data: { mode: "sql", data_source_urls: [collection], query: query } };
+}
+
+var mcp = null;          // the capability namespace, once resolved
+var SERVER = null;       // the connector display name that actually resolved
+var BUILDS_ROWS = null;  // last good rows
+var CLIENT_LIST = [];
+var CLIENT_NAME = {};
+var PROJECT_NAME = {};
+var STALE_AT = null;
+var el = function (id) { return document.getElementById(id); };
+
+/* ---- small helpers ---- */
+function esc(s) {
+  return (s == null ? "" : String(s)).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+function asList(v) {
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string" && v.trim().charAt(0) === "[") { try { return JSON.parse(v); } catch (e) { return []; } }
+  return typeof v === "string" && v ? [v] : [];
+}
+function rows(result) {
+  var p = result && result.payload;
+  if (typeof p === "string") { try { p = JSON.parse(p); } catch (e) { p = null; } }
+  if (!p && result && result.content) {
+    for (var i = 0; i < result.content.length; i++) {
+      var b = result.content[i];
+      if (b && b.type === "text") { try { p = JSON.parse(b.text); break; } catch (e) {} }
+    }
+  }
+  return (p && p.results) || [];
+}
+function repoBase(u) { return u ? u.trim().replace(/\/+$/, "").replace(/\.git$/, "") : null; }
+function tidyPath(p) { return p ? p.trim().replace(/^\/+|\/+$/g, "") : ""; }
+function encPath(p) { return p.split("/").map(encodeURIComponent).join("/"); }
+// A build normally owns its whole repo, so Download latest is GitHub's branch archive.
+// With a Path set (the vestigial monorepo case) it is the per-build zip beside the folder.
+function zipUrl(repo, branch, path) {
+  var b = repoBase(repo); if (!b) return null;
+  var br = encodeURIComponent((branch && branch.trim()) || "main"), p = tidyPath(path);
+  return p ? b + "/raw/" + br + "/" + encPath(p) + "/latest.zip"
+           : b + "/archive/refs/heads/" + br + ".zip";
+}
+function browseUrl(repo, branch, path) {
+  var b = repoBase(repo); if (!b) return null;
+  var br = encodeURIComponent((branch && branch.trim()) || "main"), p = tidyPath(path);
+  return p ? b + "/tree/" + br + "/" + encPath(p) : b;
+}
+function ageDays(iso) {
+  if (!iso) return null;
+  var d = new Date(iso); if (isNaN(d)) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function ago(iso) {
+  var d = ageDays(iso);
+  if (d === null) return "";
+  if (d <= 0) return "today";
+  if (d === 1) return "yesterday";
+  if (d < 30) return d + " days ago";
+  if (d < 365) return Math.floor(d / 30) + " months ago";
+  return Math.floor(d / 365) + " years ago";
+}
+function clock(ms) {
+  var d = new Date(ms);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+/* ---- error copy: one branch per code that has its own fix ---- */
+function explain(err) {
+  var server = (err && err.server) || SERVER || "Notion";
+  switch (err && err.code) {
+    case "needs_reauth":
+      return { head: "Notion needs reconnecting",
+        body: "Your Notion connection has expired. Reconnect " + server + " in claude.ai Settings → Connectors, then reload this page." };
+    case "server_not_connected":
+      return { head: "No Notion connector on your account",
+        body: "This dashboard reads the registry through your own Notion connection. Add " + server + " in claude.ai Settings → Connectors, then reload." };
+    case "selection_required":
+      return { head: "Choose which Notion to use",
+        body: "You have more than one Notion connection. Pick the YF workspace when claude.ai asks, then reload this page." };
+    case "server_not_found":
+      return { head: "That Notion connection no longer exists",
+        body: "Re-add " + server + " in claude.ai Settings → Connectors." };
+    case "blocked_by_policy":
+      return { head: "Blocked by workspace policy",
+        body: "Your organisation blocks this connector call. ZF can confirm whether the Notion connector is permitted for your account." };
+    case "approval_required":
+      return { head: "This call needs approval",
+        body: "Policy requires per-call approval for the Notion connector, which published pages can't request yet. Ask ZF to relax that for this connector." };
+    case "not_in_manifest":
+      return { head: "The page asked for something it isn't allowed",
+        body: "The published manifest doesn't cover this call — a bug in the dashboard, not your setup. Tell ZF the code was not_in_manifest." };
+    case "tool_error":
+      return { head: "Notion rejected the query",
+        body: (err.message || "The connector reported a failure.") + " If this mentions a column or data source, the registry schema has changed and the dashboard needs updating." };
+    case "server_unavailable":
+      return { head: "Notion is not responding",
+        body: "Temporary — Notion or the connector bridge is unreachable. Reload in a moment." };
+    case "rate_limited":
+      return { head: "Too many requests",
+        body: "This page has hit its connector budget. Wait a few seconds and reload." };
+    case "not_granted":
+    case "capability_disabled":
+    case "capability_removed":
+      return { head: "Connector access isn't available in this view",
+        body: "Open this dashboard from your claude.ai artifacts list rather than a direct link or an embed, so it can reach your Notion connection." };
+    default:
+      return { head: "Couldn't reach the registry",
+        body: (err && err.message) || "Unknown failure. Reload, and tell ZF if it persists." };
+  }
+}
+function pageError(err) {
+  var e = explain(err);
+  el("main").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + '</h2><p>' + esc(e.body) + '</p>' +
+    '<p class="quiet mono">code: ' + esc((err && err.code) || "unknown") + '</p></div>';
+  el("conn").open = true;
+}
+
+/* ---- connection panel: what resolved, what didn't ---- */
+function renderConn(info, note) {
+  var box = el("connBox");
+  if (!info) { box.textContent = note || "Not checked yet."; return; }
+  var servers = (info.servers || []);
+  var html = "";
+  if (note) html += '<p class="quiet" style="margin:0 0 10px">' + esc(note) + "</p>";
+  if (!servers.length) {
+    html += '<p class="quiet" style="margin:0">No Notion connector is callable from this page for your account. ' +
+      'Add Notion in claude.ai Settings → Connectors, then reload.</p>';
+  } else {
+    html += "<table><thead><tr><th>Connector</th><th>Auth</th><th>Tools available to this page</th></tr></thead><tbody>";
+    servers.forEach(function (s) {
+      var names = (s.tools || []).map(function (t) { return t.name; });
+      html += "<tr><td class='mono'>" + esc(s.server) + "</td><td>" + esc(s.authStatus) + "</td><td class='mono'>" +
+        esc(names.length ? names.join(", ") : "—") + "</td></tr>";
+    });
+    html += "</tbody></table>";
+  }
+  if (STALE_AT) html += '<p class="quiet mono" style="margin:10px 0 0">registry read ' + esc(clock(STALE_AT)) + "</p>";
+  box.innerHTML = html;
+}
+
+/* ---- render ---- */
+var PILL = { "Prototype": "prototype", "In Progress": "progress", "Needs Review": "review", "Live": "live", "Archived": "archived" };
+
+function shape(b) {
+  return {
+    name: b["Name"] || "(untitled)",
+    repo: b["Repo URL"], branch: b["Branch"], path: b["Path"] || "",
+    live: b["Live URL"], builder: b["Builder"] || "",
+    status: b["Status"] || "", version: b["Latest Version"] || "",
+    stack: asList(b["Tech Stack"]),
+    client: asList(b["Client"]).map(function (u) { return CLIENT_NAME[u] || ""; }).filter(Boolean).join(", "),
+    project: asList(b["Project"]).map(function (u) { return PROJECT_NAME[u] || ""; }).filter(Boolean).join(", "),
+    notes: b["Notes"] || "", commit: b["Commit"] || "",
+    committer: b["Last Committer"] || "", commitDate: b["date:Last Commit:start"] || ""
+  };
+}
+
+function freshLine(b) {
+  if (!b.commitDate) {
+    return '<span class="dot none"></span>' + (b.repo ? "Not synced yet" : "No repo linked");
+  }
+  var d = ageDays(b.commitDate);
+  var cls = d === null ? "none" : d <= 14 ? "ok" : d <= 60 ? "warn" : "crit";
+  return '<span class="dot ' + cls + '"></span>Last commit <strong>' + esc(ago(b.commitDate)) + "</strong>" +
+    (b.commit ? ' &middot; <span class="sha">' + esc(b.commit) + "</span>" : "") +
+    (b.committer ? " by " + esc(b.committer) : "");
+}
+
+function card(b) {
+  var dl = zipUrl(b.repo, b.branch, b.path), gh = browseUrl(b.repo, b.branch, b.path);
+  var who = b.builder || b.committer;
+  return '<article class="card">' +
+    '<div class="card-top"><h3>' + esc(b.name) + "</h3>" +
+      (b.status ? '<span class="pill ' + (PILL[b.status] || "prototype") + '">' + esc(b.status) + "</span>" : "") +
+    "</div>" +
+    (b.stack.length ? '<div class="chips">' + b.stack.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : "") +
+    '<p class="line" style="margin:0">' + (who ? "Built by <strong>" + esc(who) + "</strong>" : "Builder not set") +
+      (b.version ? ' &middot; <span class="sha">' + esc(b.version) + "</span>" : "") + "</p>" +
+    '<p class="line" style="margin:0">' + freshLine(b) + "</p>" +
+    ((b.client || b.project) ? '<p class="line" style="margin:0">' +
+      (b.client ? "Client <strong>" + esc(b.client) + "</strong>" : "") +
+      (b.client && b.project ? " &middot; " : "") +
+      (b.project ? "Project <strong>" + esc(b.project) + "</strong>" : "") + "</p>" : "") +
+    (b.notes ? '<p class="notes">' + esc(b.notes) + "</p>" : "") +
+    '<div class="actions">' +
+      (dl ? '<a class="btn primary" href="' + esc(dl) + '" target="_blank" rel="noopener">Download latest</a>'
+          : '<span class="btn dead">No repo yet</span>') +
+      (gh ? '<a class="btn" href="' + esc(gh) + '" target="_blank" rel="noopener">GitHub &amp; history</a>' : "") +
+      (b.live ? '<a class="btn" href="' + esc(b.live) + '" target="_blank" rel="noopener">Live</a>' : "") +
+    "</div></article>";
+}
+
+var EMPTY = '<div class="panel"><h2>No builds tracked yet</h2>' +
+  "<p>When you've made something the team should be able to find later, say this <strong>in Claude Code</strong>:</p>" +
+  '<p class="say">&ldquo;log this build&rdquo;</p>' +
+  "<p>It creates the repo, pushes the files and registers the build. Same sentence for a new version of something that already exists.</p>" +
+  '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. Ask ZF for the <code>yf-builds-publish</code> skill and none of the steps are yours to remember.</p></div>';
+
+function fillFilters() {
+  var all = BUILDS_ROWS || [];
+  var statuses = [], builders = [];
+  all.forEach(function (b) {
+    if (b.status && statuses.indexOf(b.status) < 0) statuses.push(b.status);
+    var w = b.builder || b.committer;
+    if (w && builders.indexOf(w) < 0) builders.push(w);
+  });
+  [[el("fStatus"), statuses, "All statuses"], [el("fBuilder"), builders, "All builders"]].forEach(function (spec) {
+    var sel = spec[0], keep = sel.value;
+    sel.innerHTML = '<option value="">' + spec[2] + "</option>";
+    spec[1].sort().forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+    if (keep && spec[1].indexOf(keep) >= 0) sel.value = keep;
+  });
+}
+
+function render() {
+  var all = BUILDS_ROWS;
+  if (!all) return;
+  var q = el("search").value.toLowerCase().trim();
+  var fs = el("fStatus").value, fb = el("fBuilder").value, arch = el("fArchived").checked;
+  var pool = all.filter(function (b) { return arch || b.status !== "Archived"; });
+  var hiddenArchived = all.length - pool.length;
+
+  var counts = {}, stale = 0;
+  pool.forEach(function (b) {
+    if (b.status) counts[b.status] = (counts[b.status] || 0) + 1;
+    var d = ageDays(b.commitDate);
+    if (d !== null && d > 60) stale++;
+  });
+  var strip = el("strip");
+  strip.hidden = !pool.length;
+  strip.innerHTML = '<div class="gauge"><span class="n">' + pool.length + '</span><span class="label">builds</span></div>' +
+    Object.keys(counts).map(function (s) {
+      return '<div class="gauge"><span class="n">' + counts[s] + '</span><span class="label">' + esc(s) + "</span></div>";
+    }).join("") +
+    (stale ? '<div class="gauge crit"><span class="n">' + stale + '</span><span class="label">untouched 60d+</span></div>' : "") +
+    (!arch && hiddenArchived ? '<div class="gauge"><span class="n">' + hiddenArchived + '</span><span class="label">archived, hidden</span></div>' : "");
+
+  el("freshness").textContent = STALE_AT ? "read " + clock(STALE_AT) : "";
+
+  var shown = pool.filter(function (b) {
+    if (fs && b.status !== fs) return false;
+    if (fb && (b.builder || b.committer) !== fb) return false;
+    if (!q) return true;
+    return (b.name + " " + b.builder + " " + b.committer + " " + b.client + " " + b.project).toLowerCase().indexOf(q) >= 0;
+  });
+
+  var main = el("main");
+  if (!pool.length) { main.innerHTML = EMPTY; return; }
+  if (!shown.length) { main.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>No build matches those filters. Clear the search or pick another status.</p></div>'; return; }
+  main.innerHTML = '<div class="grid">' + shown.map(card).join("") + "</div>";
+}
+
+/* ---- data ---- */
+function resolveServer() {
+  return mcp.listTools().then(function (info) {
+    var live = (info.servers || []).filter(function (s) { return (s.tools || []).length; });
+    var pick = live[0] || (info.servers || [])[0] || null;
+    SERVER = pick ? pick.server : SERVER_CANDIDATES[0];
+    renderConn(info, pick ? null : "No connector resolved from this page's manifest.");
+    return info;
+  }).catch(function (err) {
+    SERVER = SERVER_CANDIDATES[0];
+    renderConn(null, "Couldn't list connectors: " + ((err && err.code) || "unknown") + " — " + ((err && err.message) || ""));
+    return null;
+  });
+}
+
+function loadLookups() {
+  var opts = { cache: { staleTime: 300000 } };
+  return Promise.all([
+    mcp.callTool(SERVER, T_QUERY, sqlInput(CLIENTS, Q_CLIENTS), opts).then(rows).catch(function () { return []; }),
+    mcp.callTool(SERVER, T_QUERY, sqlInput(PROJECTS, Q_PROJECTS), opts).then(rows).catch(function () { return []; })
+  ]).then(function (both) {
+    both[0].forEach(function (c) { CLIENT_NAME[c.url] = c["Name"]; });
+    both[1].forEach(function (p) { PROJECT_NAME[p.url] = p["Project Name"]; });
+    CLIENT_LIST = both[0].filter(function (c) { return c["Name"]; })
+      .map(function (c) { return { url: c.url, name: c["Name"] }; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+    var sel = el("f_client");
+    sel.innerHTML = '<option value="">None</option>';
+    CLIENT_LIST.forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c.url; o.textContent = c.name;
+      sel.appendChild(o);
+    });
+  });
+}
+
+var retried = false;
+function watchBuilds() {
+  return mcp.watchTool(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS), function (ev) {
+    if (ev.type === "data") {
+      retried = false;
+      STALE_AT = (ev.result.cache && ev.result.cache.storedAt) || Date.now();
+      BUILDS_ROWS = rows(ev.result).map(shape);
+      fillFilters();
+      render();
+      return;
+    }
+    var err = ev.error || {};
+    var authz = ["needs_reauth", "server_not_connected", "blocked_by_policy", "approval_required", "selection_required", "not_in_manifest"];
+    if (authz.indexOf(err.code) >= 0 || !BUILDS_ROWS) {
+      BUILDS_ROWS = null;          // retract: we must not show data the viewer may no longer read
+      pageError(err);
+      return;
+    }
+    // transient, with data already on screen: keep it, mark it stale, retry once
+    el("freshness").textContent = "couldn't refresh — showing " + (STALE_AT ? clock(STALE_AT) : "last read");
+    if (err.retryable && !retried) {
+      retried = true;
+      setTimeout(function () {
+        mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
+      }, Math.min(err.retryAfterMs || 3000, 15000) + Math.random() * 1000);
+    }
+  }, { cache: { staleTime: 60000 }, refetchInterval: 300000 });
+}
+
+function boot() {
+  if (!window.claude || typeof window.claude.use !== "function") {
+    el("main").innerHTML = '<div class="panel alert"><h2>Open this from claude.ai</h2>' +
+      "<p>This dashboard reads the registry through your Notion connection, which is only available when the page runs inside claude.ai. " +
+      "Open it from your artifacts list rather than as a downloaded file.</p></div>";
+    return;
+  }
+  window.claude.use("mcp").then(function (ns) {
+    mcp = ns;
+    if (!mcp) { pageError({ code: "capability_disabled" }); return; }
+    return resolveServer().then(loadLookups).then(watchBuilds);
+  }).catch(function (err) { pageError(err); });
+}
+
+/* ---- add build ---- */
+function openSheet(id) { el(id).classList.add("open"); }
+function closeSheet(id) { el(id).classList.remove("open"); }
+el("addBtn").addEventListener("click", function () { el("formmsg").textContent = ""; openSheet("addScrim"); });
+el("addCancel").addEventListener("click", function () { closeSheet("addScrim"); });
+el("helpBtn").addEventListener("click", function () { openSheet("helpScrim"); });
+el("helpClose").addEventListener("click", function () { closeSheet("helpScrim"); });
+["addScrim", "helpScrim"].forEach(function (id) {
+  el(id).addEventListener("click", function (e) { if (e.target.id === id) closeSheet(id); });
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") { closeSheet("addScrim"); closeSheet("helpScrim"); }
+});
+
+el("addSave").addEventListener("click", function () {
+  var msg = el("formmsg");
+  msg.className = "formmsg";
+  msg.textContent = "";
+  var name = el("f_name").value.trim();
+  if (!name) { msg.className = "formmsg bad"; msg.textContent = "A name is required."; return; }
+  if (!mcp || !SERVER) { msg.className = "formmsg bad"; msg.textContent = "No Notion connection, so this can't be saved. Reload the page."; return; }
+
+  var props = { "Name": name, "Branch": el("f_branch").value.trim() || "main", "Status": el("f_status").value };
+  var put = function (key, id) { var v = el(id).value.trim(); if (v) props[key] = v; };
+  put("Repo URL", "f_repo"); put("Path", "f_path"); put("Builder", "f_builder");
+  put("Latest Version", "f_version"); put("Live URL", "f_live"); put("Notes", "f_notes");
+  var stack = [].slice.call(document.querySelectorAll("#f_stack input:checked")).map(function (i) { return i.value; });
+  if (stack.length) props["Tech Stack"] = stack;
+  var client = el("f_client").value;
+  if (client) props["Client"] = [client];
+
+  var btn = el("addSave");
+  btn.disabled = true;
+  btn.textContent = "Saving";
+  mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: BUILDS_DS },
+    pages: [{ properties: props }]
+  }).then(function () {
+    msg.className = "formmsg good";
+    msg.textContent = "Saved. It will appear below in a moment.";
+    ["f_name", "f_repo", "f_path", "f_builder", "f_version", "f_live", "f_notes"].forEach(function (id) { el(id).value = ""; });
+    document.querySelectorAll("#f_stack input:checked").forEach(function (i) { i.checked = false; });
+    el("f_client").value = "";
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
+  }).then(function () {
+    setTimeout(function () { closeSheet("addScrim"); }, 700);
+  }).catch(function (err) {
+    var e = explain(err);
+    msg.className = "formmsg bad";
+    msg.textContent = e.head + " — " + e.body;
+  }).then(function () {
+    btn.disabled = false;
+    btn.textContent = "Save build";
+  });
+});
+
+["search", "fStatus", "fBuilder", "fArchived"].forEach(function (id) {
+  el(id).addEventListener(id === "search" ? "input" : "change", render);
+});
+
+boot();
+</script>

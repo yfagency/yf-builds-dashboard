@@ -1,0 +1,340 @@
+<!doctype html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Yf Builds Dashboard",
+  "schemaVersion": 1,
+  "description": "YF Builds dashboard — team-facing view of every app/webpage built, with status, builder, client/project, and a Download-latest-build button pulling from GitHub. Reads the YF Builds registry in Notion (invisible backend).",
+  "mcpTools": [
+    "mcp__63820650-5dfc-4c35-b26d-fc79daa4aa81__notion-query-data-sources",
+    "mcp__63820650-5dfc-4c35-b26d-fc79daa4aa81__notion-create-pages"
+  ],
+  "mcpServerNames": [
+    "Notion",
+    "Notion"
+  ]
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YF Builds</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2328; background: #f7f7f5; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px; }
+header.top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+.sub { color: #6b7280; font-size: 13px; margin: 2px 0 18px; }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.stat { background: #fff; border: 1px solid #e6e6e3; border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #6b7280; }
+.stat b { color: #1f2328; font-size: 15px; margin-right: 4px; }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+.controls input, .controls select { font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid #e0e0dd; border-radius: 8px; background: #fff; color: #1f2328; }
+.controls input.search { flex: 1; min-width: 180px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.card { background: #fff; border: 1px solid #e6e6e3; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card h3 { margin: 0; font-size: 15px; line-height: 1.3; }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: #4b5563; }
+.badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #f1f1ef; color: #4b5563; }
+.meta { font-size: 12px; color: #6b7280; }
+.meta b { color: #1f2328; font-weight: 600; }
+.notes { font-size: 12.5px; color: #6b7280; border-top: 1px solid #f0f0ee; padding-top: 8px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 6px; }
+.btn { font-size: 12.5px; font-weight: 600; text-decoration: none; padding: 7px 11px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.btn.dl { background: #1f2328; color: #fff; }
+.btn.dl:hover { background: #000; }
+.btn.gh, .btn.live, .btn.ghost { background: #fff; color: #1f2328; border-color: #e0e0dd; }
+.btn.gh:hover, .btn.live:hover, .btn.ghost:hover { border-color: #b9b9b4; }
+.btn.add { background: #2f6df6; color: #fff; }
+.btn.add:hover { background: #1f5be0; }
+.btn.disabled { opacity: 0.4; pointer-events: none; }
+.state { text-align: center; color: #6b7280; padding: 60px 20px; font-size: 14px; }
+.state.err { color: #b42318; }
+.footnote { color: #9ca3af; font-size: 11.5px; margin-top: 24px; line-height: 1.5; }
+.overlay { position: fixed; inset: 0; background: rgba(20,20,20,0.35); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow: auto; z-index: 50; }
+.overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+.modal h2 { margin: 0 0 4px; font-size: 17px; }
+.modal p.hint { margin: 0 0 16px; font-size: 12.5px; color: #6b7280; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+.field input, .field select, .field textarea { width: 100%; font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid #e0e0dd; border-radius: 8px; background: #fff; color: #1f2328; }
+.field textarea { resize: vertical; min-height: 54px; }
+.stackopts { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: #374151; }
+.stackopts label { display: inline-flex; align-items: center; gap: 5px; font-weight: 500; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.formmsg { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+.formmsg.err { color: #b42318; }
+.formmsg.ok { color: #166534; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #4b5563; white-space: nowrap; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.dot.green { background: #16a34a; } .dot.amber { background: #d97706; } .dot.red { background: #b42318; } .dot.gray { background: #c4c4bf; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; background: #f1f1ef; padding: 1px 5px; border-radius: 4px; }
+.state.empty { text-align: left; max-width: 620px; margin: 0 auto; padding: 40px 20px; color: #4b5563; font-size: 13.5px; line-height: 1.6; }
+.state.empty .big { font-size: 16px; font-weight: 600; color: #1f2328; margin: 0 0 10px; }
+.state.empty ol { padding-left: 20px; } .state.empty li { margin-bottom: 8px; }
+.state.empty .muted, .help .muted { color: #9ca3af; font-size: 12.5px; }
+.help { font-size: 13px; color: #4b5563; line-height: 1.6; }
+.help ol { padding-left: 20px; margin: 6px 0 14px; } .help li { margin-bottom: 7px; }
+.help p b { color: #1f2328; }
+.say { font-size: 15px; font-weight: 600; color: #1f2328; background: #f1f1ef; border-left: 3px solid #2f6df6; padding: 10px 14px; border-radius: 6px; margin: 12px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>&#128736;&#65039; YF Builds</h1>
+    <button class="btn add" id="addBtn">&#43; Add build</button>
+  </header>
+  <div class="sub">Every app &amp; webpage the team has built &mdash; who built it, its status, and the latest downloadable build.</div>
+  <div class="stats" id="stats"></div>
+  <div class="controls">
+    <input class="search" id="search" type="text" placeholder="Search by name, builder, or client&hellip;">
+    <select id="fStatus"><option value="">All statuses</option></select>
+    <select id="fBuilder"><option value="">All builders</option></select>
+    <label class="chk"><input type="checkbox" id="fArchived"> Show archived</label>
+    <button class="btn ghost" id="helpBtn">How do I add a build?</button>
+  </div>
+  <div id="content"><div class="state" id="loading">Loading builds&hellip;</div></div>
+  <div class="footnote" id="foot"></div>
+</div>
+
+<div class="overlay" id="helpOverlay">
+  <div class="modal">
+    <h2>Adding a build</h2>
+    <p class="hint">Publishing happens in Claude Code. Everything else happens here.</p>
+    <div class="help">
+      <p class="say">&ldquo;log this build&rdquo; &mdash; said in Claude Code</p>
+      <p>It creates the GitHub repo, pushes the files, and registers the build. It will ask what to call it and which client it&rsquo;s for if that isn&rsquo;t obvious from what you were working on.</p>
+      <p><b>Why Claude Code and not here?</b> Cowork can read GitHub but cannot push to it &mdash; that&rsquo;s a hard limit of its sandbox, not a setting anyone can change. Claude Code runs on your own machine with your own GitHub login, so it can.</p>
+      <p><b>Get the skill.</b> Ask ZF for <code>yf-builds-publish</code>. Once installed, the sentence above is genuinely all you need &mdash; no git commands, no repo settings.</p>
+      <p><b>Updating something that already exists</b> &mdash; identical. Say the same thing; it spots the build is already published and adds a new version. Every previous version stays recoverable.</p>
+      <p><b>Download latest</b> gives you a zip of the newest version, with no GitHub account needed &mdash; so it works for anyone you send it to.</p>
+      <p><b>Nothing secret in a build.</b> Builds are public, which is what makes that download work. No API keys, no client data, no credentials.</p>
+      <p class="muted">A new build appears here after the next morning sync, or right away if you say &ldquo;sync the builds&rdquo; in Cowork. The commit line on each card is filled in by that same sync.</p>
+      <p class="muted"><b>Add build</b> registers a card by hand without publishing anything &mdash; useful for something hosted elsewhere. Most people should ignore it.</p>
+    </div>
+    <div class="modal-actions"><button class="btn ghost" id="helpClose">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Add a build</h2>
+    <p class="hint">This saves straight to the YF Builds registry &mdash; no need to open Notion.</p>
+    <div class="field"><label>Name *</label><input id="f_name" type="text" placeholder="e.g. TDK Town Hall microsite"></div>
+    <div class="field"><label>GitHub repo URL</label><input id="f_repo" type="url" placeholder="https://github.com/yfagency/repo-name"></div>
+    <div class="row" style="gap:12px">
+      <div class="field" style="flex:1"><label>Folder in repo</label><input id="f_path" type="text" placeholder="e.g. tdk-townhall"></div>
+      <div class="field" style="flex:1"><label>Builder</label><input id="f_builder" type="text" placeholder="e.g. ZF"></div>
+    </div>
+    <div class="row" style="gap:12px">
+      <div class="field" style="flex:1"><label>Branch</label><input id="f_branch" type="text" value="main"></div>
+    </div>
+    <div class="row" style="gap:12px">
+      <div class="field" style="flex:1"><label>Status</label><select id="f_status">
+        <option>Prototype</option><option>In Progress</option><option>Needs Review</option><option>Live</option><option>Archived</option>
+      </select></div>
+      <div class="field" style="flex:1"><label>Latest version</label><input id="f_version" type="text" placeholder="e.g. v1.0"></div>
+    </div>
+    <div class="field"><label>Tech stack</label><div class="stackopts" id="f_stack">
+      <label><input type="checkbox" value="HTML">HTML</label>
+      <label><input type="checkbox" value="React">React</label>
+      <label><input type="checkbox" value="Webflow">Webflow</label>
+      <label><input type="checkbox" value="Node">Node</label>
+      <label><input type="checkbox" value="Other">Other</label>
+    </div></div>
+    <div class="field"><label>Client (optional)</label><select id="f_client"><option value="">&mdash; none &mdash;</option></select></div>
+    <div class="field"><label>Live URL (optional)</label><input id="f_live" type="url" placeholder="https://&hellip;"></div>
+    <div class="field"><label>Notes</label><textarea id="f_notes" placeholder="What is this build?"></textarea></div>
+    <div class="formmsg" id="formmsg"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelBtn">Cancel</button>
+      <button class="btn add" id="saveBtn">Save build</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const NOTION = "mcp__63820650-5dfc-4c35-b26d-fc79daa4aa81__notion-query-data-sources";
+const NOTION_CREATE = "mcp__63820650-5dfc-4c35-b26d-fc79daa4aa81__notion-create-pages";
+const BUILDS = "collection://10d63098-3c9a-44a2-83fb-a98ce261eea1";
+const BUILDS_DS = "10d63098-3c9a-44a2-83fb-a98ce261eea1";
+const CLIENTS = "collection://44f6ebf3-d835-4dc8-b3e1-263e47021b6e";
+const PROJECTS = "collection://9e25d15a-b80a-4baf-90c1-cb7838757375";
+const STATUS_COLORS = { "Prototype":"#e5e7eb|#374151","In Progress":"#fef3c7|#92400e","Needs Review":"#ffedd5|#9a3412","Live":"#dcfce7|#166534","Archived":"#ede9e3|#6b5c4a" };
+
+let ALL = [], CLIENT_LIST = [];
+
+async function callSql(collection, query) {
+  const r = await window.cowork.callMcpTool(NOTION, { data: { mode: "sql", data_source_urls: [collection], query } });
+  let p = r.structuredContent; if (!p && r.content && r.content[0] && r.content[0].text) p = JSON.parse(r.content[0].text);
+  return (p && p.results) || [];
+}
+function arr(v){ if(Array.isArray(v))return v; if(typeof v==="string"&&v.trim().startsWith("[")){try{return JSON.parse(v);}catch(e){return[];}} if(typeof v==="string"&&v)return[v]; return[]; }
+function repoBase(repo){ return repo?repo.trim().replace(/\/+$/,"").replace(/\.git$/,""):null; }
+function cleanPath(p){ return p?p.trim().replace(/^\/+|\/+$/g,""):""; }
+function encPath(p){ return p.split("/").map(encodeURIComponent).join("/"); }
+// With a Path (monorepo build) the download is the per-build zip Claude commits alongside the
+// folder. Without one the build owns its whole repo, so fall back to GitHub's repo archive.
+function zipUrl(repo,branch,path){
+  const b=repoBase(repo); if(!b)return null;
+  const br=encodeURIComponent((branch&&branch.trim())||"main"), p=cleanPath(path);
+  return p ? b+"/raw/"+br+"/"+encPath(p)+"/latest.zip"
+           : b+"/archive/refs/heads/"+br+".zip";
+}
+function browseUrl(repo,branch,path){
+  const b=repoBase(repo); if(!b)return null;
+  const br=encodeURIComponent((branch&&branch.trim())||"main"), p=cleanPath(path);
+  return p ? b+"/tree/"+br+"/"+encPath(p) : b;
+}
+function relTime(iso){ if(!iso)return""; const d=new Date(iso),now=new Date(),days=Math.floor((now-d)/86400000); if(days<=0)return"today"; if(days===1)return"yesterday"; if(days<30)return days+"d ago"; if(days<365)return Math.floor(days/30)+"mo ago"; return Math.floor(days/365)+"y ago"; }
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+async function load() {
+  try {
+    const [builds, clients, projects] = await Promise.all([
+      callSql(BUILDS, `SELECT url,"Name","Repo URL","Branch","Live URL","Builder","Status","Latest Version","Tech Stack","Client","Project","Notes","Last Updated","Commit","Last Committer","Path","date:Last Commit:start" FROM "${BUILDS}" ORDER BY "Last Updated" DESC`),
+      callSql(CLIENTS, `SELECT url,"Name" FROM "${CLIENTS}" LIMIT 300`),
+      callSql(PROJECTS, `SELECT url,"Project Name" FROM "${PROJECTS}" LIMIT 300`)
+    ]);
+    const cMap={}; clients.forEach(c=>cMap[c.url]=c.Name);
+    const pMap={}; projects.forEach(p=>pMap[p.url]=p["Project Name"]);
+    CLIENT_LIST = clients.map(c=>({url:c.url,name:c.Name})).filter(c=>c.name).sort((a,b)=>a.name.localeCompare(b.name));
+    populateClientDropdown();
+    ALL = builds.map(b=>({
+      name:b.Name||"(untitled)", repo:b["Repo URL"], branch:b.Branch, live:b["Live URL"],
+      builder:b.Builder||"", status:b.Status||"", version:b["Latest Version"]||"", stack:arr(b["Tech Stack"]),
+      client:arr(b.Client).map(u=>cMap[u]||"").filter(Boolean).join(", "),
+      project:arr(b.Project).map(u=>pMap[u]||"").filter(Boolean).join(", "),
+      notes:b.Notes||"", updated:b["Last Updated"], path:b.Path||"",
+      commit:b.Commit||"", committer:b["Last Committer"]||"", commitDate:b["date:Last Commit:start"]||""
+    }));
+    buildFilters(); render();
+  } catch(e){ document.getElementById("content").innerHTML='<div class="state err">Couldn\'t load builds: '+esc(e.message||e)+'</div>'; }
+}
+
+function buildFilters(){
+  const statuses=[...new Set(ALL.map(b=>b.status).filter(Boolean))];
+  const builders=[...new Set(ALL.map(b=>b.builder||b.committer).filter(Boolean))];
+  const fs=document.getElementById("fStatus"), fb=document.getElementById("fBuilder");
+  fs.innerHTML='<option value="">All statuses</option>'; fb.innerHTML='<option value="">All builders</option>';
+  statuses.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;fs.appendChild(o);});
+  builders.forEach(b=>{const o=document.createElement("option");o.value=b;o.textContent=b;fb.appendChild(o);});
+}
+function populateClientDropdown(){
+  const sel=document.getElementById("f_client"); sel.innerHTML='<option value="">&mdash; none &mdash;</option>';
+  CLIENT_LIST.forEach(c=>{const o=document.createElement("option");o.value=c.url;o.textContent=c.name;sel.appendChild(o);});
+}
+const EMPTY_STATE = '<div class="state empty">'+
+  '<p class="big">No builds tracked yet.</p>'+
+  '<p>When you&rsquo;ve made something you want the team to be able to find later, say this <b>in Claude Code</b>:</p>'+
+  '<p class="say">&ldquo;log this build&rdquo;</p>'+
+  '<p>It creates the repo, pushes the files and registers the build. Same sentence for a new version of something that already exists.</p>'+
+  '<p class="muted">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. Ask ZF for the <code>yf-builds-publish</code> skill and you won&rsquo;t have to remember any of the steps.</p>'+
+  '</div>';
+
+function render(){
+  const q=document.getElementById("search").value.toLowerCase().trim();
+  const fs=document.getElementById("fStatus").value, fb=document.getElementById("fBuilder").value;
+  const showArch=document.getElementById("fArchived").checked;
+  const pool=ALL.filter(b=>showArch||b.status!=="Archived");
+  const archivedCount=ALL.filter(b=>b.status==="Archived").length;
+  const rows=pool.filter(b=>(!fs||b.status===fs)&&(!fb||(b.builder||b.committer)===fb)&&(!q||(b.name+" "+b.builder+" "+b.committer+" "+b.client+" "+b.project).toLowerCase().includes(q)));
+  const byStatus={}; pool.forEach(b=>{if(b.status)byStatus[b.status]=(byStatus[b.status]||0)+1;});
+  const stale=pool.filter(b=>{const d=ageDays(b.commitDate); return d!==null&&d>60;}).length;
+  document.getElementById("stats").innerHTML='<div class="stat"><b>'+pool.length+'</b>builds</div>'+
+    Object.keys(byStatus).map(s=>'<div class="stat"><b>'+byStatus[s]+'</b>'+esc(s)+'</div>').join("")+
+    (stale?'<div class="stat"><b>'+stale+'</b>untouched 60d+</div>':'')+
+    (!showArch&&archivedCount?'<div class="stat"><b>'+archivedCount+'</b>archived (hidden)</div>':'');
+  const content=document.getElementById("content");
+  if(!pool.length){content.innerHTML=EMPTY_STATE;return;}
+  if(!rows.length){content.innerHTML='<div class="state">No builds match your filters.</div>';return;}
+  content.innerHTML='<div class="grid">'+rows.map(cardHtml).join("")+'</div>';
+}
+function ageDays(iso){ if(!iso)return null; const d=new Date(iso); if(isNaN(d))return null; return Math.floor((Date.now()-d)/86400000); }
+function freshHtml(b){
+  if(!b.commitDate) return '<span class="dot gray"></span>'+(b.repo?'Not synced yet':'No repo linked');
+  const days=ageDays(b.commitDate);
+  const cls = days===null?"gray" : days<=14?"green" : days<=60?"amber" : "red";
+  return '<span class="dot '+cls+'"></span>Last commit <b>'+esc(relTime(b.commitDate))+'</b>'+
+         (b.commit?' &middot; <code>'+esc(b.commit)+'</code>':'')+
+         (b.committer?' by '+esc(b.committer):'');
+}
+function cardHtml(b){
+  const sc=(STATUS_COLORS[b.status]||"#eee|#444").split("|");
+  const dl=zipUrl(b.repo,b.branch,b.path);
+  const gh=browseUrl(b.repo,b.branch,b.path);
+  const who=b.builder||b.committer;
+  const stackTags=b.stack.map(s=>'<span class="tag">'+esc(s)+'</span>').join("");
+  return '<div class="card">'+
+    '<div class="row" style="justify-content:space-between"><h3>'+esc(b.name)+'</h3>'+(b.status?'<span class="badge" style="background:'+sc[0]+';color:'+sc[1]+'">'+esc(b.status)+'</span>':'')+'</div>'+
+    (stackTags?'<div class="row">'+stackTags+'</div>':'')+
+    '<div class="meta">'+(who?'Built by <b>'+esc(who)+'</b>':'Builder not set')+(b.version?' &middot; <b>'+esc(b.version)+'</b>':'')+'</div>'+
+    '<div class="meta">'+freshHtml(b)+'</div>'+
+    ((b.client||b.project)?'<div class="meta">'+(b.client?'Client: <b>'+esc(b.client)+'</b>':'')+(b.client&&b.project?' &middot; ':'')+(b.project?'Project: <b>'+esc(b.project)+'</b>':'')+'</div>':'')+
+    (b.notes?'<div class="notes">'+esc(b.notes)+'</div>':'')+
+    '<div class="actions">'+
+      (dl?'<a class="btn dl" href="'+esc(dl)+'">&#8595; Download latest</a>':'<span class="btn dl disabled">&#8595; No repo</span>')+
+      (gh?'<a class="btn gh" href="'+esc(gh)+'" target="_blank" rel="noopener">GitHub &amp; history</a>':'')+
+      (b.live?'<a class="btn live" href="'+esc(b.live)+'" target="_blank" rel="noopener">Live</a>':'')+
+    '</div></div>';
+}
+
+// ----- Add build -----
+function openModal(){ document.getElementById("overlay").classList.add("show"); document.getElementById("formmsg").textContent=""; }
+function closeModal(){ document.getElementById("overlay").classList.remove("show"); }
+document.getElementById("addBtn").addEventListener("click", openModal);
+document.getElementById("cancelBtn").addEventListener("click", closeModal);
+document.getElementById("overlay").addEventListener("click", e=>{ if(e.target.id==="overlay") closeModal(); });
+
+async function saveBuild(){
+  const msg=document.getElementById("formmsg"); msg.className="formmsg"; msg.textContent="";
+  const name=document.getElementById("f_name").value.trim();
+  if(!name){ msg.className="formmsg err"; msg.textContent="Name is required."; return; }
+  const props={ "Name": name };
+  const repo=document.getElementById("f_repo").value.trim(); if(repo) props["Repo URL"]=repo;
+  props["Branch"]=document.getElementById("f_branch").value.trim()||"main";
+  const path=document.getElementById("f_path").value.trim(); if(path) props["Path"]=path;
+  const builder=document.getElementById("f_builder").value.trim(); if(builder) props["Builder"]=builder;
+  props["Status"]=document.getElementById("f_status").value;
+  const version=document.getElementById("f_version").value.trim(); if(version) props["Latest Version"]=version;
+  const stack=[...document.querySelectorAll('#f_stack input:checked')].map(i=>i.value); if(stack.length) props["Tech Stack"]=stack;
+  const clientUrl=document.getElementById("f_client").value; if(clientUrl) props["Client"]=[clientUrl];
+  const live=document.getElementById("f_live").value.trim(); if(live) props["Live URL"]=live;
+  const notes=document.getElementById("f_notes").value.trim(); if(notes) props["Notes"]=notes;
+  const btn=document.getElementById("saveBtn"); btn.textContent="Saving…"; btn.classList.add("disabled");
+  try {
+    const r=await window.cowork.callMcpTool(NOTION_CREATE, { parent:{ type:"data_source_id", data_source_id:BUILDS_DS }, pages:[{ properties: props }] });
+    if(r && r.isError){ throw new Error((r.content&&r.content[0]&&r.content[0].text)||"create failed"); }
+    msg.className="formmsg ok"; msg.textContent="Saved.";
+    ["f_name","f_repo","f_path","f_version","f_builder","f_live","f_notes"].forEach(id=>document.getElementById(id).value="");
+    document.querySelectorAll('#f_stack input:checked').forEach(i=>i.checked=false);
+    document.getElementById("f_client").value="";
+    await load();
+    setTimeout(closeModal, 500);
+  } catch(e){ msg.className="formmsg err"; msg.textContent="Couldn't save: "+(e.message||e); }
+  finally { btn.textContent="Save build"; btn.classList.remove("disabled"); }
+}
+document.getElementById("saveBtn").addEventListener("click", saveBuild);
+
+document.getElementById("search").addEventListener("input", render);
+document.getElementById("fStatus").addEventListener("change", render);
+document.getElementById("fBuilder").addEventListener("change", render);
+document.getElementById("fArchived").addEventListener("change", render);
+
+// ----- Help -----
+const helpOv=document.getElementById("helpOverlay");
+document.getElementById("helpBtn").addEventListener("click", ()=>helpOv.classList.add("show"));
+document.getElementById("helpClose").addEventListener("click", ()=>helpOv.classList.remove("show"));
+helpOv.addEventListener("click", e=>{ if(e.target.id==="helpOverlay") helpOv.classList.remove("show"); });
+document.getElementById("foot").innerHTML='Data lives in the YF Builds registry (Notion, behind the scenes) &mdash; this dashboard is the only place you need to open, including adding builds. &ldquo;Download latest&rdquo; pulls the current build straight from GitHub. Commit SHA, author and date are refreshed by the daily GitHub sync (public repos only).';
+
+if (window.cowork && window.cowork.callMcpTool) { load(); }
+else { document.getElementById("content").innerHTML='<div class="state err">This dashboard needs to run inside Cowork to load data.</div>'; }
+</script>
+</body>
+</html>
