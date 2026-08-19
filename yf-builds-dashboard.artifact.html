@@ -251,6 +251,7 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
       <p><strong>Why Claude Code and not here?</strong> Cowork can read GitHub but cannot push to it &mdash; a hard limit of its sandbox, not a setting anyone can change. Claude Code runs on your own machine with your own GitHub login, so it can.</p>
       <p><strong>Get the skill.</strong> Ask ZF for <code>yf-builds-publish</code>. Once it's installed, the sentence above is the whole interface &mdash; no git commands, no repo settings.</p>
       <p><strong>Updating something that already exists</strong> is identical. Say the same thing; it notices the build is already published and adds a version. Every earlier version stays recoverable.</p>
+      <p><strong>Status, version, notes, client.</strong> Press <strong>Edit</strong> on any card. Those are yours to set &mdash; the commit line underneath isn't, because it's read from git by the nightly sync.</p>
       <p><strong>Nothing secret in a build.</strong> Builds are public, which is what makes Download latest work for anyone you send it to. No API keys, no client data, no credentials.</p>
       <p class="quiet">A new build appears here after the next morning sync, or right away if you say &ldquo;sync the builds&rdquo; in Cowork. That same sync fills in the commit line on each card.</p>
       <p class="quiet"><strong>Add build</strong> registers a card by hand without publishing anything &mdash; useful for something hosted elsewhere. Most people should ignore it.</p>
@@ -261,8 +262,8 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
 
 <div class="scrim" id="addScrim">
   <div class="sheet">
-    <h2>Add a build</h2>
-    <p class="quiet">Saves straight to the registry. You don't need to open Notion.</p>
+    <h2 id="sheetTitle">Add a build</h2>
+    <p class="quiet" id="sheetHint">Saves straight to the registry. You don't need to open Notion.</p>
     <div class="field"><span class="label">Name <span aria-hidden="true">*</span></span><input type="text" id="f_name" placeholder="TDK Town Hall microsite"></div>
     <div class="field"><span class="label">GitHub repo URL</span><input type="url" id="f_repo" placeholder="https://github.com/yfagency/repo-name"></div>
     <div class="pair">
@@ -301,6 +302,7 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
 var SERVER_CANDIDATES = ["Notion", "notion", "Notion MCP"];
 var T_QUERY  = "notion-query-data-sources";
 var T_CREATE = "notion-create-pages";
+var T_UPDATE = "notion-update-page";
 var BUILDS    = "collection://10d63098-3c9a-44a2-83fb-a98ce261eea1";
 var BUILDS_DS = "10d63098-3c9a-44a2-83fb-a98ce261eea1";
 var CLIENTS   = "collection://44f6ebf3-d835-4dc8-b3e1-263e47021b6e";
@@ -346,6 +348,11 @@ function rows(result) {
     }
   }
   return (p && p.results) || [];
+}
+// Notion row ids arrive inside the page url the registry query returns.
+function pageIdFrom(url) {
+  var m = String(url || "").match(/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i);
+  return m ? m[0] : null;
 }
 function repoBase(u) { return u ? u.trim().replace(/\/+$/, "").replace(/\.git$/, "") : null; }
 function tidyPath(p) { return p ? p.trim().replace(/^\/+|\/+$/g, "") : ""; }
@@ -461,6 +468,8 @@ var PILL = { "Prototype": "prototype", "In Progress": "progress", "Needs Review"
 
 function shape(b) {
   return {
+    pageId: pageIdFrom(b.url),
+    clientUrls: asList(b["Client"]),
     name: b["Name"] || "(untitled)",
     repo: b["Repo URL"], branch: b["Branch"], path: b["Path"] || "",
     live: b["Live URL"], builder: b["Builder"] || "",
@@ -505,6 +514,7 @@ function card(b) {
           : '<span class="btn dead">No repo yet</span>') +
       (gh ? '<a class="btn" href="' + esc(gh) + '" target="_blank" rel="noopener">GitHub &amp; history</a>' : "") +
       (b.live ? '<a class="btn" href="' + esc(b.live) + '" target="_blank" rel="noopener">Live</a>' : "") +
+      (b.pageId ? '<button class="btn edit" data-edit="' + esc(b.pageId) + '">Edit</button>' : "") +
     "</div></article>";
 }
 
@@ -651,11 +661,86 @@ function boot() {
   }).catch(function (err) { pageError(err); });
 }
 
-/* ---- add build ---- */
+/* ---- add / edit a build ----
+   Only the human-owned fields are editable here. Commit, Last Committer and Last Commit
+   belong to the daily sync and are deliberately absent from this form. */
+var EDITING = null;   // the row's page id while the sheet is in edit mode
+var FORM = [
+  ["f_name", "Name"], ["f_repo", "Repo URL"], ["f_path", "Path"], ["f_builder", "Builder"],
+  ["f_version", "Latest Version"], ["f_live", "Live URL"], ["f_notes", "Notes"]
+];
+
 function openSheet(id) { el(id).classList.add("open"); }
 function closeSheet(id) { el(id).classList.remove("open"); }
-el("addBtn").addEventListener("click", function () { el("formmsg").textContent = ""; openSheet("addScrim"); });
+
+function resetForm() {
+  FORM.forEach(function (f) { el(f[0]).value = ""; });
+  el("f_branch").value = "main";
+  el("f_status").value = "Prototype";
+  el("f_client").value = "";
+  [].slice.call(document.querySelectorAll("#f_stack input")).forEach(function (i) { i.checked = false; });
+  el("formmsg").textContent = "";
+  el("formmsg").className = "formmsg";
+}
+
+function openAdd() {
+  EDITING = null;
+  resetForm();
+  el("sheetTitle").textContent = "Add a build";
+  el("sheetHint").textContent = "Saves straight to the registry. You don't need to open Notion.";
+  el("addSave").textContent = "Save build";
+  openSheet("addScrim");
+  el("f_name").focus();
+}
+
+function openEdit(pageId) {
+  var b = (BUILDS_ROWS || []).filter(function (r) { return r.pageId === pageId; })[0];
+  if (!b) return;
+  EDITING = pageId;
+  resetForm();
+  el("sheetTitle").textContent = "Edit build";
+  el("sheetHint").textContent = "Saves to the registry and updates below straight away. Commit, author and date come from the sync and aren't editable.";
+  el("addSave").textContent = "Save changes";
+  el("f_name").value = b.name === "(untitled)" ? "" : b.name;
+  el("f_repo").value = b.repo || "";
+  el("f_path").value = b.path || "";
+  el("f_builder").value = b.builder || "";
+  el("f_version").value = b.version || "";
+  el("f_live").value = b.live || "";
+  el("f_notes").value = b.notes || "";
+  el("f_branch").value = b.branch || "main";
+  if (b.status) el("f_status").value = b.status;
+  el("f_client").value = (b.clientUrls && b.clientUrls[0]) || "";
+  [].slice.call(document.querySelectorAll("#f_stack input")).forEach(function (i) {
+    i.checked = b.stack.indexOf(i.value) >= 0;
+  });
+  openSheet("addScrim");
+  el("f_status").focus();
+}
+
+// An empty field means "clear this" when editing, and "don't set it" when creating.
+function collectProps() {
+  var props = { "Branch": el("f_branch").value.trim() || "main", "Status": el("f_status").value };
+  FORM.forEach(function (f) {
+    var v = el(f[0]).value.trim();
+    if (v) props[f[1]] = v;
+    else if (EDITING) props[f[1]] = null;
+  });
+  var stack = [].slice.call(document.querySelectorAll("#f_stack input:checked")).map(function (i) { return i.value; });
+  if (stack.length) props["Tech Stack"] = stack;
+  else if (EDITING) props["Tech Stack"] = null;
+  var client = el("f_client").value;
+  if (client) props["Client"] = [client];
+  else if (EDITING) props["Client"] = null;
+  return props;
+}
+
+el("addBtn").addEventListener("click", openAdd);
 el("addCancel").addEventListener("click", function () { closeSheet("addScrim"); });
+el("main").addEventListener("click", function (e) {
+  var t = e.target.closest ? e.target.closest("[data-edit]") : null;
+  if (t) openEdit(t.getAttribute("data-edit"));
+});
 el("helpBtn").addEventListener("click", function () { openSheet("helpScrim"); });
 el("helpClose").addEventListener("click", function () { closeSheet("helpScrim"); });
 ["addScrim", "helpScrim"].forEach(function (id) {
@@ -669,31 +754,27 @@ el("addSave").addEventListener("click", function () {
   var msg = el("formmsg");
   msg.className = "formmsg";
   msg.textContent = "";
-  var name = el("f_name").value.trim();
-  if (!name) { msg.className = "formmsg bad"; msg.textContent = "A name is required."; return; }
+  if (!el("f_name").value.trim()) { msg.className = "formmsg bad"; msg.textContent = "A name is required."; return; }
   if (!mcp || !SERVER) { msg.className = "formmsg bad"; msg.textContent = "No Notion connection, so this can't be saved. Reload the page."; return; }
 
-  var props = { "Name": name, "Branch": el("f_branch").value.trim() || "main", "Status": el("f_status").value };
-  var put = function (key, id) { var v = el(id).value.trim(); if (v) props[key] = v; };
-  put("Repo URL", "f_repo"); put("Path", "f_path"); put("Builder", "f_builder");
-  put("Latest Version", "f_version"); put("Live URL", "f_live"); put("Notes", "f_notes");
-  var stack = [].slice.call(document.querySelectorAll("#f_stack input:checked")).map(function (i) { return i.value; });
-  if (stack.length) props["Tech Stack"] = stack;
-  var client = el("f_client").value;
-  if (client) props["Client"] = [client];
-
+  var editing = EDITING;
+  var props = collectProps();
   var btn = el("addSave");
+  var restore = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Saving";
-  mcp.callTool(SERVER, T_CREATE, {
-    parent: { type: "data_source_id", data_source_id: BUILDS_DS },
-    pages: [{ properties: props }]
-  }).then(function () {
+
+  var call = editing
+    ? mcp.callTool(SERVER, T_UPDATE, { page_id: editing, command: "update_properties", properties: props })
+    : mcp.callTool(SERVER, T_CREATE, {
+        parent: { type: "data_source_id", data_source_id: BUILDS_DS },
+        pages: [{ properties: props }]
+      });
+
+  call.then(function () {
     msg.className = "formmsg good";
-    msg.textContent = "Saved. It will appear below in a moment.";
-    ["f_name", "f_repo", "f_path", "f_builder", "f_version", "f_live", "f_notes"].forEach(function (id) { el(id).value = ""; });
-    document.querySelectorAll("#f_stack input:checked").forEach(function (i) { i.checked = false; });
-    el("f_client").value = "";
+    msg.textContent = editing ? "Changes saved." : "Saved. It will appear below in a moment.";
+    if (!editing) resetForm();
     return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
   }).then(function () {
     setTimeout(function () { closeSheet("addScrim"); }, 700);
@@ -703,7 +784,7 @@ el("addSave").addEventListener("click", function () {
     msg.textContent = e.head + " — " + e.body;
   }).then(function () {
     btn.disabled = false;
-    btn.textContent = "Save build";
+    btn.textContent = restore;
   });
 });
 

@@ -1,0 +1,313 @@
+<title>YF Builds Handbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --paper: #f2f3f7;
+  --surface: #ffffff;
+  --surface-2: #e9ebf1;
+  --rule: #dcdfe8;
+  --rule-soft: #e8eaf0;
+  --ink: #171a21;
+  --ink-2: #3b4250;
+  --muted: #5d6472;
+  --accent: #2b4acb;
+  --accent-soft: #e6e9fb;
+  --ok: #1f8a4c;
+  --warn: #b4740e;
+  --crit: #b3261e;
+  --ok-soft: #e2f2e8;
+  --warn-soft: #f8eedb;
+  --crit-soft: #f8e5e3;
+  --shadow: 0 1px 2px rgba(23, 26, 33, .05), 0 8px 24px rgba(23, 26, 33, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #101218;
+    --surface: #171a22;
+    --surface-2: #1e222c;
+    --rule: #2a2f3b;
+    --rule-soft: #232833;
+    --ink: #e7e9ef;
+    --ink-2: #c3c8d4;
+    --muted: #949cac;
+    --accent: #93a2ff;
+    --accent-soft: #1d2340;
+    --ok: #5cc98a;
+    --warn: #e0a94a;
+    --crit: #f08a80;
+    --ok-soft: #16281d;
+    --warn-soft: #2b2214;
+    --crit-soft: #2e1a19;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #101218;
+  --surface: #171a22;
+  --surface-2: #1e222c;
+  --rule: #2a2f3b;
+  --rule-soft: #232833;
+  --ink: #e7e9ef;
+  --ink-2: #c3c8d4;
+  --muted: #949cac;
+  --accent: #93a2ff;
+  --accent-soft: #1d2340;
+  --ok: #5cc98a;
+  --warn: #e0a94a;
+  --crit: #f08a80;
+  --ok-soft: #16281d;
+  --warn-soft: #2b2214;
+  --crit-soft: #2e1a19;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.62;
+}
+.page { max-width: 760px; margin: 0 auto; padding: 44px 24px 72px; }
+h1, h2, h3 { font-family: Archivo, sans-serif; text-wrap: balance; margin: 0; }
+h1 { font-size: 32px; font-weight: 700; letter-spacing: -.025em; }
+.deck { color: var(--muted); font-size: 17px; margin: 8px 0 0; max-width: 60ch; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+code {
+  font-family: "IBM Plex Mono", monospace; font-size: .86em;
+  background: var(--surface-2); padding: 1.5px 6px; border-radius: 4px;
+}
+section { margin-top: 40px; }
+section > h2 {
+  font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+}
+section > h2 + * { margin-top: 18px; }
+h3 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0 0 14px; max-width: 66ch; }
+p:last-child { margin-bottom: 0; }
+.lede { font-size: 17px; color: var(--ink-2); }
+.quiet { color: var(--muted); font-size: 14.5px; }
+strong { font-weight: 600; }
+
+.say {
+  font-family: Archivo, sans-serif; font-size: 19px; font-weight: 600;
+  background: var(--accent-soft); color: var(--ink);
+  padding: 16px 20px; border-radius: 10px; margin: 18px 0;
+}
+.say .who { display: block; font-family: "Public Sans", sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); margin-top: 5px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 22px; box-shadow: var(--shadow);
+}
+.lanes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.lane .who {
+  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px;
+}
+.lane h3 { margin-bottom: 8px; }
+.lane p { font-size: 15px; margin-bottom: 0; }
+
+ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+ol.steps > li {
+  counter-increment: s; position: relative; padding-left: 44px; margin-bottom: 22px;
+}
+ol.steps > li::before {
+  content: counter(s); position: absolute; left: 0; top: 1px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--rule); color: var(--ink-2);
+  font-family: "IBM Plex Mono", monospace; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+ol.steps > li:last-child { margin-bottom: 0; }
+ol.steps h3 { font-size: 16.5px; margin-bottom: 4px; }
+ol.steps p { font-size: 15px; margin-bottom: 0; }
+
+ul.plain { padding-left: 20px; margin: 0 0 14px; }
+ul.plain li { margin-bottom: 8px; }
+ul.plain li:last-child { margin-bottom: 0; }
+
+.anatomy { display: flex; flex-direction: column; gap: 0; }
+.anatomy .row {
+  display: grid; grid-template-columns: 168px 1fr; gap: 18px;
+  padding: 13px 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;
+}
+.anatomy .row:last-child { border-bottom: 0; }
+.anatomy dt { font-family: Archivo, sans-serif; font-size: 14px; font-weight: 600; }
+.anatomy dd { margin: 0; font-size: 15px; color: var(--ink-2); }
+dl { margin: 0; }
+
+.pill {
+  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap; display: inline-block;
+}
+.pill.live { background: var(--ok-soft); color: var(--ok); }
+.pill.progress { background: var(--warn-soft); color: var(--warn); }
+.pill.proto { background: var(--surface-2); color: var(--ink-2); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.crit { background: var(--crit); }
+
+table.tbl { width: 100%; border-collapse: collapse; font-size: 15px; }
+.scroll { overflow-x: auto; }
+table.tbl th, table.tbl td { text-align: left; padding: 11px 14px 11px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+table.tbl th {
+  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); white-space: nowrap;
+}
+table.tbl td:first-child { font-weight: 600; padding-right: 24px; }
+
+.flag {
+  border-left: 3px solid var(--warn); background: var(--warn-soft);
+  padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 18px 0;
+}
+.flag.stop { border-left-color: var(--crit); background: var(--crit-soft); }
+.flag p { font-size: 15px; margin-bottom: 0; }
+.flag .head { font-family: Archivo, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--warn); display: block; margin-bottom: 4px; }
+.flag.stop .head { color: var(--crit); }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.foot { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 14px; }
+</style>
+
+<div class="page">
+  <header>
+    <h1>YF Builds Handbook</h1>
+    <p class="deck">Everything the team builds with Claude &mdash; mock-ups, pages, prototypes, small apps &mdash; in one place, with the latest version always one click away.</p>
+  </header>
+
+  <section>
+    <h2>Two things to know</h2>
+    <div class="lanes">
+      <div class="card lane">
+        <span class="who">Everyone</span>
+        <h3>Open the dashboard</h3>
+        <p>It's a link. Search, filter, download the latest version of anything the team has made. You never need to open Notion or GitHub.</p>
+      </div>
+      <div class="card lane">
+        <span class="who">Anyone who builds</span>
+        <h3>Say one sentence</h3>
+        <p>&ldquo;log this build&rdquo; in Claude Code. That's the whole publishing process &mdash; no git, no repo settings, no forms.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>First time only</h2>
+    <ol class="steps">
+      <li>
+        <h3>Open the dashboard link and bookmark it</h3>
+        <p>ZF will send it to you. It opens in the browser, no install.</p>
+      </li>
+      <li>
+        <h3>Connect Notion to your Claude account, once</h3>
+        <p>The dashboard reads the build list using <strong>your</strong> Notion connection, not a shared one &mdash; which is why nobody can see anything you couldn't already see. Go to claude.ai &rarr; Settings &rarr; Connectors and add <strong>Notion</strong>, signing in with your YF workspace. If the dashboard tells you to add or reconnect Notion, this is the fix.</p>
+      </li>
+      <li>
+        <h3>That's it, if you only need to download things</h3>
+        <p>Everything below is for people who want to publish their own builds.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Reading a card</h2>
+    <div class="card">
+      <dl class="anatomy">
+        <div class="row"><dt>Status</dt><dd><span class="pill proto">Prototype</span> <span class="pill progress">In Progress</span> <span class="pill live">Live</span> &mdash; how finished it is. Set by whoever built it, not automatic.</dd></div>
+        <div class="row"><dt>Freshness dot</dt><dd><span class="dot ok"></span>touched in the last two weeks &nbsp; <span class="dot warn"></span>within two months &nbsp; <span class="dot crit"></span>older than that. It reads the real commit date, so it can't be talked up.</dd></div>
+        <div class="row"><dt>Built by</dt><dd>Who the team says made it. Falls back to whoever last committed if nobody set it.</dd></div>
+        <div class="row"><dt>Download latest</dt><dd>A zip of the current version. No GitHub account needed &mdash; works for anyone you forward it to.</dd></div>
+        <div class="row"><dt>GitHub &amp; history</dt><dd>Every earlier version, if you need to go back or see what changed.</dd></div>
+        <div class="row"><dt>Live</dt><dd>Only on builds that are actually deployed somewhere.</dd></div>
+        <div class="row"><dt>Edit</dt><dd>Change the status, version, notes, client or live URL of any build, yours or not. Saves to the registry immediately.</dd></div>
+      </dl>
+    </div>
+    <p class="quiet" style="margin-top:14px">The counts along the top are the same list summarised &mdash; including how many builds nobody has touched in 60 days, which is usually the useful number.</p>
+  </section>
+
+  <section>
+    <h2>Publishing your own build</h2>
+    <p class="lede">You need <strong>Claude Code</strong> on your machine and the <code>yf-builds-publish</code> skill installed. Ask ZF for both &mdash; the skill is a file you drop in, one time.</p>
+    <ol class="steps">
+      <li>
+        <h3>Finish the thing, in its own folder</h3>
+        <p>One folder per build, containing only what should ship &mdash; no scratch files, no notes, no <code>.env</code>.</p>
+      </li>
+      <li>
+        <h3>Open Claude Code in that folder and say it</h3>
+        <div class="say">&ldquo;log this build&rdquo;<span class="who">that's the entire interface</span></div>
+        <p>It asks what to call it and which client it's for, if it can't work that out from what you've been doing. Then it creates the repo, pushes the files and registers the build.</p>
+      </li>
+      <li>
+        <h3>It gives you two links</h3>
+        <p>The repo, and the download URL. You can forward the download URL to anyone.</p>
+      </li>
+    </ol>
+    <div class="flag">
+      <span class="head">Builds are public</span>
+      <p>That's deliberate &mdash; it's what lets anyone download one without a GitHub account. So nothing secret goes in a build: no API keys, no credentials, no client data, nothing under NDA. If a build genuinely can't be public, stop and talk to ZF; it needs a different home.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Updating a build you already published</h2>
+    <p class="lede">Exactly the same sentence.</p>
+    <div class="say">&ldquo;log this build&rdquo;<span class="who">said again, in the same folder</span></div>
+    <p>It notices the build already exists and adds a new version instead of creating a second entry. Everyone downloading gets the new one immediately; every earlier version stays recoverable under <strong>GitHub &amp; history</strong>.</p>
+    <p>Changing the <strong>status</strong>, <strong>version label</strong>, <strong>notes</strong> or <strong>client</strong> is a different job, and it happens on the dashboard: press <strong>Edit</strong> on the card, change it, save. It's yours to maintain &mdash; a build that says <em>In Progress</em> six months after you finished it is only misleading because nobody pressed that button.</p>
+    <div class="flag">
+      <span class="head">One thing you can't edit</span>
+      <p>The commit line &mdash; the dot, the date, the author. That's read from git by the nightly sync, so it always reflects what actually happened rather than what anyone typed. If a build looks stale, the fix is to work on it, not to edit it.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>When something looks wrong</h2>
+    <div class="scroll">
+      <table class="tbl">
+        <thead><tr><th>What you see</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>My build isn't on the dashboard</td>
+            <td>Nine times out of ten the repo description is missing its <code>[YF Build]</code> prefix, which is how builds are told apart from YF's other repos. Otherwise: new builds appear at the <strong>06:30 JST</strong> sync, so something published this afternoon shows up tomorrow morning. ZF can force it sooner.</td>
+          </tr>
+          <tr>
+            <td>&ldquo;Add Notion in Settings &rarr; Connectors&rdquo;</td>
+            <td>Your Claude account has no Notion connection yet. Step 2 of <em>First time only</em>.</td>
+          </tr>
+          <tr>
+            <td>&ldquo;Reconnect Notion&rdquo;</td>
+            <td>Your connection expired &mdash; normal, occasional. Reconnect in the same place and reload.</td>
+          </tr>
+          <tr>
+            <td>&ldquo;Choose which Notion to use&rdquo;</td>
+            <td>You have more than one Notion connection. Pick the YF workspace.</td>
+          </tr>
+          <tr>
+            <td>The commit line says <em>Not synced yet</em></td>
+            <td>The build is registered but the sync hasn't read its repo yet. It fills in overnight.</td>
+          </tr>
+          <tr>
+            <td>Download gives me a 404</td>
+            <td>The repo was renamed, deleted or made private. Tell ZF &mdash; private repos are invisible to the dashboard by design.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Three rules</h2>
+    <div class="card">
+      <ul class="plain">
+        <li><strong>One repo per build.</strong> Don't add a second build to an existing one &mdash; Download-latest would hand people the wrong thing.</li>
+        <li><strong>Nothing secret in a build.</strong> Public is what makes downloads work for everyone.</li>
+        <li><strong>Publishing happens in Claude Code.</strong> Not in Cowork &mdash; Cowork can read GitHub but can't push to it, which is a limit of its sandbox rather than a setting anyone can change.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="foot">Maintained by ZF. The dashboard is the only interface &mdash; if something here sends you to Notion or GitHub to get ordinary work done, that's a gap worth reporting rather than a habit worth forming.</p>
+</div>
