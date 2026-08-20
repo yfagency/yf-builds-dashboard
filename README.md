@@ -94,16 +94,41 @@ running the PowerShell script:
 The capture is deterministic: re-rendering an unchanged build produces a byte-identical
 JPEG, so a no-op run leaves a clean `git diff`.
 
+## Before you publish - every time, both sessions
+
+An artifact publish does **not** go through git. Two Claude sessions publish this one
+page, so whoever publishes last silently overwrites the other, and neither is told. That
+happened twice on 2026-08-20: a whole-file edit re-encoded every non-ASCII character into
+mojibake, and a publish from a stale copy dropped a thumbnail another session had just
+added. Both are now checked mechanically:
+
+```powershell
+git pull
+powershell -File tools/check-artifact.ps1
+```
+
+It exits non-zero and tells you what is wrong if the file is not pure ASCII, if a rendered
+thumbnail in `thumbs/` is missing from the page, if the markup or script brackets are
+unbalanced, if a stray fragment sits above the `<title>`, if the guide's contents rail
+points at a section that does not exist, or **if you are behind the remote** - which is
+the one that catches you about to overwrite another session.
+
+Publish only on exit code 0, then commit and push so the repo matches what is live. The
+repo is the shared state; the artifact is a copy of it.
+
 ## Republishing the artifact
 
 From Claude Code, with the `Artifact` tool, passing the existing artifact URL so the
 team's bookmark keeps working:
 
 - URL: `https://claude.ai/code/artifact/89f3d2c0-86ef-4561-8c51-2778f38aad48`
-- **Favicon: ⚡** — required on every publish, and it is stored as platform metadata
-  rather than in this file, so it cannot be read back off the live page. Passing a
-  different emoji silently changes the tab icon the team navigates by. It is recorded
-  here so nobody has to guess.
+- **Favicon — UNSETTLED, ask ZF before assuming.** This file recorded ⚡; the ZF-PC session
+  has published 🛠️ on every publish since the artifact was created, so 🛠️ is what is live
+  as of 2026-08-20. Two sessions passing different emoji flip the team's tab icon back and
+  forth, which is worse than either choice. **Whoever gets ZF's answer: write the single
+  agreed emoji here, delete this paragraph, and use only that one.** It is stored as
+  platform metadata and cannot be read back off the live page, which is why it has to be
+  recorded rather than checked.
 - Pass **nothing** for `capabilities` or `contract`. Omitting them carries the stored
   declaration forward — currently `{mcp}` on contract `0.2.7`. Passing `capabilities`
   explicitly would replace it, and `{}` would clear it and break the page's Notion access.
