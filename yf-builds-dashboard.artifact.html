@@ -91,8 +91,26 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .btn.dead { opacity: .45; cursor: default; pointer-events: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* acting on a selection */
+.bulkbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  border: 1px solid var(--accent); background: var(--accent-soft);
+  border-radius: var(--radius); padding: 10px 14px; margin: -6px 0 18px;
+}
+.bulkbar .n { font-family: var(--mono); font-size: 12px; color: var(--ink); }
+.bulkbar select { padding: 5px 8px; font-size: 13px; }
+.bulkbar .btn { padding: 6px 12px; font-size: 12.5px; }
+
 /* cards */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+input.pick {
+  appearance: auto; width: 14px; height: 14px; margin-right: 8px;
+  vertical-align: 1px; accent-color: var(--accent); cursor: pointer;
+}
+.claim { display: flex; align-items: center; gap: 8px; }
+.claim .who { color: var(--accent); font-weight: 600; }
+.claim.held { color: var(--ink-2); }
+.btn.tiny { padding: 3px 8px; font-size: 11.5px; font-weight: 500; }
 .card {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
   padding: 18px; display: flex; flex-direction: column; gap: 11px; box-shadow: var(--shadow);
@@ -330,8 +348,22 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
     <select id="fBuilder"><option value="">All builders</option></select>
     <label class="toggle"><input type="checkbox" id="fArchived"> Show archived</label>
     <label class="toggle"><input type="checkbox" id="fPreview" checked> Previews</label>
+    <label class="toggle"><input type="checkbox" id="fSelect"> Select</label>
     <button class="btn ghost" id="refreshBtn" title="Re-read the registry now">Refresh</button>
     <span class="quiet mono" id="freshness"></span>
+  </div>
+
+  <div class="bulkbar" id="bulkbar" hidden>
+    <span class="n" id="bulkCount"></span>
+    <label class="toggle">Set status to
+      <select id="bulkStatus">
+        <option>Archived</option><option>Prototype</option><option>In Progress</option>
+        <option>Needs Review</option><option>Live</option>
+      </select>
+    </label>
+    <button class="btn primary" id="bulkApply">Apply</button>
+    <button class="btn ghost" id="bulkClear">Clear</button>
+    <span class="quiet" id="bulkMsg"></span>
   </div>
 
   <main id="main"><div class="panel"><span class="spin"></span>Loading the registry&hellip;</div></main>
@@ -363,6 +395,8 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       <a href="#g-publish" data-goto="g-publish">Publishing</a>
       <a href="#g-update" data-goto="g-update">Updating</a>
       <a href="#g-edit" data-goto="g-edit">Editing</a>
+      <a href="#g-many" data-goto="g-many">Archiving</a>
+      <a href="#g-checkout" data-goto="g-checkout">Checking out</a>
       <a href="#g-fresh" data-goto="g-fresh">How current is this</a>
       <a href="#g-problems" data-goto="g-problems">When something looks wrong</a>
     </nav>
@@ -460,6 +494,21 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
         </div>
       </section>
 
+      <section id="g-many">
+        <h3>Archiving, and several builds at once</h3>
+        <p>Tick <b>Select</b> in the bar at the top. Checkboxes appear on every card; tick the ones you mean, choose a status, press <b>Apply</b>. <b>Archived</b> is the default because hiding finished or dead builds is what this is mostly for.</p>
+        <p>Archived builds disappear from the gallery but are never deleted &mdash; tick <b>Show archived</b> to see them, and you can select them and set them back to any status the same way. Nothing here removes a build; the repo and its download keep working regardless.</p>
+        <p class="quiet">Untick <b>Select</b> and the checkboxes go away. If you only ever download things, you never need to turn it on.</p>
+      </section>
+
+      <section id="g-checkout">
+        <h3>Checking a build out</h3>
+        <p>Optional, and only useful when more than one person might touch the same build. Press <b>Check out</b> on a card and it shows your name to everyone else looking at the dashboard, so nobody starts editing the same thing in parallel. Press <b>Check in</b> when you're done.</p>
+        <p>The first time you check something out it asks for your name or initials and remembers them in this browser. Nothing else is stored about you.</p>
+        <p><b>It's a note, not a lock.</b> Anyone can still publish, and anyone can check a build in on someone's behalf &mdash; the button says so when it isn't yours. A lock nobody can break causes worse problems than a claim everybody can see, especially at 3pm on a Friday when the person who has it is asleep in another timezone.</p>
+        <p class="quiet">Claude reads it too: when you publish an update to a build somebody else has checked out, it tells you before pushing.</p>
+      </section>
+
       <section id="g-fresh">
         <h3>How current is this</h3>
         <p>Three layers, three different clocks. Worth knowing which is which before you trust a number.</p>
@@ -499,6 +548,18 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
     </div>
   </div>
 </div>
+<div class="scrim" id="meScrim">
+  <div class="sheet" style="max-width:400px">
+    <h2>Who's checking this out?</h2>
+    <p class="quiet">Your name or initials, so the team knows who has it. Asked once, then remembered in this browser.</p>
+    <div class="field"><span class="label">You are</span><input type="text" id="meField" placeholder="ZF" maxlength="40"></div>
+    <div class="sheet-actions">
+      <button class="btn" id="meCancel">Cancel</button>
+      <button class="btn primary" id="meSave">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="scrim" id="addScrim">
   <div class="sheet">
     <h2 id="sheetTitle">Add a build</h2>
@@ -553,7 +614,8 @@ var PROJECTS  = "collection://9e25d15a-b80a-4baf-90c1-cb7838757375";
 
 var Q_BUILDS = 'SELECT url, "Name", "Repo URL", "Branch", "Path", "Live URL", "Builder", "Status", ' +
   '"Latest Version", "Tech Stack", "Client", "Project", "Notes", "Last Updated", "Commit", ' +
-  '"Last Committer", "date:Last Commit:start" FROM "' + BUILDS + '" ORDER BY "Last Updated" DESC';
+  '"Last Committer", "date:Last Commit:start", "Checked Out By", "date:Checked Out At:start" ' +
+  'FROM "' + BUILDS + '" ORDER BY "Last Updated" DESC';
 var Q_CLIENTS  = 'SELECT url, "Name" FROM "' + CLIENTS + '" LIMIT 300';
 var Q_PROJECTS = 'SELECT url, "Project Name" FROM "' + PROJECTS + '" LIMIT 300';
 
@@ -735,7 +797,8 @@ function shape(b) {
     client: asList(b["Client"]).map(function (u) { return CLIENT_NAME[u] || ""; }).filter(Boolean).join(", "),
     project: asList(b["Project"]).map(function (u) { return PROJECT_NAME[u] || ""; }).filter(Boolean).join(", "),
     notes: b["Notes"] || "", commit: b["Commit"] || "",
-    committer: b["Last Committer"] || "", commitDate: b["date:Last Commit:start"] || ""
+    committer: b["Last Committer"] || "", commitDate: b["date:Last Commit:start"] || "",
+    coBy: (b["Checked Out By"] || "").trim(), coAt: b["date:Checked Out At:start"] || ""
   };
 }
 
@@ -748,6 +811,28 @@ function freshLine(b) {
   return '<span class="dot ' + cls + '"></span>Last commit <strong>' + esc(ago(b.commitDate)) + "</strong>" +
     (b.commit ? ' &middot; <span class="sha">' + esc(b.commit) + "</span>" : "") +
     (b.committer ? " by " + esc(b.committer) : "");
+}
+
+/* ---- check-out ----
+   A soft claim, not a lock: it tells the rest of the team that somebody is working on a
+   build, and it is what the publishing skill reads before pushing over someone's work.
+   Nothing is enforced, because a lock nobody can break is worse than a note everybody
+   can see. Identity is self-declared and remembered in this browser. */
+var ME = "";
+try { ME = (localStorage.getItem("yfbuilds.me") || "").trim(); } catch (e) { ME = ""; }
+
+function checkoutLine(b) {
+  if (!b.pageId) return "";
+  if (!b.coBy) {
+    return '<p class="line claim" style="margin:0">' +
+      '<button class="btn ghost tiny" data-checkout="' + esc(b.pageId) + '">Check out</button></p>';
+  }
+  var mine = ME && b.coBy.toLowerCase() === ME.toLowerCase();
+  return '<p class="line claim held" style="margin:0">' +
+    '<span class="who">' + esc(b.coBy) + "</span> has this" +
+    (b.coAt ? " since <b>" + esc(ago(b.coAt)) + "</b>" : "") +
+    '<button class="btn ghost tiny" data-checkin="' + esc(b.pageId) + '">' +
+      (mine ? "Check in" : "Check in for them") + "</button></p>";
 }
 
 function card(b) {
@@ -764,9 +849,13 @@ function card(b) {
       (shot ? '<img src="' + shot + '" alt="' + esc(b.name) + '" loading="lazy">'
             : '<div class="fallback">' + esc(b.name) + ' &middot; no thumbnail yet &mdash; open live to view</div>') +
       "</div>" : "") +
-    '<div class="card-top"><h3>' + esc(b.name) + "</h3>" +
+    '<div class="card-top"><h3>' +
+      (SELECTING && b.pageId ? '<input type="checkbox" class="pick" data-pick="' + esc(b.pageId) + '"' +
+        (SELECTED[b.pageId] ? " checked" : "") + ' aria-label="Select ' + esc(b.name) + '">' : "") +
+      esc(b.name) + "</h3>" +
       (b.status ? '<span class="pill ' + (PILL[b.status] || "prototype") + '">' + esc(b.status) + "</span>" : "") +
     "</div>" +
+    checkoutLine(b) +
     (b.stack.length ? '<div class="chips">' + b.stack.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : "") +
     '<p class="line" style="margin:0">' + (who ? "Built by <strong>" + esc(who) + "</strong>" : "Builder not set") +
       (b.version ? ' &middot; <span class="sha">' + esc(b.version) + "</span>" : "") + "</p>" +
@@ -892,6 +981,105 @@ function render() {
   if (!pool.length) { main.innerHTML = EMPTY; return; }
   if (!shown.length) { main.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>No build matches those filters. Clear the search or pick another status.</p></div>'; return; }
   main.innerHTML = '<div class="grid">' + shown.map(card).join("") + "</div>";
+  // Drop selections for rows that are no longer on screen, so the count never claims
+  // more than the viewer can see.
+  var visible = {};
+  shown.forEach(function (b) { if (b.pageId) visible[b.pageId] = true; });
+  Object.keys(SELECTED).forEach(function (id) { if (!visible[id]) delete SELECTED[id]; });
+  renderBar();
+}
+
+/* ---- selecting builds, and acting on the selection ----
+   Off by default: with Select unticked there is not one extra pixel or click for someone
+   who only wants to download things. */
+var SELECTING = false;
+var SELECTED = {};
+
+function selectedIds() { return Object.keys(SELECTED).filter(function (k) { return SELECTED[k]; }); }
+
+function renderBar() {
+  var bar = el("bulkbar");
+  var ids = selectedIds();
+  if (!SELECTING || !ids.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  el("bulkCount").textContent = ids.length === 1 ? "1 build selected" : ids.length + " builds selected";
+}
+
+function nameOf(pageId) {
+  var b = (BUILDS_ROWS || []).filter(function (r) { return r.pageId === pageId; })[0];
+  return b ? b.name : pageId;
+}
+
+// One row at a time, deliberately: a partial failure has to be reportable per build, and
+// the registry is not worth hammering for the sake of a second saved.
+function applyToSelection(status) {
+  var ids = selectedIds();
+  if (!ids.length || !mcp || !SERVER) return;
+  var msg = el("bulkMsg");
+  var done = 0, failed = [];
+  msg.textContent = "Saving 0/" + ids.length;
+
+  var step = function (i) {
+    if (i >= ids.length) {
+      SELECTED = {};
+      renderBar();
+      msg.textContent = failed.length
+        ? done + " saved, " + failed.length + " failed: " + failed.join(", ")
+        : done + (done === 1 ? " build set to " : " builds set to ") + status;
+      return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {})
+        .then(function () { setTimeout(function () { msg.textContent = ""; }, 4000); });
+    }
+    return mcp.callTool(SERVER, T_UPDATE, {
+      page_id: ids[i], command: "update_properties", properties: { "Status": status }
+    }).then(function () { done++; }, function () { failed.push(nameOf(ids[i])); })
+      .then(function () {
+        msg.textContent = "Saving " + (i + 1) + "/" + ids.length;
+        return step(i + 1);
+      });
+  };
+  step(0);
+}
+
+/* ---- check-out actions ---- */
+function askWhoYouAre(then) {
+  if (ME) { then(); return; }
+  PENDING_AFTER_NAME = then;
+  el("meField").value = "";
+  openSheet("meScrim");
+  el("meField").focus();
+}
+var PENDING_AFTER_NAME = null;
+
+function checkOut(pageId) {
+  askWhoYouAre(function () {
+    if (!mcp || !SERVER) return;
+    mcp.callTool(SERVER, T_UPDATE, {
+      page_id: pageId, command: "update_properties",
+      properties: {
+        "Checked Out By": ME,
+        "date:Checked Out At:start": new Date().toISOString(),
+        "date:Checked Out At:is_datetime": 1
+      }
+    }).then(function () {
+      return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
+    }).catch(function (err) {
+      var e = explain(err);
+      el("bulkMsg").textContent = e.head + " - " + e.body;
+    });
+  });
+}
+
+function checkIn(pageId) {
+  if (!mcp || !SERVER) return;
+  mcp.callTool(SERVER, T_UPDATE, {
+    page_id: pageId, command: "update_properties",
+    properties: { "Checked Out By": null, "date:Checked Out At:start": null }
+  }).then(function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
+  }).catch(function (err) {
+    var e = explain(err);
+    el("bulkMsg").textContent = e.head + " - " + e.body;
+  });
 }
 
 /* ---- data ---- */
@@ -1070,8 +1258,44 @@ function onCardClick(e) {
   var ed = e.target.closest("[data-edit]");
   if (ed) { openEdit(ed.getAttribute("data-edit")); return; }
   var lk = e.target.closest("[data-links]");
-  if (lk) toggleLinks(lk);
+  if (lk) { toggleLinks(lk); return; }
+  var co = e.target.closest("[data-checkout]");
+  if (co) { checkOut(co.getAttribute("data-checkout")); return; }
+  var ci = e.target.closest("[data-checkin]");
+  if (ci) { checkIn(ci.getAttribute("data-checkin")); return; }
 }
+
+// Selection is tracked outside the DOM so it survives every re-render, including the
+// two-minute refresh landing mid-selection.
+el("main").addEventListener("change", function (e) {
+  var box = e.target.closest ? e.target.closest("[data-pick]") : null;
+  if (!box) return;
+  var id = box.getAttribute("data-pick");
+  if (box.checked) SELECTED[id] = true; else delete SELECTED[id];
+  renderBar();
+});
+el("fSelect").addEventListener("change", function () {
+  SELECTING = el("fSelect").checked;
+  if (!SELECTING) SELECTED = {};
+  render();
+  renderBar();
+});
+el("bulkApply").addEventListener("click", function () { applyToSelection(el("bulkStatus").value); });
+el("bulkClear").addEventListener("click", function () { SELECTED = {}; render(); renderBar(); });
+el("meCancel").addEventListener("click", function () { PENDING_AFTER_NAME = null; closeSheet("meScrim"); });
+el("meSave").addEventListener("click", function () {
+  var v = el("meField").value.trim();
+  if (!v) { el("meField").focus(); return; }
+  ME = v;
+  try { localStorage.setItem("yfbuilds.me", ME); } catch (err) {}
+  closeSheet("meScrim");
+  var next = PENDING_AFTER_NAME;
+  PENDING_AFTER_NAME = null;
+  if (next) next();
+});
+el("meScrim").addEventListener("click", function (e) {
+  if (e.target.id === "meScrim") { PENDING_AFTER_NAME = null; closeSheet("meScrim"); }
+});
 // The colophon carries an Edit button too, and it lives outside <main>.
 el("main").addEventListener("click", onCardClick);
 el("colophon").addEventListener("click", onCardClick);
@@ -1157,7 +1381,7 @@ document.addEventListener("click", function (e) {
   if (t) { e.preventDefault(); openGuide(t.getAttribute("data-guide")); }
 });
 document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") { closeSheet("addScrim"); closeSheet("guideScrim"); }
+  if (e.key === "Escape") { closeSheet("addScrim"); closeSheet("guideScrim"); closeSheet("meScrim"); }
 });
 
 el("addSave").addEventListener("click", function () {
