@@ -342,6 +342,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
     </header>
 
     <nav class="guide-nav">
+      <a href="#g-rules" data-goto="g-rules">Rules</a>
       <a href="#g-start" data-goto="g-start">Start here</a>
       <a href="#g-cards" data-goto="g-cards">The cards</a>
       <a href="#g-publish" data-goto="g-publish">Publishing</a>
@@ -349,10 +350,19 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       <a href="#g-edit" data-goto="g-edit">Editing</a>
       <a href="#g-fresh" data-goto="g-fresh">How current is this</a>
       <a href="#g-problems" data-goto="g-problems">When something looks wrong</a>
-      <a href="#g-rules" data-goto="g-rules">Rules</a>
     </nav>
 
     <div class="guide-body" id="guideBody">
+
+      <section id="g-rules">
+        <h3>Three rules</h3>
+        <p>Everything else here is help. These three are the ones that break something if you get them wrong.</p>
+        <ul class="plain">
+          <li><b>One repo per build.</b> Don't add a second build to an existing one &mdash; Download latest would hand people the wrong thing.</li>
+          <li><b>Nothing secret in a build.</b> Public is what makes downloads work for everyone, including people outside YF. That covers claims as well as credentials: naming a client on a page makes it a public statement.</li>
+          <li><b>Publishing happens in Claude Code.</b> Not in Cowork, which can read GitHub but can't push to it.</li>
+        </ul>
+      </section>
 
       <section id="g-start">
         <h3>Start here</h3>
@@ -439,15 +449,6 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
             </tbody>
           </table>
         </div>
-      </section>
-
-      <section id="g-rules">
-        <h3>Three rules</h3>
-        <ul class="plain">
-          <li><b>One repo per build.</b> Don't add a second build to an existing one &mdash; Download latest would hand people the wrong thing.</li>
-          <li><b>Nothing secret in a build.</b> Public is what makes downloads work for everyone, including people outside YF.</li>
-          <li><b>Publishing happens in Claude Code.</b> Not in Cowork, which can read GitHub but can't push to it.</li>
-        </ul>
         <p class="quiet">This dashboard is meant to be the only thing you open. If something here sends you to Notion or GitHub to get ordinary work done, that's a gap worth reporting rather than a habit worth forming.</p>
       </section>
 
