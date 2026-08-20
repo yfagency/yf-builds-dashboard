@@ -33,7 +33,8 @@ $builds = @(
   "solution-stack-gravity",
   "construct-word-field",
   "cta-diagnostic-landing",
-  "work-mosaic"
+  "work-mosaic",
+  "yf-grid-specimen"
 )
 
 New-Item -ItemType Directory -Force $ShotDir | Out-Null
