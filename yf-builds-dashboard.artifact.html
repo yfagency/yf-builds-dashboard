@@ -251,7 +251,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
       <p class="say">&ldquo;log this build&rdquo; &mdash; said in Claude Code</p>
       <p>It creates the GitHub repo, pushes the files, and registers the build. It asks what to call it and which client it's for if that isn't obvious from what you were working on.</p>
       <p><strong>Why Claude Code and not here?</strong> Cowork can read GitHub but cannot push to it &mdash; a hard limit of its sandbox, not a setting anyone can change. Claude Code runs on your own machine with your own GitHub login, so it can.</p>
-      <p><strong>Get the skill.</strong> Ask ZF for <code>yf-builds-publish</code>. Once it's installed, the sentence above is the whole interface &mdash; no git commands, no repo settings.</p>
+      <p><strong>Get the skill yourself.</strong> In Claude Code, two lines, once: <code>/plugin marketplace add https://github.com/yfagency/yf-claude-plugins.git</code> then <code>/plugin install yf-builds@yf-tools</code>. After that the sentence above is the whole interface &mdash; no git commands, no repo settings.</p>
       <p><strong>Updating something that already exists</strong> is identical. Say the same thing; it notices the build is already published and adds a version. Every earlier version stays recoverable.</p>
       <p><strong>Status, version, notes, client.</strong> Press <strong>Edit</strong> on any card. Those are yours to set &mdash; the commit line underneath isn't, because it's read from git by the nightly sync.</p>
       <p><strong>Nothing secret in a build.</strong> Builds are public, which is what makes Download latest work for anyone you send it to. No API keys, no client data, no credentials.</p>
@@ -550,7 +550,7 @@ var EMPTY = '<div class="panel"><h2>No builds tracked yet</h2>' +
   "<p>When you've made something the team should be able to find later, say this <strong>in Claude Code</strong>:</p>" +
   '<p class="say">&ldquo;log this build&rdquo;</p>' +
   "<p>It creates the repo, pushes the files and registers the build. Same sentence for a new version of something that already exists.</p>" +
-  '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. Ask ZF for the <code>yf-builds-publish</code> skill and none of the steps are yours to remember.</p></div>';
+  '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. Install the skill once with <code>/plugin marketplace add https://github.com/yfagency/yf-claude-plugins.git</code> and none of the steps are yours to remember.</p></div>';
 
 function fillFilters() {
   var all = BUILDS_ROWS || [];
