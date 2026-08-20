@@ -392,7 +392,8 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
         <p>Publishing happens in <b>Claude Code</b>, on your own machine. It can't happen in Cowork: that sandbox can read GitHub but not push to it, which is a limit of the sandbox rather than a setting anyone can change.</p>
         <p class="say">&ldquo;log this build&rdquo;</p>
         <p>Said in Claude Code, in the folder containing the thing you made. It creates the repo, pushes the files, turns on hosting, and registers the card. It asks what to call it and which client it's for only if that isn't obvious from what you've been doing.</p>
-        <p><b>Setup, once, and only if you've never done it:</b> install the GitHub CLI (<code>winget install GitHub.cli</code> on Windows, <code>brew install gh</code> on a Mac), run <code>gh auth login</code>, and ask ZF for access to the <code>yfagency</code> org.</p>
+        <p><b>Never done this before? Say it anyway.</b> There's no setup for you to do first. If your machine is missing anything &mdash; the GitHub CLI, a login, a git identity &mdash; Claude installs and configures it as part of the same request. The only moment it needs you is approving a GitHub login in your browser, and it will tell you exactly what to click.</p>
+        <p>The one thing it can't do for you is put you in the <code>yfagency</code> organisation. If you're not in it yet, it stops and says so &mdash; then it's one line for ZF and you try again.</p>
         <p><b>One folder per build</b>, containing only what should ship &mdash; no scratch files, no notes, no <code>.env</code>.</p>
         <div class="flag">
           <span class="head">Builds are public</span>
