@@ -143,6 +143,21 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .dot.crit { background: var(--crit); } .dot.none { background: var(--rule); border: 1px solid var(--muted); }
 .notes { font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--rule-soft); padding-top: 10px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
+/* The plain-text escape hatch behind the Links button. */
+.linkfall { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.linkfall .grab { display: flex; gap: 6px; align-items: center; }
+.linkfall .tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); width: 62px; flex: none;
+}
+.linkfall input {
+  flex: 1; min-width: 0; font-family: var(--mono); font-size: 11.5px;
+  padding: 6px 8px; border: 1px solid var(--rule); border-radius: 4px;
+  background: var(--surface-2); color: var(--ink-2);
+}
+.linkfall .btn { padding: 5px 10px; font-size: 11.5px; }
+.btn.ghost { color: var(--muted); }
+.btn.ghost:hover { color: var(--ink); }
 
 /* states */
 .panel {
@@ -491,6 +506,10 @@ function card(b) {
   var dl = zipUrl(b.repo, b.branch, b.path), gh = browseUrl(b.repo, b.branch, b.path);
   var who = b.builder || b.committer;
   var wantPreview = el("fPreview").checked && b.live;
+  var links = [];
+  if (dl) links.push(["Download", dl]);
+  if (b.live) links.push(["Live", b.live]);
+  if (gh) links.push(["GitHub", gh]);
   return '<article class="card">' +
     (wantPreview ? '<div class="thumb" data-preview="' + esc(b.live) + '">' +
       '<div class="fallback">' + esc(b.name) + ' &middot; open Live to view</div></div>' : "") +
@@ -507,11 +526,16 @@ function card(b) {
       (b.project ? "Project <strong>" + esc(b.project) + "</strong>" : "") + "</p>" : "") +
     (b.notes ? '<p class="notes">' + esc(b.notes) + "</p>" : "") +
     '<div class="actions">' +
-      (dl ? '<a class="btn primary" href="' + esc(dl) + '" target="_blank" rel="noopener">Download latest</a>'
+      // No target="_blank": the artifact shell intercepts cross-origin anchor clicks and
+      // hands the URL to its parent window, asking for a new tab only when a target is
+      // set — and that new-tab request is what the browser silently refuses. Plain
+      // anchors take the path the shell can actually complete.
+      (dl ? '<a class="btn primary" href="' + esc(dl) + '">Download latest</a>'
           : '<span class="btn dead">No repo yet</span>') +
-      (b.live ? '<a class="btn" href="' + esc(b.live) + '" target="_blank" rel="noopener">Open live</a>' : "") +
-      (gh ? '<a class="btn" href="' + esc(gh) + '" target="_blank" rel="noopener">GitHub &amp; history</a>' : "") +
+      (b.live ? '<a class="btn" href="' + esc(b.live) + '">Open live</a>' : "") +
+      (gh ? '<a class="btn" href="' + esc(gh) + '">GitHub &amp; history</a>' : "") +
       (b.pageId ? '<button class="btn edit" data-edit="' + esc(b.pageId) + '">Edit</button>' : "") +
+      (links.length ? '<button class="btn ghost" data-links="' + esc(JSON.stringify(links)) + '" title="Show these as plain text">Links</button>' : "") +
     "</div></article>";
 }
 
@@ -774,9 +798,69 @@ function collectProps() {
 el("addBtn").addEventListener("click", openAdd);
 el("addCancel").addEventListener("click", function () { closeSheet("addScrim"); });
 el("main").addEventListener("click", function (e) {
-  var t = e.target.closest ? e.target.closest("[data-edit]") : null;
-  if (t) openEdit(t.getAttribute("data-edit"));
+  if (!e.target.closest) return;
+  var ed = e.target.closest("[data-edit]");
+  if (ed) { openEdit(ed.getAttribute("data-edit")); return; }
+  var lk = e.target.closest("[data-links]");
+  if (lk) toggleLinks(lk);
 });
+
+/* An escape hatch, not a workaround: the buttons above are the normal way out, but a
+   URL you can select and paste always works, whatever the frame permits. */
+function toggleLinks(button) {
+  var card = button.closest(".card");
+  if (!card) return;
+  var open = card.querySelector(".linkfall");
+  if (open) { open.parentNode.removeChild(open); return; }
+
+  var links;
+  try { links = JSON.parse(button.getAttribute("data-links")); } catch (err) { return; }
+
+  var box = document.createElement("div");
+  box.className = "linkfall";
+  links.forEach(function (pair) {
+    var row = document.createElement("div");
+    row.className = "grab";
+
+    var tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = pair[0];
+
+    var field = document.createElement("input");
+    field.type = "text";
+    field.readOnly = true;
+    field.value = pair[1];
+    field.addEventListener("focus", function () { field.select(); });
+
+    var copy = document.createElement("button");
+    copy.className = "btn";
+    copy.textContent = "Copy";
+    copy.addEventListener("click", function () {
+      field.focus();
+      field.select();
+      var ok = function () {
+        copy.textContent = "Copied";
+        setTimeout(function () { copy.textContent = "Copy"; }, 1600);
+      };
+      var manual = function () {
+        copy.textContent = (navigator.platform || "").indexOf("Mac") === 0 ? "Press ⌘C" : "Press Ctrl+C";
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pair[1]).then(ok, manual);
+      } else {
+        var done = false;
+        try { done = document.execCommand("copy"); } catch (err) { done = false; }
+        if (done) ok(); else manual();
+      }
+    });
+
+    row.appendChild(tag);
+    row.appendChild(field);
+    row.appendChild(copy);
+    box.appendChild(row);
+  });
+  card.appendChild(box);
+}
 el("helpBtn").addEventListener("click", function () { openSheet("helpScrim"); });
 el("helpClose").addEventListener("click", function () { closeSheet("helpScrim"); });
 ["addScrim", "helpScrim"].forEach(function (id) {
