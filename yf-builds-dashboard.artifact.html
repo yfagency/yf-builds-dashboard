@@ -1,5 +1,4 @@
-'<p class="quiet mono">code: ' + esc((err && err.code) || "unknown") + '</p>' +
-    '<p><a href="#g-problems" data-guide="g-problems" style="color:var(--accent)">What this means and how to fix it</a></p></div>';<title>YF Builds</title>
+<title>YF Builds</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Single-theme by intent, not omission. The palette is lifted from the builds this
@@ -222,6 +221,12 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .formmsg { font-size: 13px; min-height: 18px; margin-top: 8px; }
 .formmsg.bad { color: var(--crit); } .formmsg.good { color: var(--ok); }
+.guidelink {
+  font-size: 13px; color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--rule); cursor: pointer;
+}
+.guidelink:hover { border-bottom-color: var(--accent); }
+
 /* guide — the manual, built into the tool */
 .sheet.guide { max-width: 760px; display: flex; flex-direction: column; max-height: calc(100vh - 80px); padding: 0; }
 .guide-top {
@@ -640,7 +645,8 @@ function explain(err) {
 function pageError(err) {
   var e = explain(err);
   el("main").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + '</h2><p>' + esc(e.body) + '</p>' +
-    '<p class="quiet mono">code: ' + esc((err && err.code) || "unknown") + '</p></div>';
+    '<p class="quiet mono">code: ' + esc((err && err.code) || "unknown") + '</p>' +
+    '<p><a class="guidelink" href="#g-problems" data-guide="g-problems">What this means and how to fix it</a></p></div>';
   el("conn").open = true;
 }
 
@@ -742,7 +748,7 @@ var EMPTY = '<div class="panel"><h2>No builds tracked yet</h2>' +
   '<p class="say">&ldquo;log this build&rdquo;</p>' +
   "<p>It creates the repo, pushes the files and registers the build. Same sentence for a new version of something that already exists.</p>" +
   '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. The skill that does it is already shared with the team, so none of the steps are yours to remember.</p>' +
-  '<p><a href="#g-publish" data-guide="g-publish" style="color:var(--accent)">Read how publishing works</a></p></div>';
+  '<p><a class="guidelink" href="#g-publish" data-guide="g-publish">Read how publishing works</a></p></div>';
 
 function fillFilters() {
   // Filters describe the gallery, so the dashboard's own row must not contribute options.
