@@ -137,6 +137,24 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .pill.review    { background: var(--accent-soft); color: var(--accent); }
 .pill.live      { background: var(--ok-soft); color: var(--ok); }
 .pill.archived  { background: var(--surface-2); color: var(--muted); border-color: var(--rule); }
+/* live preview tile — an iframe of the build's own Pages URL, scaled down.
+   Whether the artifact CSP permits the frame is unknown at author time, so the
+   tile always renders a fallback underneath and only hides it on a real load. */
+.thumb {
+  position: relative; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden;
+  background: var(--surface-2); border: 1px solid var(--rule-soft);
+}
+.thumb iframe {
+  position: absolute; top: 0; left: 0; width: 1280px; height: 800px;
+  border: 0; transform-origin: top left; pointer-events: none; opacity: 0;
+  transition: opacity .35s ease;
+}
+.thumb.loaded iframe { opacity: 1; }
+.thumb .fallback {
+  position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 12px;
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted);
+}
+.thumb.loaded .fallback { display: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
   font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .03em;
@@ -229,6 +247,7 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
     <select id="fStatus"><option value="">All statuses</option></select>
     <select id="fBuilder"><option value="">All builders</option></select>
     <label class="toggle"><input type="checkbox" id="fArchived"> Show archived</label>
+    <label class="toggle"><input type="checkbox" id="fPreview"> Live previews</label>
     <span class="quiet mono" id="freshness"></span>
   </div>
 
@@ -496,7 +515,10 @@ function freshLine(b) {
 function card(b) {
   var dl = zipUrl(b.repo, b.branch, b.path), gh = browseUrl(b.repo, b.branch, b.path);
   var who = b.builder || b.committer;
+  var wantPreview = el("fPreview").checked && b.live;
   return '<article class="card">' +
+    (wantPreview ? '<div class="thumb" data-preview="' + esc(b.live) + '">' +
+      '<div class="fallback">' + esc(b.name) + ' &middot; open Live to view</div></div>' : "") +
     '<div class="card-top"><h3>' + esc(b.name) + "</h3>" +
       (b.status ? '<span class="pill ' + (PILL[b.status] || "prototype") + '">' + esc(b.status) + "</span>" : "") +
     "</div>" +
@@ -512,8 +534,8 @@ function card(b) {
     '<div class="actions">' +
       (dl ? '<a class="btn primary" href="' + esc(dl) + '" target="_blank" rel="noopener">Download latest</a>'
           : '<span class="btn dead">No repo yet</span>') +
+      (b.live ? '<a class="btn" href="' + esc(b.live) + '" target="_blank" rel="noopener">Open live</a>' : "") +
       (gh ? '<a class="btn" href="' + esc(gh) + '" target="_blank" rel="noopener">GitHub &amp; history</a>' : "") +
-      (b.live ? '<a class="btn" href="' + esc(b.live) + '" target="_blank" rel="noopener">Live</a>' : "") +
       (b.pageId ? '<button class="btn edit" data-edit="' + esc(b.pageId) + '">Edit</button>' : "") +
     "</div></article>";
 }
@@ -580,6 +602,45 @@ function render() {
   if (!pool.length) { main.innerHTML = EMPTY; return; }
   if (!shown.length) { main.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>No build matches those filters. Clear the search or pick another status.</p></div>'; return; }
   main.innerHTML = '<div class="grid">' + shown.map(card).join("") + "</div>";
+  mountPreviews();
+}
+
+/* Previews mount only once a tile is near the viewport — these are WebGL pages and
+   mounting six at once would cost more than it shows. */
+var seenTiles = null;
+function mountPreviews() {
+  var tiles = [].slice.call(document.querySelectorAll(".thumb[data-preview]"));
+  if (!tiles.length) return;
+  if (!seenTiles && "IntersectionObserver" in window) {
+    seenTiles = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { obs.unobserve(en.target); mountOne(en.target); }
+      });
+    }, { rootMargin: "300px" });
+  }
+  tiles.forEach(function (t) {
+    if (t.getAttribute("data-mounted")) return;
+    t.setAttribute("data-mounted", "1");
+    if (seenTiles) seenTiles.observe(t); else mountOne(t);
+  });
+}
+function mountOne(tile) {
+  var src = tile.getAttribute("data-preview");
+  if (!src) return;
+  var frame = document.createElement("iframe");
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("loading", "lazy");
+  frame.setAttribute("title", "Preview");
+  frame.setAttribute("tabindex", "-1");
+  frame.addEventListener("load", function () { tile.classList.add("loaded"); });
+  frame.src = src;
+  tile.appendChild(frame);
+  var fit = function () {
+    var w = tile.clientWidth;
+    if (w) frame.style.transform = "scale(" + (w / 1280) + ")";
+  };
+  fit();
+  window.addEventListener("resize", fit);
 }
 
 /* ---- data ---- */
@@ -788,7 +849,7 @@ el("addSave").addEventListener("click", function () {
   });
 });
 
-["search", "fStatus", "fBuilder", "fArchived"].forEach(function (id) {
+["search", "fStatus", "fBuilder", "fArchived", "fPreview"].forEach(function (id) {
   el(id).addEventListener(id === "search" ? "input" : "change", render);
 });
 
