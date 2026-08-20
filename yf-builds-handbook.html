@@ -229,12 +229,8 @@ a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset:
 
   <section>
     <h2>Publishing your own build</h2>
-    <p class="lede">You need <strong>Claude Code</strong> on your machine, the <strong>GitHub CLI</strong> signed in, and the publishing skill installed. The skill is self-serve &mdash; two lines in Claude Code, once, and you never think about it again:</p>
-    <div class="card" style="margin-bottom:18px">
-      <p class="quiet" style="margin:0 0 8px"><code>/plugin marketplace add https://github.com/yfagency/yf-claude-plugins.git</code></p>
-      <p class="quiet" style="margin:0"><code>/plugin install yf-builds@yf-tools</code></p>
-    </div>
-    <p>Ask ZF only for two things: access to the <code>yfagency</code> org, and <code>gh auth login</code> if you've never set up the GitHub CLI (<code>winget install GitHub.cli</code> on Windows, <code>brew install gh</code> on a Mac).</p>
+    <p class="lede">You need <strong>Claude Code</strong> on your machine and the <strong>GitHub CLI</strong> signed in. There is no skill to install &mdash; the publishing skill is shared across the team, so it's already in your Claude.</p>
+    <p>Two one-time bits of setup, and only if you've never done them: install the GitHub CLI (<code>winget install GitHub.cli</code> on Windows, <code>brew install gh</code> on a Mac) and run <code>gh auth login</code>. Ask ZF for access to the <code>yfagency</code> org.</p>
     <ol class="steps">
       <li>
         <h3>Finish the thing, in its own folder</h3>
