@@ -1,0 +1,28 @@
+<script>
+/* LOCAL PREVIEW ONLY - never shipped. Stubs the artifact runtime so the layout renders. */
+window.claude = { use: function (n) {
+  if (n !== "mcp") return Promise.resolve(null);
+  var mk = function (o) { return { payload: o }; };
+  var day = 86400000, now = Date.now();
+  var iso = function (d) { return new Date(now - d * day).toISOString(); };
+  var rows = { results: [
+    { url:"https://app.notion.com/aaaaaaaaaaaa1111aaaaaaaaaaaa1111", Name:"Solution Stack Gravity", "Repo URL":"https://github.com/yfagency/solution-stack-gravity", Branch:"main", "Live URL":"https://yfagency.github.io/solution-stack-gravity/", Builder:"ZF", Status:"Prototype", "Latest Version":"v1.0", "Tech Stack":"[\"HTML\"]", Notes:"The seven solution domains as a gravity field, over a self-animating WebGL gradient.", Commit:"a1b2c3d - initial", "Last Committer":"Zia Firouz", "date:Last Commit:start":iso(3), "Checked Out By":"" },
+    { url:"https://app.notion.com/aaaaaaaaaaaa2222aaaaaaaaaaaa2222", Name:"Work Mosaic", "Repo URL":"https://github.com/yfagency/work-mosaic", Branch:"main", "Live URL":"https://yfagency.github.io/work-mosaic/", Builder:"BB", Status:"Live", "Latest Version":"v1.0", "Tech Stack":"[\"HTML\"]", Notes:"Every engagement a tile, colour-coded by solution domain.", Commit:"9f8e7d6 - recovered", "Last Committer":"Zia Firouz", "date:Last Commit:start":iso(20), "Checked Out By":"BB", "date:Checked Out At:start":iso(1) },
+    { url:"https://app.notion.com/aaaaaaaaaaaa3333aaaaaaaaaaaa3333", Name:"Construct Word Field", "Repo URL":"https://github.com/yfagency/construct-word-field", Branch:"main", "Live URL":"https://yfagency.github.io/construct-word-field/", Builder:"ZF", Status:"Needs Review", "Latest Version":"v1.0", "Tech Stack":"[\"HTML\"]", Notes:"Words spelled into a viewport-derived glyph lattice.", "date:Last Commit:start":iso(75), Commit:"5c4b3a2 - lattice", "Last Committer":"Zia Firouz", "Checked Out By":"" },
+    { url:"https://app.notion.com/aaaaaaaaaaaa4444aaaaaaaaaaaa4444", Name:"YF Builds Dashboard", "Repo URL":"https://github.com/yfagency/yf-builds-dashboard", Branch:"main", Builder:"ZF", Status:"In Progress", "Latest Version":"v1.6", "Tech Stack":"[\"HTML\"]", Notes:"The dashboard itself.", "date:Last Commit:start":iso(0), Commit:"5e0e6d4 - status control", "Last Committer":"Zia Firouz", "Checked Out By":"" }
+  ]};
+  var clients = { results: [] }, projects = { results: [] };
+  var route = function (input) {
+    var q = (input && input.data && input.data.query) || "";
+    if (q.indexOf("44f6ebf3") >= 0) return mk(clients);
+    if (q.indexOf("9e25d15a") >= 0) return mk(projects);
+    return mk(rows);
+  };
+  return Promise.resolve({
+    listTools: function () { return Promise.resolve({ servers: [{ server:"Notion", authStatus:"connected", tools:[{name:"notion-query-data-sources"}] }] }); },
+    callTool: function (s, t, input) { return Promise.resolve(route(input)); },
+    watchTool: function (s, t, input, h) { setTimeout(function () { h({ type:"data", result: route(input) }); }, 20); return function () {}; },
+    invalidate: function () { return Promise.resolve(); }
+  });
+} };
+</script>

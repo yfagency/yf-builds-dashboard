@@ -140,3 +140,26 @@ The connector manifest still declares all three candidate display names — `Not
 actually resolves to. The dashboard's **Connection** panel reports the winner. Trim the
 manifest to that one and republish. Until then every publish warns that three declared
 connectors were unobserved, which is expected and not a failure.
+
+## Seeing the page before you publish it
+
+Neither Claude session can open the live artifact, so styling it blind is how bad layout
+ships. `tools/preview-stub.html` is a fake artifact runtime: insert it immediately before
+the page's own `<script>` and the file renders locally, with sample builds, one of them
+checked out.
+
+```powershell
+$dir = "."   # repo root
+$stub = Get-Content tools/preview-stub.html -Raw
+$src  = [IO.File]::ReadAllText("$dir/yf-builds-dashboard.artifact.html")
+$i = $src.IndexOf("`n<script>`n")
+[IO.File]::WriteAllText("$env:TEMP/preview.html", $src.Substring(0,$i+1) + $stub + $src.Substring($i+1), (New-Object System.Text.UTF8Encoding($false)))
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
+  --enable-unsafe-swiftshader --hide-scrollbars --no-first-run --window-size=1280,900 `
+  --virtual-time-budget=6000 --screenshot="$env:TEMP/preview.png" "file:///$env:TEMP/preview.html"
+```
+
+Then look at the PNG. This caught two bugs that static reading did not: a `[hidden]`
+element staying visible because an author `display: flex` beats the UA stylesheet, and a
+near-empty row on every card. **Never commit the merged preview file** - it contains a
+stub that fakes the registry.
