@@ -32,10 +32,14 @@ $builds = @(
   "brand-spiral-work-index",
   "solution-stack-gravity",
   "construct-word-field",
-  "cta-diagnostic-landing"
+  "cta-diagnostic-landing",
+  "work-mosaic"
 )
 
 New-Item -ItemType Directory -Force $ShotDir | Out-Null
+# Chrome resolves --screenshot against its OWN working directory, not this script's, so a
+# relative path here fails with "cannot find the path specified". Absolute from here on.
+$ShotDir = (Resolve-Path $ShotDir).Path
 
 $jpegEncoder = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
   Where-Object { $_.MimeType -eq "image/jpeg" }
@@ -53,9 +57,24 @@ foreach ($name in $builds) {
   # virtual-time-budget lets animation and WebGL settle before the frame is taken;
   # enable-unsafe-swiftshader gives headless a software GL implementation, without
   # which the canvas-heavy builds capture black.
+  # Chrome reports success on stderr ("N bytes written to file ..."). Windows PowerShell
+  # turns any native stderr line into an ErrorRecord, which under ErrorActionPreference
+  # = Stop aborts the script on a screenshot that actually worked. Relax it for the call
+  # and judge the outcome by whether the file exists.
+  # Each render gets its own throwaway profile. Without this, the second and later
+  # invocations attach to the still-shutting-down first Chrome, hold no profile lock of
+  # their own, and exit silently without writing a file — so only the first build gets a
+  # thumbnail and the rest are quietly skipped.
+  $profileDir = Join-Path ([IO.Path]::GetTempPath()) ("yfshot-" + [Guid]::NewGuid().ToString("N"))
+
+  $prevEAP = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
   & $chrome --headless=new --disable-gpu --enable-unsafe-swiftshader --hide-scrollbars `
+            --no-first-run --no-default-browser-check "--user-data-dir=$profileDir" `
             --window-size=1280,800 --virtual-time-budget=9000 `
-            --screenshot="$png" $url 2>$null | Out-Null
+            --screenshot="$png" $url *> $null
+  $ErrorActionPreference = $prevEAP
+  Remove-Item $profileDir -Recurse -Force -ErrorAction SilentlyContinue
   if (-not (Test-Path $png)) { Write-Warning "$name did not render - skipped"; continue }
 
   $src = [System.Drawing.Image]::FromFile($png)
