@@ -1,4 +1,5 @@
-<title>YF Builds</title>
+'<p class="quiet mono">code: ' + esc((err && err.code) || "unknown") + '</p>' +
+    '<p><a href="#g-problems" data-guide="g-problems" style="color:var(--accent)">What this means and how to fix it</a></p></div>';<title>YF Builds</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Single-theme by intent, not omission. The palette is lifted from the builds this
@@ -221,8 +222,60 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .formmsg { font-size: 13px; min-height: 18px; margin-top: 8px; }
 .formmsg.bad { color: var(--crit); } .formmsg.good { color: var(--ok); }
-.help p { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); max-width: none; }
-.help p:last-of-type { margin-bottom: 0; }
+/* guide — the manual, built into the tool */
+.sheet.guide { max-width: 760px; display: flex; flex-direction: column; max-height: calc(100vh - 80px); padding: 0; }
+.guide-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 22px 24px 16px; border-bottom: 1px solid var(--rule);
+}
+.guide-nav {
+  display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 24px;
+  border-bottom: 1px solid var(--rule); background: var(--surface-2);
+}
+.guide-nav a {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; padding: 4px 9px; border-radius: 3px;
+  border: 1px solid transparent;
+}
+.guide-nav a:hover { color: var(--accent); border-color: var(--rule); }
+.guide-body { overflow-y: auto; padding: 4px 24px 28px; }
+.guide-body section { padding-top: 26px; }
+.guide-body section + section { border-top: 1px solid var(--rule-soft); }
+.guide-body h3 { font-size: 17px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 10px; }
+.guide-body p { font-size: 14px; color: var(--ink-2); margin: 0 0 12px; max-width: 68ch; }
+.guide-body p:last-child { margin-bottom: 0; }
+.guide-body a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.guide-body ul.plain { padding-left: 20px; margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
+.guide-body ul.plain li { margin-bottom: 7px; }
+.guide-body b { color: var(--ink); font-weight: 600; }
+dl.anat { margin: 0 0 14px; }
+dl.anat > div {
+  display: grid; grid-template-columns: 132px 1fr; gap: 14px;
+  padding: 10px 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;
+}
+dl.anat > div:last-child { border-bottom: 0; }
+dl.anat dt { font-family: var(--sans); font-size: 13.5px; font-weight: 600; color: var(--ink); }
+dl.anat dd { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.tbl th, table.tbl td {
+  text-align: left; padding: 10px 14px 10px 0;
+  border-bottom: 1px solid var(--rule-soft); vertical-align: top; color: var(--ink-2);
+}
+table.tbl th {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 22px; }
+.scroll { overflow-x: auto; }
+.flag {
+  border-left: 2px solid var(--warn); background: var(--warn-soft);
+  padding: 13px 16px; border-radius: 0 4px 4px 0; margin: 14px 0;
+}
+.flag .head {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--warn); display: block; margin-bottom: 5px;
+}
+.flag p { font-size: 13.5px; margin-bottom: 0; }
 
 /* connection footer */
 .conn { margin-top: 32px; border-top: 1px solid var(--rule); padding-top: 16px; }
@@ -245,7 +298,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
       <p class="tagline">Every app, page and mock-up the team has built &mdash; who made it, what state it's in, and a one-click download of the latest version.</p>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap">
-      <button class="btn" id="helpBtn">How do I add a build?</button>
+      <button class="btn" id="helpBtn">Guide</button>
       <button class="btn primary" id="addBtn">Add build</button>
     </div>
   </header>
@@ -273,25 +326,129 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
   <p class="foot">Builds live in the YF Builds registry; the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads the registry through your own Notion connector and re-reads it every couple of minutes while you're looking at it &mdash; press Refresh if you can't wait. The commit line comes from git via the 06:30 JST sync, so it can lag by a day. Thumbnails are rendered images updated when the dashboard is republished.</p>
 </div>
 
-<div class="scrim" id="helpScrim">
-  <div class="sheet">
-    <h2>Adding a build</h2>
-    <p class="quiet">Publishing happens in Claude Code. Everything else happens here.</p>
-    <div class="help">
-      <p class="say">&ldquo;log this build&rdquo; &mdash; said in Claude Code</p>
-      <p>It creates the GitHub repo, pushes the files, and registers the build. It asks what to call it and which client it's for if that isn't obvious from what you were working on.</p>
-      <p><strong>Why Claude Code and not here?</strong> Cowork can read GitHub but cannot push to it &mdash; a hard limit of its sandbox, not a setting anyone can change. Claude Code runs on your own machine with your own GitHub login, so it can.</p>
-      <p><strong>Nothing to install.</strong> The publishing skill is shared across the team, so it's already in your Claude Code. The sentence above is the whole interface &mdash; no git commands, no repo settings. You do need the GitHub CLI signed in once: <code>gh auth login</code>.</p>
-      <p><strong>Updating something that already exists</strong> is identical. Say the same thing; it notices the build is already published and adds a version. Every earlier version stays recoverable.</p>
-      <p><strong>Status, version, notes, client.</strong> Press <strong>Edit</strong> on any card. Those are yours to set &mdash; the commit line underneath isn't, because it's read from git by the nightly sync.</p>
-      <p><strong>Nothing secret in a build.</strong> Builds are public, which is what makes Download latest work for anyone you send it to. No API keys, no client data, no credentials.</p>
-      <p class="quiet">A new build appears here after the next morning sync, or right away if you say &ldquo;sync the builds&rdquo; in Cowork. That same sync fills in the commit line on each card.</p>
-      <p class="quiet"><strong>Add build</strong> registers a card by hand without publishing anything &mdash; useful for something hosted elsewhere. Most people should ignore it.</p>
+<div class="scrim" id="guideScrim">
+  <div class="sheet guide">
+    <header class="guide-top">
+      <div>
+        <h2>How YF Builds works</h2>
+        <p class="quiet" style="margin:2px 0 0">Everything about this dashboard, in the dashboard.</p>
+      </div>
+      <button class="btn" id="guideClose">Close</button>
+    </header>
+
+    <nav class="guide-nav">
+      <a href="#g-start" data-goto="g-start">Start here</a>
+      <a href="#g-cards" data-goto="g-cards">The cards</a>
+      <a href="#g-publish" data-goto="g-publish">Publishing</a>
+      <a href="#g-update" data-goto="g-update">Updating</a>
+      <a href="#g-edit" data-goto="g-edit">Editing</a>
+      <a href="#g-fresh" data-goto="g-fresh">How current is this</a>
+      <a href="#g-problems" data-goto="g-problems">When something looks wrong</a>
+      <a href="#g-rules" data-goto="g-rules">Rules</a>
+    </nav>
+
+    <div class="guide-body" id="guideBody">
+
+      <section id="g-start">
+        <h3>Start here</h3>
+        <p>This is the registry of everything the team builds with Claude &mdash; mock-ups, pages, prototypes, small apps. It answers three questions: what have we built, who built it, and how do I get the latest version.</p>
+        <p><b>If you only want to look at things and download them</b>, you're already done. Search, filter, press <b>Download latest</b> on anything.</p>
+        <p><b>One-time setup, if the page ever tells you to.</b> This dashboard reads the registry using <i>your</i> Notion connection, not a shared one &mdash; which is why nobody can see anything here they couldn't already see. If you get a message about adding or reconnecting Notion, go to claude.ai &rarr; Settings &rarr; Connectors and add <b>Notion</b>, signed into the YF workspace. That's the fix, every time.</p>
+        <p><b>Nothing to install for publishing either.</b> The skill that publishes builds is shared across the team, so it's already in your Claude Code. You need the GitHub CLI signed in once &mdash; see <a href="#g-publish" data-goto="g-publish">Publishing</a>.</p>
+      </section>
+
+      <section id="g-cards">
+        <h3>Reading a card</h3>
+        <dl class="anat">
+          <div><dt>Thumbnail</dt><dd>A picture of the build, rendered from its live version. It updates when the dashboard is republished, not the moment you change the build &mdash; so a brand-new build may show a placeholder for a while. Not a fault.</dd></div>
+          <div><dt>Status</dt><dd><b>Prototype</b>, <b>In Progress</b>, <b>Needs Review</b>, <b>Live</b>, <b>Archived</b>. Set by a person, not automatically &mdash; so it's only true if somebody keeps it true. Anyone can fix it; see <a href="#g-edit" data-goto="g-edit">Editing</a>.</dd></div>
+          <div><dt>Freshness dot</dt><dd><span class="dot ok"></span>touched within two weeks &nbsp; <span class="dot warn"></span>within two months &nbsp; <span class="dot crit"></span>older. Read from git, so it can't be talked up &mdash; the only way to make a dot green is to work on the build.</dd></div>
+          <div><dt>Built by</dt><dd>Who the team says made it. Falls back to whoever last committed, if nobody set it.</dd></div>
+          <div><dt>Download latest</dt><dd>A zip of the current version. No GitHub account needed, so it works for anyone you forward it to.</dd></div>
+          <div><dt>Open live</dt><dd>The build running in a browser, hosted free on GitHub Pages. Only on builds that can run as a static page.</dd></div>
+          <div><dt>GitHub &amp; history</dt><dd>Every earlier version, for going back or seeing what changed.</dd></div>
+          <div><dt>Links</dt><dd>The same three URLs as plain text with Copy buttons &mdash; for pasting a build into Slack, or for when a button can't open a new tab in your browser.</dd></div>
+        </dl>
+        <p class="quiet">The counts along the top summarise whatever the filters currently show, including how many builds nobody has touched in 60 days &mdash; usually the number worth looking at.</p>
+      </section>
+
+      <section id="g-publish">
+        <h3>Publishing your own build</h3>
+        <p>Publishing happens in <b>Claude Code</b>, on your own machine. It can't happen in Cowork: that sandbox can read GitHub but not push to it, which is a limit of the sandbox rather than a setting anyone can change.</p>
+        <p class="say">&ldquo;log this build&rdquo;</p>
+        <p>Said in Claude Code, in the folder containing the thing you made. It creates the repo, pushes the files, turns on hosting, and registers the card. It asks what to call it and which client it's for only if that isn't obvious from what you've been doing.</p>
+        <p><b>Setup, once, and only if you've never done it:</b> install the GitHub CLI (<code>winget install GitHub.cli</code> on Windows, <code>brew install gh</code> on a Mac), run <code>gh auth login</code>, and ask ZF for access to the <code>yfagency</code> org.</p>
+        <p><b>One folder per build</b>, containing only what should ship &mdash; no scratch files, no notes, no <code>.env</code>.</p>
+        <div class="flag">
+          <span class="head">Builds are public</span>
+          <p>That's what lets anyone download one without a GitHub account. So: no API keys, no credentials, no client data, nothing under NDA. Watch for <i>claims</i> as well as secrets &mdash; a page that names clients or carries positioning copy becomes a public statement the moment it goes live. If a build genuinely can't be public, stop and talk to ZF; it needs a different home.</p>
+        </div>
+      </section>
+
+      <section id="g-update">
+        <h3>Updating a build you already published</h3>
+        <p>Exactly the same sentence, in the same folder. It notices the build already exists and adds a version rather than making a second entry. Everyone downloading gets the new one immediately, and every earlier version stays recoverable under <b>GitHub &amp; history</b>.</p>
+        <p class="quiet">The commit line and the freshness dot catch up at the next sync rather than instantly &mdash; see <a href="#g-fresh" data-goto="g-fresh">How current is this</a>.</p>
+      </section>
+
+      <section id="g-edit">
+        <h3>Editing what a card says</h3>
+        <p>Press <b>Edit</b> on any card &mdash; yours or anyone's. Status, version, notes, client, live URL, tech stack, repo and branch are all yours to change, and they save straight back to the registry. You never need to open Notion; that's the whole point of this page.</p>
+        <p><b>Add build</b> in the top right registers a card by hand without publishing anything &mdash; useful for something hosted elsewhere. Most people should ignore it.</p>
+        <div class="flag">
+          <span class="head">One thing you can't edit</span>
+          <p>The commit line: the dot, the date, the author. That comes from git, so it always says what actually happened rather than what anyone typed. If a build looks stale, the fix is to work on it, not to edit it.</p>
+        </div>
+      </section>
+
+      <section id="g-fresh">
+        <h3>How current is this</h3>
+        <p>Three layers, three different clocks. Worth knowing which is which before you trust a number.</p>
+        <div class="scroll">
+          <table class="tbl">
+            <thead><tr><th>What</th><th>How it updates</th></tr></thead>
+            <tbody>
+              <tr><td>Everything a person types &mdash; status, version, notes, new builds</td><td>This page re-reads the registry <b>every two minutes</b> while you're looking at it. Your own edits show immediately. <b>Refresh</b> forces a read now.</td></tr>
+              <tr><td>The commit line and freshness dot</td><td>From git, via a <b>daily sync at 06:30 JST</b>. Can be up to a day behind, by design.</td></tr>
+              <tr><td>Thumbnails, and this guide</td><td>Only when the dashboard itself is <b>republished</b>. If you have it open, reload to pick up a new version.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="quiet">Polling, not push &mdash; nothing can notify this page that a row changed, so it asks. It stops asking while the tab is hidden and catches up when you come back.</p>
+      </section>
+
+      <section id="g-problems">
+        <h3>When something looks wrong</h3>
+        <div class="scroll">
+          <table class="tbl">
+            <thead><tr><th>What you see</th><th>What it means</th></tr></thead>
+            <tbody>
+              <tr><td>My build isn't here</td><td>Almost always the repo description is missing its <code>[YF Build]</code> prefix, which is how builds are told apart from YF's other repos. Otherwise: new builds appear at the 06:30 JST sync, so something published this afternoon shows up tomorrow morning. ZF can force it sooner.</td></tr>
+              <tr><td>&ldquo;Add Notion in Settings &rarr; Connectors&rdquo;</td><td>Your Claude account has no Notion connection yet. See <a href="#g-start" data-goto="g-start">Start here</a>.</td></tr>
+              <tr><td>&ldquo;Reconnect Notion&rdquo;</td><td>Your connection expired. Normal, occasional. Reconnect and reload.</td></tr>
+              <tr><td>&ldquo;Choose which Notion to use&rdquo;</td><td>You have more than one Notion connection. Pick the YF workspace.</td></tr>
+              <tr><td>The commit line says <i>Not synced yet</i></td><td>The build is registered but the sync hasn't read its repo yet. It fills in overnight.</td></tr>
+              <tr><td>A button does nothing</td><td>Some browsers won't let this page open a new tab. Use <b>Links</b> on the card and copy the URL instead.</td></tr>
+              <tr><td>Download gives a 404</td><td>The repo was renamed, deleted, or made private. Tell ZF &mdash; private repos are invisible here by design.</td></tr>
+              <tr><td>A thumbnail is a grey placeholder</td><td>The build has no live version, or the dashboard hasn't been republished since it was added. Harmless.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="g-rules">
+        <h3>Three rules</h3>
+        <ul class="plain">
+          <li><b>One repo per build.</b> Don't add a second build to an existing one &mdash; Download latest would hand people the wrong thing.</li>
+          <li><b>Nothing secret in a build.</b> Public is what makes downloads work for everyone, including people outside YF.</li>
+          <li><b>Publishing happens in Claude Code.</b> Not in Cowork, which can read GitHub but can't push to it.</li>
+        </ul>
+        <p class="quiet">This dashboard is meant to be the only thing you open. If something here sends you to Notion or GitHub to get ordinary work done, that's a gap worth reporting rather than a habit worth forming.</p>
+      </section>
+
     </div>
-    <div class="sheet-actions"><button class="btn" id="helpClose">Close</button></div>
   </div>
 </div>
-
 <div class="scrim" id="addScrim">
   <div class="sheet">
     <h2 id="sheetTitle">Add a build</h2>
@@ -584,7 +741,8 @@ var EMPTY = '<div class="panel"><h2>No builds tracked yet</h2>' +
   "<p>When you've made something the team should be able to find later, say this <strong>in Claude Code</strong>:</p>" +
   '<p class="say">&ldquo;log this build&rdquo;</p>' +
   "<p>It creates the repo, pushes the files and registers the build. Same sentence for a new version of something that already exists.</p>" +
-  '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. The skill that does it is already shared with the team, so none of the steps are yours to remember.</p></div>';
+  '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. The skill that does it is already shared with the team, so none of the steps are yours to remember.</p>' +
+  '<p><a href="#g-publish" data-guide="g-publish" style="color:var(--accent)">Read how publishing works</a></p></div>';
 
 function fillFilters() {
   // Filters describe the gallery, so the dashboard's own row must not contribute options.
@@ -921,13 +1079,32 @@ function toggleLinks(button) {
   });
   card.appendChild(box);
 }
-el("helpBtn").addEventListener("click", function () { openSheet("helpScrim"); });
-el("helpClose").addEventListener("click", function () { closeSheet("helpScrim"); });
-["addScrim", "helpScrim"].forEach(function (id) {
-  el(id).addEventListener("click", function (e) { if (e.target.id === id) closeSheet(id); });
+/* The guide is the manual, in the tool. Deep-link into a section so the place someone got
+   stuck can send them to the paragraph that unsticks them. */
+function openGuide(section) {
+  openSheet("guideScrim");
+  var target = section ? document.getElementById(section) : null;
+  var body = el("guideBody");
+  body.scrollTop = target ? Math.max(0, target.offsetTop - body.offsetTop - 8) : 0;
+}
+el("helpBtn").addEventListener("click", function () { openGuide(null); });
+el("guideClose").addEventListener("click", function () { closeSheet("guideScrim"); });
+el("guideScrim").addEventListener("click", function (e) {
+  // in-guide navigation and cross references
+  var jump = e.target.closest ? e.target.closest("[data-goto]") : null;
+  if (jump) { e.preventDefault(); openGuide(jump.getAttribute("data-goto")); return; }
+  if (e.target.id === "guideScrim") closeSheet("guideScrim");
+});
+el("addScrim").addEventListener("click", function (e) {
+  if (e.target.id === "addScrim") closeSheet("addScrim");
+});
+// Anything anywhere can open the guide at a section: data-guide="g-problems"
+document.addEventListener("click", function (e) {
+  var t = e.target.closest ? e.target.closest("[data-guide]") : null;
+  if (t) { e.preventDefault(); openGuide(t.getAttribute("data-guide")); }
 });
 document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape") { closeSheet("addScrim"); closeSheet("helpScrim"); }
+  if (e.key === "Escape") { closeSheet("addScrim"); closeSheet("guideScrim"); }
 });
 
 el("addSave").addEventListener("click", function () {
