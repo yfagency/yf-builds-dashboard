@@ -46,7 +46,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
-h1, h2, h3 { font-family: var(--sans); text-wrap: balance; margin: 0; }
+h1, h2, h3, h4 { font-family: var(--sans); text-wrap: balance; margin: 0; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .label {
   font-family: var(--sans); font-size: 11px; font-weight: 600;
@@ -253,6 +253,20 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 .guide-body ul.plain { padding-left: 20px; margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
 .guide-body ul.plain li { margin-bottom: 7px; }
 .guide-body b { color: var(--ink); font-weight: 600; }
+/* numbered steps — used where the order genuinely matters, not as decoration */
+.guide-body ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0 0 14px; }
+.guide-body ol.steps > li { counter-increment: s; position: relative; padding-left: 40px; margin-bottom: 18px; }
+.guide-body ol.steps > li:last-child { margin-bottom: 0; }
+.guide-body ol.steps > li::before {
+  content: counter(s); position: absolute; left: 0; top: 0;
+  width: 25px; height: 25px; border-radius: 50%;
+  border: 1px solid var(--rule); color: var(--muted);
+  font-family: var(--mono); font-size: 11.5px;
+  display: flex; align-items: center; justify-content: center;
+}
+.guide-body ol.steps h4 { font-size: 14.5px; font-weight: 600; color: var(--ink); margin-bottom: 3px; letter-spacing: -.01em; }
+.guide-body ol.steps p { font-size: 13.5px; margin-bottom: 0; }
+
 dl.anat { margin: 0 0 14px; }
 dl.anat > div {
   display: grid; grid-template-columns: 132px 1fr; gap: 14px;
@@ -345,6 +359,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       <a href="#g-rules" data-goto="g-rules">Rules</a>
       <a href="#g-start" data-goto="g-start">Start here</a>
       <a href="#g-cards" data-goto="g-cards">The cards</a>
+      <a href="#g-cc" data-goto="g-cc">Claude Code</a>
       <a href="#g-publish" data-goto="g-publish">Publishing</a>
       <a href="#g-update" data-goto="g-update">Updating</a>
       <a href="#g-edit" data-goto="g-edit">Editing</a>
@@ -385,6 +400,34 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
           <div><dt>Links</dt><dd>The same three URLs as plain text with Copy buttons &mdash; for pasting a build into Slack, or for when a button can't open a new tab in your browser.</dd></div>
         </dl>
         <p class="quiet">The counts along the top summarise whatever the filters currently show, including how many builds nobody has touched in 60 days &mdash; usually the number worth looking at.</p>
+      </section>
+
+      <section id="g-cc">
+        <h3>Starting a session in Claude Code</h3>
+        <p>The desktop app has three tabs and only one of them is the right place for this. <b>Chat</b> can't see your files. <b>Cowork</b> works in a sandbox that can't push to GitHub. Use <b>Code</b>.</p>
+        <ol class="steps">
+          <li>
+            <h4>Open the Code tab and choose <b>Local</b></h4>
+            <p>Not Cloud. A cloud session clones a GitHub repo rather than reading your machine, so it can't see the thing you just made &mdash; and its git credentials are scoped by a proxy, so it can't create a repo either. Local runs on your own files with your own login, which is the whole reason publishing works here and not in Cowork.</p>
+          </li>
+          <li>
+            <h4>Select the folder your build is in</h4>
+            <p>Not a GitHub repo, and not some shared folder &mdash; the folder containing what you made. The repo doesn't exist yet; publishing creates it. Keep builds at <code>Documents/YF Builds/&lt;build-name&gt;/</code>, one folder each, and this question stops coming up.</p>
+          </li>
+          <li>
+            <h4>Set the permission mode to <b>Auto</b></h4>
+            <p>Publishing runs a handful of git and GitHub commands. In Manual mode you'll be asked to approve each one, which is a lot of clicking to say yes to. <b>Plan</b> is worth knowing about separately: it thinks through an approach without touching files, which is the right mode before anything large.</p>
+          </li>
+          <li>
+            <h4>Say what you want, in plain language</h4>
+            <p>&ldquo;Build me a one-page microsite for the TDK town hall&rdquo;. It writes the files in that folder; the <b>Browser</b> pane previews them as it goes, so you can look at the thing rather than read about it. Type <code>/</code> to see the skills available to you.</p>
+          </li>
+          <li>
+            <h4>When you like it, say &ldquo;log this build&rdquo;</h4>
+            <p>That's the handover to <a href="#g-publish" data-goto="g-publish">Publishing</a>. Everything from there is automatic.</p>
+          </li>
+        </ol>
+        <p class="quiet"><b>Windows only, once:</b> local sessions need <a href="https://git-scm.com/downloads/win">Git for Windows</a> installed. It's the one thing that has to exist before Claude can set the rest up itself. Macs already have it.</p>
       </section>
 
       <section id="g-publish">
