@@ -49,3 +49,21 @@ the team has bookmarked.
   are deliberately separate.
 - Builds are public by design — that is what lets anyone download one without a GitHub
   account. Nothing secret belongs in a build.
+
+## Thumbnails
+
+The dashboard shows a thumbnail per build. They are baked into the page as data URIs
+because the artifact CSP blocks every external host — a remote `<img>` cannot load, and
+neither can an `<iframe>` of the build itself, so a live preview is impossible by
+construction. `thumbs/` holds the rendered JPEGs.
+
+To refresh them after publishing or changing a build:
+
+```powershell
+powershell -File tools/refresh-thumbnails.ps1
+```
+
+It renders each build's GitHub Pages URL with headless Chrome, shrinks it to 640x400,
+and rewrites the `THUMBS` block in `yf-builds-dashboard.artifact.html`. Republish the
+artifact afterwards so the team sees the new tiles. Add new builds to the `$builds` list
+at the top of that script.
