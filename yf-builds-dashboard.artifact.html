@@ -1,90 +1,61 @@
 <title>YF Builds</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* Single-theme by intent, not omission. The palette is lifted from the builds this
+   dashboard lists — #0A0A0B ground, bone ink, the Construct yellow — so the registry
+   sits inside YF's visual language instead of framing it in an admin skin. Every
+   colour is therefore painted explicitly and no light variant exists. */
 :root {
-  --paper: #f2f3f7;
-  --surface: #ffffff;
-  --surface-2: #e9ebf1;
-  --rule: #dcdfe8;
-  --rule-soft: #e8eaf0;
-  --ink: #171a21;
-  --ink-2: #3b4250;
-  --muted: #5d6472;
-  --accent: #2b4acb;
-  --accent-ink: #ffffff;
-  --accent-soft: #e6e9fb;
-  --ok: #1f8a4c;
-  --warn: #b4740e;
-  --crit: #b3261e;
-  --ok-soft: #e2f2e8;
-  --warn-soft: #f8eedb;
-  --crit-soft: #f8e5e3;
-  --shadow: 0 1px 2px rgba(23, 26, 33, .05), 0 8px 24px rgba(23, 26, 33, .05);
-  --radius: 10px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #101218;
-    --surface: #171a22;
-    --surface-2: #1e222c;
-    --rule: #2a2f3b;
-    --rule-soft: #232833;
-    --ink: #e7e9ef;
-    --ink-2: #c3c8d4;
-    --muted: #949cac;
-    --accent: #93a2ff;
-    --accent-ink: #10131c;
-    --accent-soft: #1d2340;
-    --ok: #5cc98a;
-    --warn: #e0a94a;
-    --crit: #f08a80;
-    --ok-soft: #16281d;
-    --warn-soft: #2b2214;
-    --crit-soft: #2e1a19;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #101218;
-  --surface: #171a22;
-  --surface-2: #1e222c;
-  --rule: #2a2f3b;
-  --rule-soft: #232833;
-  --ink: #e7e9ef;
-  --ink-2: #c3c8d4;
-  --muted: #949cac;
-  --accent: #93a2ff;
-  --accent-ink: #10131c;
-  --accent-soft: #1d2340;
-  --ok: #5cc98a;
-  --warn: #e0a94a;
-  --crit: #f08a80;
-  --ok-soft: #16281d;
-  --warn-soft: #2b2214;
-  --crit-soft: #2e1a19;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+  --sans: "Inter Tight", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  --paper: #0A0A0B;
+  --surface: #101011;
+  --surface-2: #17171a;
+  --rule: rgba(243, 240, 233, .10);
+  --rule-soft: rgba(243, 240, 233, .06);
+  --ink: #F3F0E9;
+  --ink-2: rgba(243, 240, 233, .74);
+  --muted: rgba(243, 240, 233, .44);
+
+  --accent: #EBB20C;
+  --accent-ink: #0A0A0B;
+  --accent-soft: rgba(235, 178, 12, .12);
+
+  /* Freshness is state, not brand — kept clear of the yellow so a dot never reads
+     as an accent and the accent never reads as a warning. */
+  --ok: #5FC97F;
+  --warn: #D9822B;
+  --crit: #E85C4F;
+  --ok-soft: rgba(95, 201, 127, .13);
+  --warn-soft: rgba(217, 130, 43, .14);
+  --crit-soft: rgba(232, 92, 79, .14);
+
+  --shadow: none;
+  --radius: 4px;
 }
 * { box-sizing: border-box; }
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--sans);
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 64px; }
-h1, h2, h3 { font-family: Archivo, "Public Sans", sans-serif; text-wrap: balance; margin: 0; }
-.mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--sans); text-wrap: balance; margin: 0; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .label {
-  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600;
+  font-family: var(--sans); font-size: 11px; font-weight: 600;
   letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
 }
 
 /* header */
 .masthead { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+h1 { font-size: 27px; font-weight: 600; letter-spacing: -.035em; }
 .tagline { color: var(--muted); font-size: 14px; max-width: 62ch; margin-top: 4px; }
 
 /* instrument strip */
@@ -95,7 +66,7 @@ h1 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
 }
 .gauge { padding: 12px 18px; border-right: 1px solid var(--rule-soft); min-width: 104px; }
 .gauge:last-child { border-right: 0; }
-.gauge .n { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; font-size: 21px; font-weight: 500; display: block; line-height: 1.2; }
+.gauge .n { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 21px; font-weight: 500; display: block; line-height: 1.2; }
 .gauge.crit .n { color: var(--crit); }
 
 /* controls */
@@ -110,7 +81,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
 .btn {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
-  font-family: Archivo, sans-serif; font-size: 13px; font-weight: 600;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
   padding: 8px 13px; border-radius: 8px; border: 1px solid var(--rule);
   background: var(--surface); color: var(--ink); text-decoration: none;
 }
@@ -126,10 +97,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
   padding: 18px; display: flex; flex-direction: column; gap: 11px; box-shadow: var(--shadow);
 }
-.card h3 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.card h3 { font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
 .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .pill {
-  font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .04em;
   padding: 3px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent;
 }
 .pill.prototype { background: var(--surface-2); color: var(--ink-2); border-color: var(--rule); }
@@ -140,9 +111,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 /* live preview tile — an iframe of the build's own Pages URL, scaled down.
    Whether the artifact CSP permits the frame is unknown at author time, so the
    tile always renders a fallback underneath and only hides it on a real load. */
+/* bleeds to the card's edges — the work is the card's first statement, not an inset
+   illustration of it */
 .thumb {
-  position: relative; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden;
-  background: var(--surface-2); border: 1px solid var(--rule-soft);
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+  background: #000; margin: -18px -18px 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: 1px solid var(--rule);
 }
 .thumb iframe {
   position: absolute; top: 0; left: 0; width: 1280px; height: 800px;
@@ -152,17 +127,17 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .thumb.loaded iframe { opacity: 1; }
 .thumb .fallback {
   position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 12px;
-  font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted);
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
 }
 .thumb.loaded .fallback { display: none; }
 .chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
-  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .03em;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .03em;
   padding: 2px 7px; border-radius: 5px; background: var(--surface-2); color: var(--ink-2);
 }
 .line { font-size: 13px; color: var(--muted); }
 .line strong { color: var(--ink); font-weight: 600; }
-.line .sha { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-2); }
+.line .sha { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
 .dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); }
 .dot.crit { background: var(--crit); } .dot.none { background: var(--rule); border: 1px solid var(--muted); }
@@ -179,10 +154,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .panel.alert { border-color: var(--crit); }
 .panel.alert h2 { color: var(--crit); }
 .say {
-  font-family: Archivo, sans-serif; font-size: 16px; font-weight: 600; color: var(--ink);
+  font-family: var(--sans); font-size: 16px; font-weight: 600; color: var(--ink);
   background: var(--accent-soft); border-radius: 8px; padding: 12px 16px; margin: 14px 0;
 }
-kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
 .quiet { color: var(--muted); font-size: 13px; }
 .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; animation: sp .8s linear infinite; vertical-align: -2px; margin-right: 8px; }
 @keyframes sp { to { transform: rotate(360deg); } }
@@ -190,13 +165,13 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
 
 /* modal */
 .scrim {
-  position: fixed; inset: 0; background: rgba(16, 18, 24, .48); z-index: 40;
+  position: fixed; inset: 0; background: rgba(0, 0, 0, .72); z-index: 40;
   display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow: auto;
 }
 .scrim.open { display: flex; }
 .sheet {
   background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
-  width: 100%; max-width: 540px; padding: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
+  width: 100%; max-width: 540px; padding: 24px; box-shadow: 0 30px 80px rgba(0, 0, 0, .7);
 }
 .sheet h2 { font-size: 19px; font-weight: 600; }
 .sheet > p.quiet { margin: 4px 0 18px; }
@@ -224,7 +199,7 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
 }
 .conn table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
 .conn th, .conn td { text-align: left; padding: 5px 12px 5px 0; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
-.conn th { font-family: Archivo, sans-serif; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.conn th { font-family: var(--sans); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 78ch; }
 </style>
 
@@ -247,7 +222,7 @@ kbd, code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; backgrou
     <select id="fStatus"><option value="">All statuses</option></select>
     <select id="fBuilder"><option value="">All builders</option></select>
     <label class="toggle"><input type="checkbox" id="fArchived"> Show archived</label>
-    <label class="toggle"><input type="checkbox" id="fPreview"> Live previews</label>
+    <label class="toggle"><input type="checkbox" id="fPreview" checked> Live previews</label>
     <span class="quiet mono" id="freshness"></span>
   </div>
 
