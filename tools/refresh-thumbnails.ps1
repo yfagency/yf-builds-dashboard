@@ -51,7 +51,11 @@ $entries = New-Object System.Collections.Generic.List[string]
 
 foreach ($name in $builds) {
   $url = "https://yfagency.github.io/$name/"
-  $png = Join-Path $ShotDir "$name.png"
+  # The PNG is a throwaway intermediate, so it goes to temp rather than the repo. This
+  # folder lives inside OneDrive, which re-materialises files from its cloud copy shortly
+  # after they are deleted — so an intermediate written here comes back and lands in the
+  # next commit no matter how carefully the script cleans up after itself.
+  $png = Join-Path ([IO.Path]::GetTempPath()) "yfshot-$name.png"
   $jpg = Join-Path $ShotDir "$name.jpg"
 
   # virtual-time-budget lets animation and WebGL settle before the frame is taken;

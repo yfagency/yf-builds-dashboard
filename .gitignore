@@ -1,0 +1,3 @@
+# Rendered intermediates: the script writes PNGs to temp now, but OneDrive can
+# re-materialise deleted files here. Only the JPEGs belong in the repo.
+thumbs/*.png
