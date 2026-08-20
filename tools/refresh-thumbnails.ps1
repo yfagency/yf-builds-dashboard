@@ -98,11 +98,18 @@ foreach ($name in $builds) {
 if ($entries.Count -eq 0) { throw "Nothing rendered - aborting without touching $Html" }
 
 # Replace the whole THUMBS assignment, whatever it currently holds.
-$content = Get-Content $Html -Raw
+#
+# Read and write UTF-8 EXPLICITLY. Get-Content -Raw in Windows PowerShell 5.1 decodes
+# using the system ANSI codepage, and WriteAllText then re-encodes as UTF-8 — so every
+# non-ASCII character in the file gains a layer of mojibake on each run. That silently
+# corrupted the dashboard's error messages once already: em dashes and arrows in strings
+# the team actually reads. Do not replace these two lines with Get-Content/Out-File.
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$content = $utf8NoBom.GetString([IO.File]::ReadAllBytes((Resolve-Path $Html)))
 $pattern = '(?s)var THUMBS = \{.*?\};'
 if ($content -notmatch $pattern) { throw "Could not find the THUMBS block in $Html" }
 $js = "var THUMBS = {" + ($entries -join ",`n") + "};"
 $content = [regex]::Replace($content, $pattern, { $js }, 1)
-[IO.File]::WriteAllText((Resolve-Path $Html), $content)
+[IO.File]::WriteAllText((Resolve-Path $Html), $content, $utf8NoBom)
 
 "injected $($entries.Count) thumbnails into $Html"

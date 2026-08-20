@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Single-theme by intent, not omission. The palette is lifted from the builds this
-   dashboard lists ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â #0A0A0B ground, bone ink, the Construct yellow ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â so the registry
+   dashboard lists - #0A0A0B ground, bone ink, the Construct yellow - so the registry
    sits inside YF's visual language instead of framing it in an admin skin. Every
    colour is therefore painted explicitly and no light variant exists. */
 :root {
@@ -23,7 +23,7 @@
   --accent-ink: #0A0A0B;
   --accent-soft: rgba(235, 178, 12, .12);
 
-  /* Freshness is state, not brand ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â kept clear of the yellow so a dot never reads
+  /* Freshness is state, not brand - kept clear of the yellow so a dot never reads
      as an accent and the accent never reads as a warning. */
   --ok: #5FC97F;
   --warn: #D9822B;
@@ -108,7 +108,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .pill.review    { background: var(--accent-soft); color: var(--accent); }
 .pill.live      { background: var(--ok-soft); color: var(--ok); }
 .pill.archived  { background: var(--surface-2); color: var(--muted); border-color: var(--rule); }
-/* The tile bleeds to the card's edges ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the work is the card's first statement, not an
+/* The tile bleeds to the card's edges - the work is the card's first statement, not an
    inset illustration of it. */
 .thumb {
   position: relative; aspect-ratio: 16 / 10; overflow: hidden;
@@ -153,7 +153,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .btn.ghost:hover { color: var(--ink); }
 
 /* The dashboard's own registry row. Deliberately built from the opposite materials to a
-   card Ã¢â‚¬â€ no surface, no thumbnail, hairline rules, mono-forward Ã¢â‚¬â€ because it is the tool
+   card - no surface, no thumbnail, hairline rules, mono-forward - because it is the tool
    you are looking at rather than one of the things it lists. */
 .colophon { margin-top: 40px; border-top: 1px solid var(--rule); padding-top: 18px; }
 .colophon .stamp {
@@ -227,7 +227,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 }
 .guidelink:hover { border-bottom-color: var(--accent); }
 
-/* guide Ã¢â‚¬â€ the manual, built into the tool */
+/* guide - the manual, built into the tool */
 .sheet.guide { max-width: 760px; display: flex; flex-direction: column; max-height: calc(100vh - 80px); padding: 0; }
 .guide-top {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
@@ -253,7 +253,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 .guide-body ul.plain { padding-left: 20px; margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
 .guide-body ul.plain li { margin-bottom: 7px; }
 .guide-body b { color: var(--ink); font-weight: 600; }
-/* numbered steps Ã¢â‚¬â€ used where the order genuinely matters, not as decoration */
+/* numbered steps - used where the order genuinely matters, not as decoration */
 .guide-body ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0 0 14px; }
 .guide-body ol.steps > li { counter-increment: s; position: relative; padding-left: 40px; margin-bottom: 18px; }
 .guide-body ol.steps > li:last-child { margin-bottom: 0; }
@@ -543,7 +543,7 @@ var T_QUERY  = "notion-query-data-sources";
 var T_CREATE = "notion-create-pages";
 var T_UPDATE = "notion-update-page";
 // The dashboard's own row. It is in the registry like everything else, but it is not one
-// of the builds Ã¢â‚¬â€ it is the thing displaying them, so it is pulled out of the gallery and
+// of the builds - it is the thing displaying them, so it is pulled out of the gallery and
 // out of the counts, and rendered as a colophon instead.
 var SELF_REPO = "https://github.com/yfagency/yf-builds-dashboard";
 var BUILDS    = "collection://10d63098-3c9a-44a2-83fb-a98ce261eea1";
@@ -563,7 +563,7 @@ function sqlInput(collection, query) {
 
 /* Thumbnails are baked in as data URIs, keyed by Live URL. The artifact CSP blocks
    every external host, so neither a remote image nor an iframe of the build can ever
-   load here ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the picture has to already be in the page. These are rendered from the
+   load here - the picture has to already be in the page. These are rendered from the
    live Pages URLs by headless Chrome and refreshed when a build changes; see the
    dashboard repo README for the one command that regenerates them. */
 var THUMBS = {"https://yfagency.github.io/token-playground/":"data:image/jpeg;base64,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A6nFX9R0uXTYrKSbpdQCZfbnp+WPzqXJJpPqBS+T/ao+T/apKKoB2FIOM5AzzTaVf4voaSgAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKVvvH60lK33j9aAA/cX8aSlP3F/GkoAltpRBdwTMNyxyK5HqAc13/i3Q7vxC1lqGlMlxEYsBd4HBOcjP6/SvO60bPVNW0uH/RLi4ghbnAHyn3GeK5MRRnKcalNpSV99tSotJWZ12qw/2B4CXTbyRXupjhUBzj5txx7CuAqa6vLi+mM13PJPKf4nbJqGqw1F0ovmd23d/MJO4U9fvJ9P8aZT1+8n0/xrpJI6WkpaANnwzfXVrrEEVsybJnCyrIAUK9yfTAzzXaa74lt5tHu30W5hkuLdgr5XJVCcFlz17c15oiPI22NWZj2UZJpGVkbDAq3oRg1xVsFCtUVR9Px9S1NpWBmLsWYlmJySe5pKKK7SBV/i+hpKVf4voaSgAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKVvvH60lK33j9aAA/cX8abT1yF+8AKXcf+eg/L/wCtQBHWhFrF1DGqKY8IoVcryOMVT3H/AJ6D8v8A61G4/wDPQfl/9agCzf6gb9YA0So0YOSp+8Tjt26VSqTcf+eg/L/61G4/89B+X/1qAI6kXqn0/wAaNx/56D8v/rUmGLD5sk9DQAyipNx/56D8v/rUbj/z0H5f/WoAW3na2mEqAFhkYPSrsut3UsDxFYQGGCwXnGMcc8VR3H/noPy/+tRuP/PQfl/9agCOipNx/wCeg/L/AOtRuP8Az0H5f/WoAav8X0NJTyWIPzg+1MoAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACii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ACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAClb7x+tJSt94/WgC7bX0UNk0Mlukr+arBio+5nLrnrzgfTn1rSGs6d9o3PaM65VtxjQE4kLBcdMYO3PtWPFbpJDvaXYRnjjt/WnGzUQtIJlIAz0/wDr0AWb/Uba606C3it/Kli25bA+bC4PTkc8+/tVs63YC5jk+wh0UP8AIyKNuQpRRjqAy9TzgmsqK0WSESNMiZ7HrTbe3WdSWkEeCBk/SgDYm1vT5YLmIaeFLhvKYKuUJQD8s7j+VYFXv7OBBInUgdSBnFQC3U3DReaMD+IjrQBBRUxhQXKxB94JALDj8qmSw3qSJlGBk8ZxQBToqSSIJKU8xcAdf/1Zp0EKSZLvtAZRkehNAENFWIbXzpJVDbRHznGaebSPO0TZO7BOOOn1oAqUUd6KACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKVvvH60lK33j9aAJYYElClpQhJIwRnpUrWSAZWdSMAkcZqqFyASQM+tG0f3l/WgC0bSMbsucguBgg5x0qOG2EyFjIqnOADUO1f7y/rRtH99f1oAmkgWOSNElyH4Zu3XFJPDHCgxJvck5A7Coto/vr+tG0f31/WgC2lnE7j9+FQgctj0/z+VJ9kUL/wAfCgkdMf8A16q7R/eX9aNo/vL+tAD5YfKYgEMoOAQRUdLtH99f1pdo/vr+tADQSOhI+lJin7R/fX9aTaP74/WgBKKXaP74/Wl2j++v60ANop2zrhgcc8ZptABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUrfeP1pKVvvH60AB+4n40lOP3E/Gm0AFFFFABRgnoCaKu2GoCyGGi8wbw4+bGDtKn68E0AUewPY9KUAnoCfpW1NrsMi+WNPi8sE7ckA4z3wP5egpk2uJI8JWxijWOUSFFPDcEc8e9AGPkeooyPWtv+3oixL6bbtwQBxgA/hzUOpapBdxeTBaJGuQfMwAx49hQBl0UUUAFFFFADk/i/3TTaVf4v8AdNJQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFK33j9aSlb7x+tAC43Ko3AY9TSbf8AaX86lhgSRctKEYk4BpJofKPDBl/vCgCPb/tL+dG3/aX86nW3jZVJlCk9jTEg3lv3irtOOTQAzZ/tL+dGz/aX86fFEsm7LgY6H1olhEYBVw474oAZs/2l/Ok2/wC0v50lFAC7f9pfzpdn+0v502igB2z/AGl/OjZ/tL+dNooAXb/tL+dG3/aX86SigBwG3d8yngjg02iigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKVvvH60lK33j9aAEooooASloooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAClb7x+tJSt94/WgBKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiinwQS3MyQ28bSyucKiDJY+1ADKK1f+EY13/oEXn/fo0f8ACMa7/wBAi8/79GgDKorV/wCEY13/AKBF5/36NH/CMa7/ANAi8/79GgDKorV/4RjXf+gRef8Afo0f8Ixrv/QIvP8A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",
@@ -650,16 +650,16 @@ function explain(err) {
   switch (err && err.code) {
     case "needs_reauth":
       return { head: "Notion needs reconnecting",
-        body: "Your Notion connection has expired. Reconnect " + server + " in claude.ai Settings ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Connectors, then reload this page." };
+        body: "Your Notion connection has expired. Reconnect " + server + " in claude.ai Settings -> Connectors, then reload this page." };
     case "server_not_connected":
       return { head: "No Notion connector on your account",
-        body: "This dashboard reads the registry through your own Notion connection. Add " + server + " in claude.ai Settings ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Connectors, then reload." };
+        body: "This dashboard reads the registry through your own Notion connection. Add " + server + " in claude.ai Settings -> Connectors, then reload." };
     case "selection_required":
       return { head: "Choose which Notion to use",
         body: "You have more than one Notion connection. Pick the YF workspace when claude.ai asks, then reload this page." };
     case "server_not_found":
       return { head: "That Notion connection no longer exists",
-        body: "Re-add " + server + " in claude.ai Settings ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Connectors." };
+        body: "Re-add " + server + " in claude.ai Settings -> Connectors." };
     case "blocked_by_policy":
       return { head: "Blocked by workspace policy",
         body: "Your organisation blocks this connector call. ZF can confirm whether the Notion connector is permitted for your account." };
@@ -668,13 +668,13 @@ function explain(err) {
         body: "Policy requires per-call approval for the Notion connector, which published pages can't request yet. Ask ZF to relax that for this connector." };
     case "not_in_manifest":
       return { head: "The page asked for something it isn't allowed",
-        body: "The published manifest doesn't cover this call ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a bug in the dashboard, not your setup. Tell ZF the code was not_in_manifest." };
+        body: "The published manifest doesn't cover this call - a bug in the dashboard, not your setup. Tell ZF the code was not_in_manifest." };
     case "tool_error":
       return { head: "Notion rejected the query",
         body: (err.message || "The connector reported a failure.") + " If this mentions a column or data source, the registry schema has changed and the dashboard needs updating." };
     case "server_unavailable":
       return { head: "Notion is not responding",
-        body: "Temporary ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Notion or the connector bridge is unreachable. Reload in a moment." };
+        body: "Temporary - Notion or the connector bridge is unreachable. Reload in a moment." };
     case "rate_limited":
       return { head: "Too many requests",
         body: "This page has hit its connector budget. Wait a few seconds and reload." };
@@ -705,13 +705,13 @@ function renderConn(info, note) {
   if (note) html += '<p class="quiet" style="margin:0 0 10px">' + esc(note) + "</p>";
   if (!servers.length) {
     html += '<p class="quiet" style="margin:0">No Notion connector is callable from this page for your account. ' +
-      'Add Notion in claude.ai Settings ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Connectors, then reload.</p>';
+      'Add Notion in claude.ai Settings -> Connectors, then reload.</p>';
   } else {
     html += "<table><thead><tr><th>Connector</th><th>Auth</th><th>Tools available to this page</th></tr></thead><tbody>";
     servers.forEach(function (s) {
       var names = (s.tools || []).map(function (t) { return t.name; });
       html += "<tr><td class='mono'>" + esc(s.server) + "</td><td>" + esc(s.authStatus) + "</td><td class='mono'>" +
-        esc(names.length ? names.join(", ") : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â") + "</td></tr>";
+        esc(names.length ? names.join(", ") : "-") + "</td></tr>";
     });
     html += "</tbody></table>";
   }
@@ -778,7 +778,7 @@ function card(b) {
     '<div class="actions">' +
       // No target="_blank": the artifact shell intercepts cross-origin anchor clicks and
       // hands the URL to its parent window, asking for a new tab only when a target is
-      // set ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â and that new-tab request is what the browser silently refuses. Plain
+      // set - and that new-tab request is what the browser silently refuses. Plain
       // anchors take the path the shell can actually complete.
       (dl ? '<a class="btn primary" href="' + esc(dl) + '">Download latest</a>'
           : '<span class="btn dead">No repo yet</span>') +
@@ -903,7 +903,7 @@ function resolveServer() {
     return info;
   }).catch(function (err) {
     SERVER = SERVER_CANDIDATES[0];
-    renderConn(null, "Couldn't list connectors: " + ((err && err.code) || "unknown") + " ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â " + ((err && err.message) || ""));
+    renderConn(null, "Couldn't list connectors: " + ((err && err.code) || "unknown") + " - " + ((err && err.message) || ""));
     return null;
   });
 }
@@ -948,7 +948,7 @@ function watchBuilds() {
       return;
     }
     // transient, with data already on screen: keep it, mark it stale, retry once
-    el("freshness").textContent = "couldn't refresh ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â showing " + (STALE_AT ? clock(STALE_AT) : "last read");
+    el("freshness").textContent = "couldn't refresh - showing " + (STALE_AT ? clock(STALE_AT) : "last read");
     if (err.retryable && !retried) {
       retried = true;
       setTimeout(function () {
@@ -956,7 +956,7 @@ function watchBuilds() {
       }, Math.min(err.retryAfterMs || 3000, 15000) + Math.random() * 1000);
     }
     // Polling, not push: Notion has no way to tell this page a row changed. Two minutes
-    // is a deliberate compromise Ã¢â‚¬â€ the runtime pauses polling while the tab is hidden and
+    // is a deliberate compromise - the runtime pauses polling while the tab is hidden and
     // catches up when it comes back, and it coalesces identical reads across every open
     // copy, so this costs one call per two minutes per person actually looking.
   }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
@@ -1113,7 +1113,7 @@ function toggleLinks(button) {
         setTimeout(function () { copy.textContent = "Copy"; }, 1600);
       };
       var manual = function () {
-        copy.textContent = (navigator.platform || "").indexOf("Mac") === 0 ? "Press ÃƒÂ¢Ã…â€™Ã‹Å“C" : "Press Ctrl+C";
+        copy.textContent = (navigator.platform || "").indexOf("Mac") === 0 ? "Press Cmd+C" : "Press Ctrl+C";
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(pair[1]).then(ok, manual);
@@ -1190,7 +1190,7 @@ el("addSave").addEventListener("click", function () {
   }).catch(function (err) {
     var e = explain(err);
     msg.className = "formmsg bad";
-    msg.textContent = e.head + " ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â " + e.body;
+    msg.textContent = e.head + " - " + e.body;
   }).then(function () {
     btn.disabled = false;
     btn.textContent = restore;
