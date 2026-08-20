@@ -231,6 +231,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
     <select id="fBuilder"><option value="">All builders</option></select>
     <label class="toggle"><input type="checkbox" id="fArchived"> Show archived</label>
     <label class="toggle"><input type="checkbox" id="fPreview" checked> Previews</label>
+    <button class="btn ghost" id="refreshBtn" title="Re-read the registry now">Refresh</button>
     <span class="quiet mono" id="freshness"></span>
   </div>
 
@@ -240,7 +241,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
     <summary>Connection</summary>
     <div class="box" id="connBox">Not checked yet.</div>
   </details>
-  <p class="foot">Builds live in the YF Builds registry and the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads both through your own Notion connector &mdash; nothing is stored in the page. Commit, author and date are filled in by the daily 06:30 JST sync.</p>
+  <p class="foot">Builds live in the YF Builds registry; the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads the registry through your own Notion connector and re-reads it every couple of minutes while you're looking at it &mdash; press Refresh if you can't wait. The commit line comes from git via the 06:30 JST sync, so it can lag by a day. Thumbnails are rendered images updated when the dashboard is republished.</p>
 </div>
 
 <div class="scrim" id="helpScrim">
@@ -672,7 +673,23 @@ function watchBuilds() {
         mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
       }, Math.min(err.retryAfterMs || 3000, 15000) + Math.random() * 1000);
     }
-  }, { cache: { staleTime: 60000 }, refetchInterval: 300000 });
+    // Polling, not push: Notion has no way to tell this page a row changed. Two minutes
+    // is a deliberate compromise — the runtime pauses polling while the tab is hidden and
+    // catches up when it comes back, and it coalesces identical reads across every open
+    // copy, so this costs one call per two minutes per person actually looking.
+  }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
+}
+
+/* Force a read now, for the case the interval can't cover: somebody just changed
+   something in the next chair and you want to see it immediately. */
+function refreshNow() {
+  var btn = el("refreshBtn");
+  if (!mcp || !SERVER) return;
+  btn.disabled = true;
+  var restore = function () { btn.disabled = false; btn.textContent = "Refresh"; };
+  btn.textContent = "Refreshing";
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS))
+    .then(function () { setTimeout(restore, 600); }, restore);
 }
 
 function boot() {
@@ -879,6 +896,7 @@ el("addSave").addEventListener("click", function () {
 ["search", "fStatus", "fBuilder", "fArchived", "fPreview"].forEach(function (id) {
   el(id).addEventListener(id === "search" ? "input" : "change", render);
 });
+el("refreshBtn").addEventListener("click", refreshNow);
 
 boot();
 </script>
