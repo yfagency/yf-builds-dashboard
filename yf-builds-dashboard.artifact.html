@@ -91,15 +91,40 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .btn.dead { opacity: .45; cursor: default; pointer-events: none; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* acting on a selection */
+.toast {
+  border: 1px solid var(--crit); background: var(--crit-soft); color: var(--ink);
+  border-radius: var(--radius); padding: 9px 14px; margin: -6px 0 18px; font-size: 13px;
+}
+
+/* Acting on a selection. Appears only once something is actually selected, and stays
+   quiet when it does: this is a transient tool, not a banner. */
 .bulkbar {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  border: 1px solid var(--accent); background: var(--accent-soft);
-  border-radius: var(--radius); padding: 10px 14px; margin: -6px 0 18px;
+  border: 1px solid var(--rule); background: var(--surface);
+  border-radius: var(--radius); padding: 9px 14px; margin: -6px 0 18px;
 }
-.bulkbar .n { font-family: var(--mono); font-size: 12px; color: var(--ink); }
+.bulkbar .n { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
 .bulkbar select { padding: 5px 8px; font-size: 13px; }
 .bulkbar .btn { padding: 6px 12px; font-size: 12.5px; }
+
+/* The status pill is the control: one-off changes are the common case, so the thing you
+   read the status from is the thing you change it with. */
+select.statussel {
+  appearance: none; -webkit-appearance: none;
+  font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  padding: 3px 22px 3px 9px; border-radius: 999px; border: 1px solid transparent;
+  cursor: pointer; white-space: nowrap; line-height: 1.45;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+}
+select.statussel:hover { border-color: var(--muted); }
+select.statussel.prototype { background-color: var(--surface-2); color: var(--ink-2); border-color: var(--rule); }
+select.statussel.progress  { background-color: var(--warn-soft); color: var(--warn); }
+select.statussel.review    { background-color: var(--accent-soft); color: var(--accent); }
+select.statussel.live      { background-color: var(--ok-soft); color: var(--ok); }
+select.statussel.archived  { background-color: var(--surface-2); color: var(--muted); border-color: var(--rule); }
+select.statussel.saving { opacity: .5; pointer-events: none; }
+select.statussel option { background: var(--surface); color: var(--ink); font-weight: 500; letter-spacing: 0; }
 
 /* cards */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
@@ -353,6 +378,8 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
     <span class="quiet mono" id="freshness"></span>
   </div>
 
+  <p class="toast" id="toast" hidden></p>
+
   <div class="bulkbar" id="bulkbar" hidden>
     <span class="n" id="bulkCount"></span>
     <label class="toggle">Set status to
@@ -395,7 +422,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       <a href="#g-publish" data-goto="g-publish">Publishing</a>
       <a href="#g-update" data-goto="g-update">Updating</a>
       <a href="#g-edit" data-goto="g-edit">Editing</a>
-      <a href="#g-many" data-goto="g-many">Archiving</a>
+      <a href="#g-many" data-goto="g-many">Archiving and status</a>
       <a href="#g-checkout" data-goto="g-checkout">Checking out</a>
       <a href="#g-fresh" data-goto="g-fresh">How current is this</a>
       <a href="#g-problems" data-goto="g-problems">When something looks wrong</a>
@@ -495,10 +522,10 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       </section>
 
       <section id="g-many">
-        <h3>Archiving, and several builds at once</h3>
-        <p>Tick <b>Select</b> in the bar at the top. Checkboxes appear on every card; tick the ones you mean, choose a status, press <b>Apply</b>. <b>Archived</b> is the default because hiding finished or dead builds is what this is mostly for.</p>
-        <p>Archived builds disappear from the gallery but are never deleted &mdash; tick <b>Show archived</b> to see them, and you can select them and set them back to any status the same way. Nothing here removes a build; the repo and its download keep working regardless.</p>
-        <p class="quiet">Untick <b>Select</b> and the checkboxes go away. If you only ever download things, you never need to turn it on.</p>
+        <h3>Archiving and status</h3>
+        <p><b>One build:</b> the status badge on the card <i>is</i> the control. Click it, pick a status, done &mdash; it saves as you pick. Set it to <b>Archived</b> and the build drops out of the gallery.</p>
+        <p><b>Several at once:</b> tick <b>Select</b> in the bar at the top, tick the cards you mean, choose a status and press <b>Apply</b>. Worth it for a clear-out; overkill for one card.</p>
+        <p>Archived builds are hidden, never deleted. Tick <b>Show archived</b> to see them and set them back to anything. The repo, the download and the live URL all keep working either way &mdash; archiving is about what the team looks at, not about what exists.</p>
       </section>
 
       <section id="g-checkout">
@@ -784,6 +811,21 @@ function renderConn(info, note) {
 
 /* ---- render ---- */
 var PILL = { "Prototype": "prototype", "In Progress": "progress", "Needs Review": "review", "Live": "live", "Archived": "archived" };
+var STATUSES = ["Prototype", "In Progress", "Needs Review", "Live", "Archived"];
+
+// Reads as the status, works as the control. Falls back to a plain pill for a row with no
+// page id, which cannot be written to anyway.
+function statusControl(b) {
+  if (!b.pageId) {
+    return b.status ? '<span class="pill ' + (PILL[b.status] || "prototype") + '">' + esc(b.status) + "</span>" : "";
+  }
+  var current = b.status || "Prototype";
+  var opts = STATUSES.map(function (s) {
+    return '<option value="' + esc(s) + '"' + (s === current ? " selected" : "") + ">" + esc(s) + "</option>";
+  }).join("");
+  return '<select class="statussel ' + (PILL[current] || "prototype") + '" data-status="' + esc(b.pageId) +
+    '" title="Change this build\'s status" aria-label="Status of ' + esc(b.name) + '">' + opts + "</select>";
+}
 
 function shape(b) {
   return {
@@ -852,8 +894,7 @@ function card(b) {
     '<div class="card-top"><h3>' +
       (SELECTING && b.pageId ? '<input type="checkbox" class="pick" data-pick="' + esc(b.pageId) + '"' +
         (SELECTED[b.pageId] ? " checked" : "") + ' aria-label="Select ' + esc(b.name) + '">' : "") +
-      esc(b.name) + "</h3>" +
-      (b.status ? '<span class="pill ' + (PILL[b.status] || "prototype") + '">' + esc(b.status) + "</span>" : "") +
+      esc(b.name) + "</h3>" + statusControl(b) +
     "</div>" +
     checkoutLine(b) +
     (b.stack.length ? '<div class="chips">' + b.stack.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : "") +
@@ -1078,7 +1119,7 @@ function checkIn(pageId) {
     return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
   }).catch(function (err) {
     var e = explain(err);
-    el("bulkMsg").textContent = e.head + " - " + e.body;
+    toast(e.head + " - " + e.body);
   });
 }
 
@@ -1268,12 +1309,46 @@ function onCardClick(e) {
 // Selection is tracked outside the DOM so it survives every re-render, including the
 // two-minute refresh landing mid-selection.
 el("main").addEventListener("change", function (e) {
-  var box = e.target.closest ? e.target.closest("[data-pick]") : null;
-  if (!box) return;
-  var id = box.getAttribute("data-pick");
-  if (box.checked) SELECTED[id] = true; else delete SELECTED[id];
-  renderBar();
+  if (!e.target.closest) return;
+  var box = e.target.closest("[data-pick]");
+  if (box) {
+    var id = box.getAttribute("data-pick");
+    if (box.checked) SELECTED[id] = true; else delete SELECTED[id];
+    renderBar();
+    return;
+  }
+  var sel = e.target.closest("[data-status]");
+  if (sel) setStatus(sel, sel.getAttribute("data-status"), sel.value);
 });
+
+// A one-off status change: save on pick, recolour immediately, and put the old value back
+// if the write fails rather than showing a status the registry doesn't hold.
+function setStatus(sel, pageId, status) {
+  if (!mcp || !SERVER) return;
+  var was = (BUILDS_ROWS || []).filter(function (r) { return r.pageId === pageId; })[0];
+  var previous = (was && was.status) || "Prototype";
+  sel.className = "statussel " + (PILL[status] || "prototype") + " saving";
+  mcp.callTool(SERVER, T_UPDATE, {
+    page_id: pageId, command: "update_properties", properties: { "Status": status }
+  }).then(function () {
+    sel.className = "statussel " + (PILL[status] || "prototype");
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(BUILDS, Q_BUILDS)).catch(function () {});
+  }).catch(function (err) {
+    sel.value = previous;
+    sel.className = "statussel " + (PILL[previous] || "prototype");
+    var e2 = explain(err);
+    toast(e2.head + " - " + e2.body);
+  });
+}
+
+var TOAST_TIMER = null;
+function toast(text) {
+  var t = el("toast");
+  t.textContent = text;
+  t.hidden = false;
+  clearTimeout(TOAST_TIMER);
+  TOAST_TIMER = setTimeout(function () { t.hidden = true; }, 8000);
+}
 el("fSelect").addEventListener("change", function () {
   SELECTING = el("fSelect").checked;
   if (!SELECTING) SELECTED = {};
