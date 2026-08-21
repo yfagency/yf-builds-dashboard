@@ -91,6 +91,10 @@ try {
 # --- report ------------------------------------------------------------------------
 "thumbnails in page : $($inPage.Count)"
 "thumbnails on disk : $(@($onDisk).Count)"
+# The favicon is the one publish input nobody can look up: it is platform metadata, not
+# part of the file. Printing it here means every session that runs this check is told the
+# answer, so it never has to be guessed or escalated. Settled by ZF 2026-08-21.
+"favicon to publish : hammer-and-wrench  U+1F6E0 U+FE0F   (never substitute)"
 ""
 foreach ($w in $warn) { Write-Host "WARN  $w" -ForegroundColor Yellow }
 foreach ($f in $fail) { Write-Host "FAIL  $f" -ForegroundColor Red }

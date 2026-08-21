@@ -122,13 +122,12 @@ From Claude Code, with the `Artifact` tool, passing the existing artifact URL so
 team's bookmark keeps working:
 
 - URL: `https://claude.ai/code/artifact/89f3d2c0-86ef-4561-8c51-2778f38aad48`
-- **Favicon — UNSETTLED, ask ZF before assuming.** This file recorded ⚡; the ZF-PC session
-  has published 🛠️ on every publish since the artifact was created, so 🛠️ is what is live
-  as of 2026-08-20. Two sessions passing different emoji flip the team's tab icon back and
-  forth, which is worse than either choice. **Whoever gets ZF's answer: write the single
-  agreed emoji here, delete this paragraph, and use only that one.** It is stored as
-  platform metadata and cannot be read back off the live page, which is why it has to be
-  recorded rather than checked.
+- **Favicon: 🛠️ — SETTLED by ZF, 2026-08-21. Do not substitute anything else, ever.**
+  Hammer and wrench, `U+1F6E0 U+FE0F`. Pass exactly this on every publish. It is stored as
+  platform metadata and cannot be read back off the live page, which is why it lives here
+  and why `tools/check-artifact.ps1` prints it on every run: no session should ever have to
+  ask, guess, or raise it with ZF again. An earlier version of this file said ⚡; that was
+  wrong and is now void.
 - Pass **nothing** for `capabilities` or `contract`. Omitting them carries the stored
   declaration forward — currently `{mcp}` on contract `0.2.7`. Passing `capabilities`
   explicitly would replace it, and `{}` would clear it and break the page's Notion access.
