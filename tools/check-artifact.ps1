@@ -34,7 +34,9 @@ if ($nonAscii.Count -gt 0) {
 
 # --- 2. thumbnails in the page match thumbnails on disk ----------------------------
 # Catches a publish from a stale copy: the page must carry every rendered tile.
-$inPage = [regex]::Matches($text, 'https://yfagency\.github\.io/([a-z0-9-]+)/"\s*:\s*"data:image') |
+# Two key forms are valid: the live URL (what the render tools emit) and a bare repo slug
+# (the only option for a build with no live page, e.g. a supplied screenshot).
+$inPage = [regex]::Matches($text, '"(?:https://yfagency\.github\.io/)?([a-z0-9][a-z0-9-]*)/?"\s*:\s*"data:image') |
           ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
 $onDisk = Get-ChildItem "$ShotDir\*.jpg" -ErrorAction SilentlyContinue |
           ForEach-Object { $_.BaseName } | Sort-Object -Unique

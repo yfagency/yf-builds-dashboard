@@ -104,6 +104,7 @@ h1 {
 }
 .gauge .label { display: block; margin-top: 3px; font-size: 10px; letter-spacing: .12em; }
 .gauge.crit .n { color: var(--crit); }
+.gauge.warn .n { color: var(--warn); }
 
 /* controls */
 .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
@@ -208,6 +209,24 @@ input.pick {
 .thumb img {
   display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center;
 }
+/* A missing thumbnail is a defect, and looks like one: hazard stripes rather than a tasteful
+   empty state. Every build is supposed to have a picture, so an absent one should nag. */
+.thumb.missing {
+  background:
+    repeating-linear-gradient(45deg,
+      rgba(217, 130, 43, .10) 0 12px, rgba(217, 130, 43, .02) 12px 24px);
+  border-bottom-color: var(--warn);
+}
+.thumb .nothumb {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center; gap: 7px; padding: 16px 18px;
+}
+.thumb .nothumb .mark {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--warn); border: 1px solid var(--warn); border-radius: 3px; padding: 3px 9px;
+}
+.thumb .nothumb .ask { font-size: 12px; color: var(--ink-2); max-width: 34ch; line-height: 1.45; }
+.thumb .nothumb .ask b { color: var(--ink); }
 .thumb .fallback {
   position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 12px;
   font-family: var(--mono); font-size: 11px; color: var(--muted);
@@ -500,6 +519,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
           <li><b>One repo per build.</b> Don't add a second build to an existing one &mdash; Download latest would hand people the wrong thing.</li>
           <li><b>Nothing secret in a build.</b> Public is what makes downloads work for everyone, including people outside YF. That covers claims as well as credentials: naming a client on a page makes it a public statement.</li>
           <li><b>Publishing happens in Claude Code.</b> Not in Cowork, which can read GitHub but can't push to it.</li>
+          <li><b>Every build has a thumbnail.</b> A gallery of grey rectangles is useless, so a card with no picture shows a striped <i>Thumbnail missing</i> tile and gets counted at the top of the page until it's fixed. If your build runs in a browser this is automatic; if it doesn't, Claude asks you for an image when you publish.</li>
         </ul>
       </section>
 
@@ -514,7 +534,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       <section id="g-cards">
         <h3>Reading a card</h3>
         <dl class="anat">
-          <div><dt>Thumbnail</dt><dd>A picture of the build, rendered from its live version. It updates when the dashboard is republished, not the moment you change the build &mdash; so a brand-new build may show a placeholder for a while. Not a fault.</dd></div>
+          <div><dt>Thumbnail</dt><dd>A picture of the build, rendered from its live version. It updates when the dashboard is republished, not the moment you change the build. A striped <b>Thumbnail missing</b> tile means this build has no picture yet and someone needs to fix it &mdash; it is a defect, not a resting state, and the count at the top of the page tracks how many there are.</dd></div>
           <div><dt>Status</dt><dd><b>Prototype</b>, <b>In Progress</b>, <b>Needs Review</b>, <b>Live</b>, <b>Archived</b>. Set by a person, not automatically &mdash; so it's only true if somebody keeps it true. Anyone can fix it; see <a href="#g-edit" data-goto="g-edit">Editing</a>.</dd></div>
           <div><dt>Freshness dot</dt><dd><span class="dot ok"></span>touched within two weeks &nbsp; <span class="dot warn"></span>within two months &nbsp; <span class="dot crit"></span>older. Read from git, so it can't be talked up &mdash; the only way to make a dot green is to work on the build.</dd></div>
           <div><dt>Built by</dt><dd>Who the team says made it. Falls back to whoever last committed, if nobody set it.</dd></div>
@@ -714,6 +734,18 @@ var Q_PROJECTS = 'SELECT url, "Project Name" FROM "' + PROJECTS + '" LIMIT 300';
 
 function sqlInput(collection, query) {
   return { data: { mode: "sql", data_source_urls: [collection], query: query } };
+}
+
+/* A build's thumbnail is looked up two ways: by its repo slug first, then by its Live URL.
+   Live builds are keyed by URL because that is what the render tools emit; a build with no
+   live page can only be keyed by slug, and it needs a thumbnail just as much. */
+function slugOf(repo) {
+  var b = repoBase(repo);
+  return b ? b.split("/").pop().toLowerCase() : "";
+}
+function thumbFor(b) {
+  var s = slugOf(b.repo);
+  return (s && THUMBS[s]) || (b.live && THUMBS[b.live]) || null;
 }
 
 /* Thumbnails are baked in as data URIs, keyed by Live URL. The artifact CSP blocks
@@ -968,16 +1000,23 @@ function checkoutLine(b) {
 function card(b) {
   var dl = zipUrl(b.repo, b.branch, b.path), gh = browseUrl(b.repo, b.branch, b.path);
   var who = b.builder || b.committer;
-  var shot = b.live ? THUMBS[b.live] : null;
-  var wantPreview = el("fPreview").checked && b.live;
+  var shot = thumbFor(b);
+  // Every build gets a tile, live or not. A build with no thumbnail shows a loud
+  // placeholder rather than nothing, because "nothing" is indistinguishable from a build
+  // that simply has no picture yet - and that is the state we are trying to eliminate.
+  var wantPreview = el("fPreview").checked;
   var links = [];
   if (dl) links.push(["Download", dl]);
   if (b.live) links.push(["Live", b.live]);
   if (gh) links.push(["GitHub", gh]);
   return '<article class="card">' +
-    (wantPreview ? '<div class="thumb">' +
+    (wantPreview ? '<div class="thumb' + (shot ? "" : " missing") + '">' +
       (shot ? '<img src="' + shot + '" alt="' + esc(b.name) + '" loading="lazy">'
-            : '<div class="fallback">' + esc(b.name) + ' &middot; no thumbnail yet &mdash; open live to view</div>') +
+            : '<div class="nothumb"><span class="mark">Thumbnail missing</span>' +
+              '<span class="ask">Every build needs one. ' +
+              (b.live ? "This one is live, so it just needs rendering."
+                      : "This build has no live page, so it needs an image supplied.") +
+              " Ask ZF, or say <b>update this build</b> and Claude will sort it.</span></div>") +
       "</div>" : "") +
     '<div class="card-top"><h3>' +
       (SELECTING && b.pageId ? '<input type="checkbox" class="pick" data-pick="' + esc(b.pageId) + '"' +
@@ -1087,11 +1126,12 @@ function render() {
   var pool = listed.filter(function (b) { return arch || b.status !== "Archived"; });
   var hiddenArchived = listed.length - pool.length;
 
-  var counts = {}, stale = 0;
+  var counts = {}, stale = 0, noshot = 0;
   pool.forEach(function (b) {
     if (b.status) counts[b.status] = (counts[b.status] || 0) + 1;
     var d = ageDays(b.commitDate);
     if (d !== null && d > 60) stale++;
+    if (!thumbFor(b)) noshot++;
   });
   var strip = el("strip");
   strip.hidden = !pool.length;
@@ -1099,6 +1139,7 @@ function render() {
     Object.keys(counts).map(function (s) {
       return '<div class="gauge"><span class="n">' + counts[s] + '</span><span class="label">' + esc(s) + "</span></div>";
     }).join("") +
+    (noshot ? '<div class="gauge warn"><span class="n">' + noshot + '</span><span class="label">no thumbnail</span></div>' : "") +
     (stale ? '<div class="gauge crit"><span class="n">' + stale + '</span><span class="label">untouched 60d+</span></div>' : "") +
     (!arch && hiddenArchived ? '<div class="gauge"><span class="n">' + hiddenArchived + '</span><span class="label">archived, hidden</span></div>' : "");
 
