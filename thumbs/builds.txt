@@ -1,0 +1,27 @@
+# Build slugs the thumbnail renderer should capture, one per line.
+#
+# WHY THIS FILE EXISTS: the slug list used to be a hardcoded array inside
+# tools/refresh-thumbnails.ps1, so a newly published build silently got no thumbnail
+# until somebody remembered to edit the script. YF Operating Model Visualization was
+# published 2026-08-21 and missed exactly that way.
+#
+# The live URL is derived by convention: https://yfagency.github.io/<slug>/
+# So a slug is the only thing needed here.
+#
+# ADDING A BUILD: append its repo slug. The publishing skill tells the builder to do
+# this; only ZF and BB can push it, and only ZF can republish the artifact afterwards.
+# Blank lines and lines starting with # are ignored.
+token-playground
+brand-spiral-work-index
+solution-stack-gravity
+construct-word-field
+cta-diagnostic-landing
+work-mosaic
+yf-grid-specimen
+brand-os-ribbon
+brand-os-index
+construct-v2-lab
+lcd-panel-lab
+hero-aligned-v6
+hero-aligned-v2
+yf-operating-model-visualization

@@ -13,7 +13,10 @@
 
 param(
   [string]$Html = "yf-builds-dashboard.artifact.html",
-  [string]$ShotDir = "thumbs"
+  [string]$ShotDir = "thumbs",
+  # Render only these slugs. Injection still covers every slug that has a jpg on disk,
+  # so a subset run tops one build up without disturbing the rest.
+  [string[]]$Only = @()
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,21 +30,25 @@ $chrome = @(
 if (-not $chrome) { throw "No Chromium browser found - install Chrome or Edge." }
 
 # Every build with a live URL. Keep this list in step with the registry's Live URL column.
-$builds = @(
-  "token-playground",
-  "brand-spiral-work-index",
-  "solution-stack-gravity",
-  "construct-word-field",
-  "cta-diagnostic-landing",
-  "work-mosaic",
-  "yf-grid-specimen",
-  "brand-os-ribbon",
-  "brand-os-index",
-  "construct-v2-lab",
-  "lcd-panel-lab",
-  "hero-aligned-v6",
-  "hero-aligned-v2"
-)
+# The slug list is DATA, in thumbs/builds.txt, not an array in this script.
+#
+# It used to be hardcoded here, which meant a newly published build got no thumbnail
+# until somebody remembered to come and edit a PowerShell script. That is exactly how
+# YF Operating Model Visualization shipped on 2026-08-21 with a hazard tile: the repo
+# existed, Pages served it, the registry row was correct, and the renderer had simply
+# never been told the slug. Appending a line to a text file is a step a builder can be
+# asked to do; editing a script is not.
+# $ShotDir is still the relative default ("thumbs") at this point - it is resolved to an
+# absolute path further down - so join against it as-is rather than deriving a parent.
+$listFile = Join-Path $ShotDir "builds.txt"
+if (-not (Test-Path $listFile)) { throw "No slug list found at $listFile - nothing to render." }
+
+$builds = Get-Content $listFile |
+  ForEach-Object { $_.Trim() } |
+  Where-Object { $_ -and -not $_.StartsWith("#") }
+
+if (-not $builds) { throw "$listFile contains no slugs." }
+"reading slugs from : $listFile ($($builds.Count) builds)"
 
 New-Item -ItemType Directory -Force $ShotDir | Out-Null
 # Chrome resolves --screenshot against its OWN working directory, not this script's, so a
@@ -54,9 +61,10 @@ $encParams = New-Object System.Drawing.Imaging.EncoderParameters 1
 $encParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter(
   [System.Drawing.Imaging.Encoder]::Quality, 62)
 
-$entries = New-Object System.Collections.Generic.List[string]
+$renderList = if ($Only.Count) { $builds | Where-Object { $Only -contains $_ } } else { $builds }
+if ($Only.Count) { "rendering subset    : $($renderList -join ', ')" }
 
-foreach ($name in $builds) {
+foreach ($name in $renderList) {
   $url = "https://yfagency.github.io/$name/"
   # The PNG is a throwaway intermediate, so it goes to temp rather than the repo. This
   # folder lives inside OneDrive, which re-materialises files from its cloud copy shortly
@@ -97,12 +105,36 @@ foreach ($name in $builds) {
   $g.Dispose(); $bmp.Dispose(); $src.Dispose()
   Remove-Item $png
 
-  $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($jpg))
-  $entries.Add('"' + $url + '":"data:image/jpeg;base64,' + $b64 + '"')
-  "{0,-26} {1,7:N0} bytes" -f $name, (Get-Item $jpg).Length
+  "{0,-32} {1,7:N0} bytes" -f $name, (Get-Item $jpg).Length
+
+  # Breathe between launches. A throwaway profile per render is not enough on its own:
+  # a full 14-build run had six consecutive captures fail while the same six succeeded
+  # immediately when run one at a time. Chrome instances tearing down still interfere
+  # with the next one starting up.
+  Start-Sleep -Milliseconds 1200
 }
 
-if ($entries.Count -eq 0) { throw "Nothing rendered - aborting without touching $Html" }
+# Inject from DISK, not from what rendered this run.
+#
+# This block used to be built inside the render loop, so a run where some captures
+# failed replaced the whole THUMBS map with only the successes - silently deleting
+# working thumbnails for every build that happened to time out. That is exactly what
+# happened on 2026-08-21: six of fourteen renders failed and five good images were
+# wiped out of the page. A failed render must cost you a stale image, never a lost one.
+$entries = New-Object System.Collections.Generic.List[string]
+$missing = New-Object System.Collections.Generic.List[string]
+foreach ($name in $builds) {
+  $jpg = Join-Path $ShotDir "$name.jpg"
+  if (-not (Test-Path $jpg)) { $missing.Add($name); continue }
+  $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($jpg))
+  $entries.Add('"https://yfagency.github.io/' + $name + '/":"data:image/jpeg;base64,' + $b64 + '"')
+}
+
+if ($entries.Count -eq 0) { throw "No thumbnails on disk - aborting without touching $Html" }
+if ($missing.Count) {
+  Write-Warning ("no image on disk for: " + ($missing -join ", ") +
+    " - these will show the hazard tile until a render succeeds")
+}
 
 # Replace the whole THUMBS assignment, whatever it currently holds.
 #
