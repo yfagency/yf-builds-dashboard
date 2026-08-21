@@ -214,7 +214,21 @@ input.pick {
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
 .dot.ok { background: var(--ok); } .dot.warn { background: var(--warn); }
 .dot.crit { background: var(--crit); } .dot.none { background: var(--rule); border: 1px solid var(--muted); }
-.notes { font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--rule-soft); padding-top: 10px; }
+/* Notes are clamped to three lines so a long one can't set the height of a whole row of
+   cards. The toggle is added only where the text genuinely overflows - measured after
+   render, and again once webfonts land, because clamping is a function of the real font. */
+.notesblock { border-top: 1px solid var(--rule-soft); padding-top: 10px; }
+.notes {
+  font-size: 13.5px; color: var(--ink-2); margin: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3;
+  overflow: hidden;
+}
+.notes.open { display: block; -webkit-line-clamp: unset; line-clamp: unset; }
+.morebtn {
+  background: none; border: 0; padding: 4px 0 0; margin: 0; cursor: pointer;
+  font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--muted);
+}
+.morebtn:hover { color: var(--accent); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
 /* The plain-text escape hatch behind the Links button. */
 .linkfall { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--rule); padding-top: 10px; }
@@ -755,6 +769,24 @@ function browseUrl(repo, branch, path) {
   var br = encodeURIComponent((branch && branch.trim()) || "main"), p = tidyPath(path);
   return p ? b + "/tree/" + br + "/" + encPath(p) : b;
 }
+/* Show a Read more only where three lines actually hide something. scrollHeight beats
+   clientHeight on a clamped element by at least a line when there is more text. */
+function clampNotes() {
+  [].slice.call(document.querySelectorAll(".notesblock")).forEach(function (block) {
+    var note = block.querySelector(".notes");
+    var btn = block.querySelector(".morebtn");
+    if (!note || !btn) return;
+    if (note.classList.contains("open")) return;   // the reader opened it; leave it alone
+    btn.hidden = note.scrollHeight <= note.clientHeight + 1;
+  });
+}
+// Clamping depends on the font that actually renders, so re-measure once Inter Tight and
+// JetBrains Mono have loaded. Without this, a card measured in the fallback font can end
+// up with a Read more that reveals nothing, or none where it is needed.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(function () { clampNotes(); });
+}
+
 function ageDays(iso) {
   if (!iso) return null;
   var d = new Date(iso); if (isNaN(d)) return null;
@@ -947,7 +979,8 @@ function card(b) {
       (b.client ? "Client <strong>" + esc(b.client) + "</strong>" : "") +
       (b.client && b.project ? " &middot; " : "") +
       (b.project ? "Project <strong>" + esc(b.project) + "</strong>" : "") + "</p>" : "") +
-    (b.notes ? '<p class="notes">' + esc(b.notes) + "</p>" : "") +
+    (b.notes ? '<div class="notesblock"><p class="notes">' + esc(b.notes) + "</p>" +
+      '<button class="morebtn" data-more="1" hidden>Read more</button></div>' : "") +
     '<div class="actions">' +
       // No target="_blank": the artifact shell intercepts cross-origin anchor clicks and
       // hands the URL to its parent window, asking for a new tab only when a target is
@@ -1064,6 +1097,7 @@ function render() {
   if (!pool.length) { main.innerHTML = EMPTY; return; }
   if (!shown.length) { main.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>No build matches those filters. Clear the search or pick another status.</p></div>'; return; }
   main.innerHTML = '<div class="grid">' + shown.map(card).join("") + "</div>";
+  clampNotes();
   // Drop selections for rows that are no longer on screen, so the count never claims
   // more than the viewer can see.
   var visible = {};
@@ -1346,6 +1380,14 @@ function onCardClick(e) {
   if (co) { checkOut(co.getAttribute("data-checkout")); return; }
   var ci = e.target.closest("[data-checkin]");
   if (ci) { checkIn(ci.getAttribute("data-checkin")); return; }
+  var more = e.target.closest("[data-more]");
+  if (more) {
+    var note = more.parentNode.querySelector(".notes");
+    if (!note) return;
+    var opening = !note.classList.contains("open");
+    note.classList.toggle("open", opening);
+    more.textContent = opening ? "Show less" : "Read more";
+  }
 }
 
 // Selection is tracked outside the DOM so it survives every re-render, including the
