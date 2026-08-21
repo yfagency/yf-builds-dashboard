@@ -699,9 +699,19 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   color: var(--muted);
 }
 .tgroup > summary { cursor: pointer; }
+/* The default marker is suppressed, so a drawn chevron replaces it. Without one, a
+   collapsed panel holding eleven tasks looks like a dead header and the tasks read as
+   missing - which is exactly what happened. */
 .tgroup > summary::-webkit-details-marker { display: none; }
 .tgroup > summary::marker { content: ""; }
 .tgroup > summary:hover { color: var(--ink-2); }
+.chev {
+  flex: none; align-self: center; width: 7px; height: 7px; margin-right: 3px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform .15s ease;
+}
+.tgroup[open] > summary .chev { transform: rotate(45deg); }
+.tsummary .total { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
 .tgroup.urgent .ghead { color: var(--crit); }
 .ghead .gn, .tgroup > summary .gn { color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .ghead .ghint, .tgroup > summary .ghint {
@@ -3200,7 +3210,8 @@ function bucketPanel(name, list, opts) {
   var cls = "tgroup" + (o.urgent && list.length ? " urgent" : "");
 
   if (o.collapsed) {
-    return '<details class="' + cls + '"><summary>' + head + "</summary>" + rows + "</details>";
+    return '<details class="' + cls + '"' + (o.open ? " open" : "") + '><summary><span class="chev"></span>' +
+      head + "</summary>" + rows + "</details>";
   }
   return '<section class="' + cls + '"><p class="ghead">' + head + "</p>" + rows + "</section>";
 }
@@ -3299,11 +3310,13 @@ function renderTasksPage() {
     return;
   }
   var t = tally();
+  /* Later stays collapsed only when it is genuinely long - one person has fifty in it.
+     Under a dozen it opens, because collapsing a short list hides tasks for no gain. */
   var groups =
     bucketPanel("Overdue", t.over, { urgent: true }) +
     bucketPanel("Today", t.today, {}) +
     bucketPanel("This week", t.week, {}) +
-    bucketPanel("Later", t.later, { collapsed: true, hint: "not planned yet" });
+    bucketPanel("Later", t.later, { collapsed: true, open: t.later.length <= 12, hint: "not planned yet" });
 
   var capped = TASK_ROWS.length >= TASK_CAP
     ? '<p class="foot" style="margin:0 0 16px">Showing the first ' + TASK_CAP +
@@ -3316,8 +3329,13 @@ function renderTasksPage() {
     return '<div class="tg ' + (num ? cls : "zero") + '"><span class="n">' + num +
       '</span><span class="label">' + label + "</span></div>";
   };
+  /* The total, stated. Without it there was nothing to reconcile against Notion, so a
+     collapsed bucket made the page look like it had lost tasks. */
   var summary = '<div class="tsummary">' +
     '<p class="said' + (said.calm ? " calm" : "") + '">' + esc(said.txt) + "</p>" +
+    '<p class="total"><b>' + t.all.length + "</b> open in total" +
+      (t.later.length ? ", " + t.later.length + " of them in Later" : "") +
+      " " + String.fromCharCode(183) + " Delivered and Archived excluded</p>" +
     '<div class="tgauges">' +
       g("crit", t.over.length, "overdue") +
       g("go", t.today.length, "today") +
