@@ -934,6 +934,113 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .devnote p:last-child { margin-bottom: 0; }
 
 /* ================================================================
+   PALETTE, WHAT'S NEW, AND PROJECTS - added 2026-08-21
+   ================================================================ */
+
+/* ---- command palette ----
+   Ctrl+K and Cmd+K both, because the team is on Windows and Mac. The displayed hint
+   follows the platform; the bindings never do, so a shared machine cannot get it wrong. */
+.pal { align-items: flex-start; padding: 10vh 16px 16px; }
+.pal .sheet { max-width: 560px; padding: 0; overflow: hidden; }
+.palbox { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--rule); }
+.palbox .go { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+#palInput {
+  flex: 1; min-width: 0; background: none; border: 0; padding: 0;
+  font-family: var(--sans); font-size: 16px; color: var(--ink);
+}
+#palInput:focus { outline: none; }
+.palhint { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.pallist { max-height: 52vh; overflow-y: auto; padding: 6px 0 8px; }
+.palrow {
+  display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer; text-align: left;
+  background: none; border: 0; padding: 9px 16px; color: var(--ink-2); font-family: var(--sans); font-size: 14px;
+}
+.palrow .k {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--rule); border-radius: 3px; padding: 2px 6px; flex: none;
+}
+.palrow .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.palrow .sub { color: var(--muted); font-size: 12px; flex: none; }
+.palrow[aria-selected="true"] { background: var(--surface-2); color: var(--ink); }
+.palrow[aria-selected="true"] .k { border-color: var(--accent); color: var(--accent); }
+.palempty { padding: 18px 16px; color: var(--muted); font-size: 13.5px; }
+
+/* ---- what changed since you last looked ---- */
+.newpill {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--accent-ink); background: var(--accent); border-radius: 3px; padding: 1px 5px;
+  vertical-align: 1px; flex: none;
+}
+.sincebar {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  border-left: 2px solid var(--accent); background: var(--accent-soft);
+  border-radius: 0 4px 4px 0; padding: 10px 14px; margin: 0 0 4px;
+}
+.sincebar .n { font-family: var(--mono); font-size: 12px; color: var(--ink); }
+.sincebar .n b { color: var(--accent); }
+.sincebar .dismiss {
+  margin-left: auto; background: none; border: 0; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.sincebar .dismiss:hover { color: var(--ink); }
+
+/* A shared link can put you in someone else's view. Say so, rather than letting
+   somebody read another person's day thinking it is their own. */
+.linknotice {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  border: 1px solid var(--warn); background: var(--warn-soft);
+  border-radius: var(--radius); padding: 9px 14px; margin: 0 0 16px; font-size: 13px; color: var(--ink-2);
+}
+.linknotice b { color: var(--ink); }
+.linknotice button {
+  margin-left: auto; background: none; border: 0; cursor: pointer; color: var(--warn);
+  font-family: var(--sans); font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--rule);
+}
+
+/* ---- projects ----
+   One project open at a time, on purpose: the value of this page is depth on a single
+   job, and a list of 431 is a directory rather than a view. */
+.projbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+#projSearch { flex: 1 1 260px; min-width: 0; }
+.projlist {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  max-height: 60vh; overflow-y: auto;
+}
+.projrow {
+  display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; width: 100%;
+  background: none; border: 0; border-top: 1px solid var(--rule-soft); cursor: pointer;
+  padding: 12px 16px; text-align: left; color: var(--ink); font-family: var(--sans);
+}
+.projrow:first-child { border-top: 0; }
+.projrow:hover { background: var(--surface-2); }
+.projrow .pn { flex: 1 1 220px; min-width: 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.projrow .pc { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.projrow[aria-current="true"] { background: var(--accent-soft); }
+.projrow[aria-current="true"] .pn { color: var(--accent); }
+
+/* The open project. Deliberately built like a record, not a card - this is the page's
+   subject rather than one of many things it lists. */
+.projhead { border-bottom: 1px solid var(--rule); padding-bottom: 18px; margin-bottom: 20px; }
+.projhead .code {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 8px;
+}
+.projhead h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 600; letter-spacing: -.035em; line-height: 1.1; overflow-wrap: anywhere; }
+.projhead .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.projfacts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 0; border-top: 1px solid var(--rule); margin-top: 4px;
+}
+.pfact { padding: 13px 20px 13px 0; border-right: 1px solid var(--rule-soft); min-width: 0; }
+.pfact:last-child { border-right: 0; }
+.pfact .k {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); display: block; margin-bottom: 4px;
+}
+.pfact .v { font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.pfact .v.dim { color: var(--muted); }
+
+/* ================================================================
    FITTING EVERY VIEWPORT - added 2026-08-21
 
    The page was built at desktop width and broke badly below about
@@ -1064,6 +1171,7 @@ img, svg { max-width: 100%; }
     <div class="topbar-right">
       <div class="navlinks">
         <a href="#/tasks" data-nav="tasks">Tasks</a>
+        <a href="#/projects" data-nav="projects">Projects</a>
         <a href="#/briefing" data-nav="briefing">Briefing</a>
         <a href="#/builds" data-nav="builds">Builds</a>
         <a href="#/dev" data-nav="dev" id="navDev" hidden>Dev</a>
@@ -1135,6 +1243,29 @@ img, svg { max-width: 100%; }
         </a>
       </section>
 
+      <section data-block="projects-plate">
+        <a class="plate" href="#/projects">
+          <!-- Projects, drawn: one record pulled forward out of a stack of many, because
+               that is the model - 431 projects in the database, one open at a time. The
+               accent marks the open one; the others are just depth behind it. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="One project record pulled forward from a stack">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect x="70" y="34" width="180" height="14" rx="2" fill="var(--ink)" opacity=".10"/>
+            <rect x="70" y="54" width="180" height="14" rx="2" fill="var(--ink)" opacity=".13"/>
+            <rect x="56" y="76" width="208" height="48" rx="3" fill="var(--surface)" stroke="var(--accent)"/>
+            <rect x="70" y="88" width="82" height="6" rx="3" fill="var(--accent)"/>
+            <rect x="70" y="102" width="140" height="5" rx="2.5" fill="var(--ink)" opacity=".24"/>
+            <rect x="70" y="132" width="180" height="14" rx="2" fill="var(--ink)" opacity=".13"/>
+            <rect x="70" y="152" width="180" height="14" rx="2" fill="var(--ink)" opacity=".10"/>
+          </svg>
+          <div class="body">
+            <h2>Projects</h2>
+            <p class="what">Open one project and work from it &mdash; its client, status, deadline and deliverables in one place.</p>
+            <p class="stat" id="stProjects"><span class="quiet">reading the projects&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
       <section data-block="builds-plate">
         <a class="plate" href="#/builds">
           <!-- Builds, drawn: three builds stacked front-to-back, the newest one forward and
@@ -1160,6 +1291,26 @@ img, svg { max-width: 100%; }
       </section>
 
     </div>
+  </section>
+
+  <!-- ============================ PROJECTS ============================
+       One project open at a time. The selection lives in the URL as ?p=<page id>, so a
+       link to a project opens that project for whoever you send it to. -->
+  <section id="v-projects" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Projects</p>
+          <h1 id="projTitle">Projects</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn" id="projCopy" hidden title="Copy a link that opens this project">Copy link</button>
+          <button class="btn ghost" id="projClear" hidden>Close project</button>
+        </div>
+      </div>
+    </header>
+    <div id="projBody"><div class="panel"><span class="spin"></span>Loading projects&hellip;</div></div>
+    <p class="foot">Read live from the YF OS Projects database through your own Notion connection. Searching covers the project name, its code and its client. <b>One project is open at a time</b> &mdash; that is the point of the page, and the selection travels in the link so you can send somebody straight to it.</p>
   </section>
 
   <!-- ============================== DEV ==============================
@@ -1281,6 +1432,17 @@ img, svg { max-width: 100%; }
     <div class="box" id="connBox">Not checked yet.</div>
   </details>
 </div>
+<div class="scrim pal" id="palScrim">
+  <div class="sheet">
+    <div class="palbox">
+      <span class="go">&rsaquo;</span>
+      <input type="text" id="palInput" placeholder="Jump to a section, a person, or a project" autocomplete="off" spellcheck="false">
+      <span class="palhint" id="palHint">ESC</span>
+    </div>
+    <div class="pallist" id="palList"></div>
+  </div>
+</div>
+
 <div class="scrim" id="whoScrim">
   <div class="sheet" style="max-width:460px">
     <h2>Who are you?</h2>
@@ -3529,9 +3691,436 @@ renderWhoGrid = function () {
   });
 };
 
+/* ================================================================
+   COMMAND PALETTE, WHAT'S NEW, DEEP LINKS, PROJECTS - 2026-08-21
+   ================================================================ */
+
+/* ---- routes now carry parameters ----
+   `#/tasks?who=PS` and `#/projects?p=<id>`. routeName() has to strip the query or every
+   parameterised link falls through to home, and the "#/" guard still has to hold so the
+   Guide's own `#g-...` anchors are left alone. */
+function routeQuery() {
+  var h = location.hash || "";
+  var i = h.indexOf("?");
+  var out = {};
+  if (i < 0) return out;
+  h.slice(i + 1).split("&").forEach(function (kv) {
+    if (!kv) return;
+    var p = kv.split("=");
+    out[decodeURIComponent(p[0])] = decodeURIComponent((p[1] || "").replace(/\+/g, " "));
+  });
+  return out;
+}
+routeName = function () {
+  var h = location.hash || "";
+  if (h.indexOf("#/") !== 0) return null;
+  var k = h.slice(2).split("?")[0].replace(/\/+$/, "");
+  return VIEWS[k] ? k : "home";
+};
+function setHash(route, params) {
+  var q = [];
+  Object.keys(params || {}).forEach(function (k) {
+    if (params[k] != null && params[k] !== "") q.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
+  });
+  location.hash = "#/" + route + (q.length ? "?" + q.join("&") : "");
+}
+
+/* A ?who= link shows you somebody else's day. It does NOT overwrite who you are - a
+   link should never quietly change your identity - so it applies for the session and
+   says so out loud. */
+var LINK_WHO = null;
+function applyWhoParam() {
+  var q = routeQuery();
+  if (!q.who) { LINK_WHO = null; return; }
+  var id = matchPerson(q.who) || (isBuilder(q.who) ? q.who : null);
+  if (!id || id === WHO) { LINK_WHO = null; return; }
+  LINK_WHO = id;
+  WHO = id;
+  renderChip();
+  gateDev();
+}
+function linkNoticeHtml() {
+  if (!LINK_WHO) return "";
+  return '<div class="linknotice">Viewing <b>' + esc(whoLabel(LINK_WHO)) +
+    "</b> from a shared link, not your own tasks." +
+    '<button id="linkBack">Switch back</button></div>';
+}
+
+/* ---- what changed since you last looked ----
+   The marker is read once at load and held for the session, then advanced on the way
+   out. Advancing it at load would make "since you last looked" mean "since a moment
+   ago", which is always empty and therefore useless. */
+var SINCE = null;
+try { SINCE = localStorage.getItem("yfbridge.seen") || null; } catch (e) { SINCE = null; }
+function markSeen() {
+  try { localStorage.setItem("yfbridge.seen", new Date().toISOString()); } catch (e) {}
+}
+setTimeout(markSeen, 30000);
+window.addEventListener("pagehide", markSeen);
+
+function isNewSince(iso) {
+  if (!SINCE || !iso) return false;
+  return String(iso) > String(SINCE);
+}
+function sinceLabel() {
+  if (!SINCE) return "";
+  var d = daysSince(SINCE.slice(0, 10));
+  if (d === null) return "";
+  return d <= 0 ? "earlier today" : d === 1 ? "yesterday" : d + " days ago";
+}
+
+/* Counts what arrived since the marker, across the three feeds that move. */
+function whatsNew() {
+  var n = { tasks: 0, stories: 0, builds: 0 };
+  if (!SINCE) return n;
+  (TASK_ROWS || []).filter(minePredicate).forEach(function (t) {
+    if (isNewSince(t["Last edited time"])) n.tasks++;
+  });
+  var day = SINCE.slice(0, 10);
+  (BRIEF_ROWS || []).forEach(function (r) { if (String(r["date:Date:start"] || "") > day) n.stories++; });
+  (BUILDS_ROWS || []).forEach(function (b) {
+    if (!isSelf(b) && b.commitDate && String(b.commitDate).slice(0, 10) > day) n.builds++;
+  });
+  return n;
+}
+function sinceBarHtml() {
+  var n = whatsNew();
+  var total = n.tasks + n.stories + n.builds;
+  if (!SINCE || !total) return "";
+  var bits = [];
+  if (n.tasks) bits.push("<b>" + n.tasks + "</b> task" + (n.tasks === 1 ? "" : "s"));
+  if (n.stories) bits.push("<b>" + n.stories + "</b> briefing stor" + (n.stories === 1 ? "y" : "ies"));
+  if (n.builds) bits.push("<b>" + n.builds + "</b> build" + (n.builds === 1 ? "" : "s"));
+  return '<div class="sincebar"><span class="n">Since you last looked ' + esc(sinceLabel()) +
+    ": " + bits.join(", ") + "</span>" +
+    '<button class="dismiss" id="sinceHide">dismiss</button></div>';
+}
+
+/* ---- projects ---- */
+var Q_PROJ_LIST = 'SELECT url, "Project Name", "Status", "Client", "Stream", ' +
+  '"date:Deadline:start", date("Edited") AS edited FROM "' + PROJ_DS + '" ORDER BY "Edited" DESC LIMIT 500';
+var PROJ_ROWS = null;
+var PROJ_OPEN = null;   // page id of the open project
+var PROJ_FILTER = "";
+try { PROJ_OPEN = localStorage.getItem("yfbridge.project") || null; } catch (e) {}
+
+function projIdOf(row) { return pageIdFrom(row.url); }
+function projClientName(row) {
+  var l = asList(row["Client"]);
+  return l.length ? (CLIENT_NAME[l[0]] || "") : "";
+}
+/* Project names are prefixed with a bracketed code, e.g. "[TDK0018] - ...". Pulling it
+   out gives the page an eyebrow and makes the code searchable on its own. */
+function projCode(row) {
+  var m = /^\s*\[([^\]]+)\]/.exec(String(row["Project Name"] || ""));
+  return m ? m[1].trim() : "";
+}
+function projTitle(row) {
+  // Strips "[CODE]" plus whatever separator follows it. Matching a class of punctuation
+  // rather than a list of dashes keeps this file ASCII - the titles use hyphens, en
+  // dashes and em dashes interchangeably and none of them can be written here.
+  return String(row["Project Name"] || "(untitled project)").replace(/^\s*\[[^\]]+\]\s*[^A-Za-z0-9]*/, "").trim() ||
+    String(row["Project Name"] || "");
+}
+function projMatches(row, q) {
+  if (!q) return true;
+  return (String(row["Project Name"] || "") + " " + projClientName(row) + " " + String(row["Status"] || ""))
+    .toLowerCase().indexOf(q) >= 0;
+}
+function openProject(id) {
+  PROJ_OPEN = id || null;
+  try {
+    if (id) localStorage.setItem("yfbridge.project", id);
+    else localStorage.removeItem("yfbridge.project");
+  } catch (e) {}
+  setHash("projects", id ? { p: id } : {});
+  renderProjects();
+}
+
+function projRowOf(id) {
+  var hit = null;
+  (PROJ_ROWS || []).forEach(function (r) { if (projIdOf(r) === id) hit = r; });
+  return hit;
+}
+
+function renderProjects() {
+  var body = el("projBody");
+  if (!body) return;
+  el("projClear").hidden = !PROJ_OPEN;
+  el("projCopy").hidden = !PROJ_OPEN;
+
+  if (!PROJ_ROWS) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading projects&hellip;</div>';
+    return;
+  }
+  var open = PROJ_OPEN ? projRowOf(PROJ_OPEN) : null;
+  el("projTitle").textContent = open ? "Project" : "Projects";
+
+  if (open) {
+    var code = projCode(open), client = projClientName(open);
+    var dl = open["date:Deadline:start"];
+    var st = open["Status"] || "";
+    var deliverables = (TASK_ROWS || []).filter(function (t) {
+      return asList(t["Projects"]).indexOf(open.url) >= 0;
+    });
+    var undone = deliverables.filter(function (t) { return t["Progress"] !== "Delivered" && t["Progress"] !== "Archived"; });
+
+    var facts =
+      '<div class="pfact"><span class="k">Client</span><span class="v' + (client ? "" : " dim") + '">' +
+        esc(client || "none linked") + "</span></div>" +
+      '<div class="pfact"><span class="k">Status</span><span class="v">' + esc(st || "unset") + "</span></div>" +
+      '<div class="pfact"><span class="k">Deadline</span><span class="v' + (dl ? "" : " dim") + '">' +
+        esc(dl ? longDate(dl) : "none set") + "</span></div>" +
+      '<div class="pfact"><span class="k">Stream</span><span class="v' + (open["Stream"] ? "" : " dim") + '">' +
+        esc(open["Stream"] || "unset") + "</span></div>" +
+      '<div class="pfact"><span class="k">Last edited</span><span class="v">' + esc(shortDate(open.edited) || "-") + "</span></div>";
+
+    body.innerHTML =
+      '<div class="projhead">' +
+        (code ? '<p class="code">' + esc(code) + "</p>" : "") +
+        "<h2>" + esc(projTitle(open)) + "</h2>" +
+        '<div class="row">' +
+          '<a class="btn" href="' + esc(open.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' +
+          '<button class="btn ghost" id="projPick">Choose another</button>' +
+        "</div>" +
+      "</div>" +
+      '<div class="projfacts">' + facts + "</div>" +
+      '<div class="tstack" style="margin-top:26px">' +
+        bucketPanel("Open deliverables", undone, { hint: undone.length ? "" : "none in the loaded task set" }) +
+      "</div>" +
+      '<p class="quiet" style="margin-top:14px">Deliverables are matched against the undelivered tasks already loaded for this session, so a task outside that set will not appear here yet.</p>';
+
+    var pick = el("projPick");
+    if (pick) pick.addEventListener("click", function () { openProject(null); });
+    return;
+  }
+
+  // The directory: search first, because 431 rows is not something you scroll.
+  var q = PROJ_FILTER.toLowerCase().trim();
+  var hits = PROJ_ROWS.filter(function (r) { return projMatches(r, q); });
+  var list = hits.slice(0, 60).map(function (r) {
+    var c = projClientName(r), code = projCode(r);
+    return '<button class="projrow" data-proj="' + esc(projIdOf(r)) + '">' +
+      '<span class="pn">' + (code ? '<span class="pc">' + esc(code) + "</span> " : "") + esc(projTitle(r)) + "</span>" +
+      (c ? '<span class="pc">' + esc(c) + "</span>" : "") +
+      '<span class="tpill">' + esc(r["Status"] || "unset") + "</span></button>";
+  }).join("");
+
+  body.innerHTML =
+    '<div class="projbar">' +
+      '<input type="text" id="projSearch" placeholder="Search 431 projects by name, code or client" value="' + esc(PROJ_FILTER) + '" autocomplete="off">' +
+      '<span class="quiet mono">' + hits.length + " of " + PROJ_ROWS.length + "</span>" +
+    "</div>" +
+    (hits.length
+      ? '<div class="projlist">' + list + "</div>" +
+        (hits.length > 60 ? '<p class="quiet" style="margin-top:12px">Showing the first 60. Keep typing to narrow it.</p>' : "")
+      : '<div class="panel"><h2>Nothing matches</h2><p>No project name, code or client contains &ldquo;' +
+        esc(PROJ_FILTER) + "&rdquo;.</p></div>");
+
+  var s = el("projSearch");
+  if (s) {
+    s.addEventListener("input", function () { PROJ_FILTER = s.value; renderProjects(); });
+    if (q) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+  }
+}
+
+function startProjects() {
+  if (!mcp || !SERVER) return;
+  mcp.watchTool(SERVER, T_QUERY, sqlInput(PROJ_DS, Q_PROJ_LIST), function (ev) {
+    if (ev.type === "data") {
+      PROJ_ROWS = rows(ev.result);
+      renderProjects();
+      var st = el("stProjects");
+      if (st) {
+        var live = PROJ_ROWS.filter(function (r) {
+          return ["On Track", "At Risk", "On Hold", "Ready to invoice", "To Showcase", "Internal"].indexOf(r["Status"]) >= 0;
+        }).length;
+        st.innerHTML = "<span><b>" + live + "</b> active</span><span><b>" + PROJ_ROWS.length + "</b> total</span>";
+      }
+      return;
+    }
+    if (!PROJ_ROWS) {
+      var e = explain(ev.error || {});
+      el("projBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
+      var s2 = el("stProjects");
+      if (s2) s2.innerHTML = '<span class="quiet">projects unavailable</span>';
+    }
+  }, { cache: { staleTime: 120000 }, refetchInterval: 300000 });
+}
+
+/* ---- command palette ---- */
+var PAL_ITEMS = [], PAL_SEL = 0;
+var IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
+
+function palActions() {
+  var a = [];
+  var nav = [["home", "Home"], ["tasks", "Tasks"], ["projects", "Projects"], ["briefing", "Briefing"], ["builds", "Builds"]];
+  if (devAllowed()) nav.push(["dev", "Dev tools"]);
+  nav.forEach(function (n) {
+    a.push({ k: "Go", t: n[1], run: function () { setHash(n[0], {}); } });
+  });
+  Object.keys(PEOPLE).forEach(function (id) {
+    a.push({ k: "Who", t: PEOPLE[id].name, sub: PEOPLE[id].ini, run: function () { setWho(id); LINK_WHO = null; } });
+  });
+  a.push({ k: "Who", t: "The builders team", run: function () { setWho(WHO_ALL); LINK_WHO = null; } });
+  a.push({ k: "Act", t: "Refresh everything", run: function () { refreshNow(); if (mcp && SERVER) startBrief(); } });
+  a.push({ k: "Act", t: "Change who I am", run: openWho });
+  (PROJ_ROWS || []).slice(0, 200).forEach(function (r) {
+    var c = projClientName(r);
+    a.push({ k: "Proj", t: (projCode(r) ? projCode(r) + " " : "") + projTitle(r), sub: c,
+      run: function () { openProject(projIdOf(r)); setHash("projects", { p: projIdOf(r) }); } });
+  });
+  (TASK_ROWS || []).filter(minePredicate).slice(0, 60).forEach(function (t) {
+    a.push({ k: "Task", t: String(t["Tasks"] || ""), sub: t["Planning"] || "",
+      run: function () { window.open(t.url, "_blank", "noopener"); } });
+  });
+  return a;
+}
+
+function palRender() {
+  var box = el("palList"), q = el("palInput").value.toLowerCase().trim();
+  var all = palActions();
+  PAL_ITEMS = q
+    ? all.filter(function (i) { return (i.t + " " + (i.sub || "") + " " + i.k).toLowerCase().indexOf(q) >= 0; })
+    : all.filter(function (i) { return i.k !== "Task" && i.k !== "Proj"; });
+  PAL_ITEMS = PAL_ITEMS.slice(0, 40);
+  if (PAL_SEL >= PAL_ITEMS.length) PAL_SEL = 0;
+  box.innerHTML = PAL_ITEMS.length
+    ? PAL_ITEMS.map(function (i, n) {
+        return '<button class="palrow" data-i="' + n + '" aria-selected="' + (n === PAL_SEL) + '">' +
+          '<span class="k">' + esc(i.k) + "</span>" +
+          '<span class="t">' + esc(i.t) + "</span>" +
+          (i.sub ? '<span class="sub">' + esc(i.sub) + "</span>" : "") + "</button>";
+      }).join("")
+    : '<p class="palempty">Nothing matches. Try a project code, a name, or a section.</p>';
+  var sel = box.querySelector('[aria-selected="true"]');
+  if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: "nearest" });
+}
+function palOpen() {
+  el("palHint").textContent = (IS_MAC ? "CMD K" : "CTRL K") + " " + String.fromCharCode(183) + " ESC";
+  el("palInput").value = "";
+  PAL_SEL = 0;
+  openSheet("palScrim");
+  palRender();
+  el("palInput").focus();
+}
+function palClose() { closeSheet("palScrim"); }
+function palRun() {
+  var it = PAL_ITEMS[PAL_SEL];
+  if (!it) return;
+  palClose();
+  it.run();
+}
+
+el("palInput").addEventListener("input", function () { PAL_SEL = 0; palRender(); });
+el("palInput").addEventListener("keydown", function (e) {
+  if (e.key === "ArrowDown") { e.preventDefault(); PAL_SEL = Math.min(PAL_SEL + 1, PAL_ITEMS.length - 1); palRender(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); PAL_SEL = Math.max(PAL_SEL - 1, 0); palRender(); }
+  else if (e.key === "Enter") { e.preventDefault(); palRun(); }
+  else if (e.key === "Escape") { e.preventDefault(); palClose(); }
+});
+el("palList").addEventListener("click", function (e) {
+  var b = e.target.closest ? e.target.closest("[data-i]") : null;
+  if (!b) return;
+  PAL_SEL = +b.getAttribute("data-i");
+  palRun();
+});
+el("palScrim").addEventListener("click", function (e) { if (e.target.id === "palScrim") palClose(); });
+
+/* Ctrl+K and Cmd+K both, on every platform. Ignored while a field has focus, except
+   the palette's own, so typing a task name never hijacks the page. */
+document.addEventListener("keydown", function (e) {
+  var k = (e.key || "").toLowerCase();
+  if (k === "k" && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
+    if (el("palScrim").classList.contains("open")) palClose(); else palOpen();
+    return;
+  }
+  if (k === "escape" && el("palScrim").classList.contains("open")) { palClose(); return; }
+  var t = e.target, tag = (t && t.tagName) || "";
+  var typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable);
+  if (!typing && (k === "/" || (k === "p" && !e.ctrlKey && !e.metaKey && e.shiftKey))) {
+    e.preventDefault(); palOpen();
+  }
+});
+
+/* ---- wiring ---- */
+VIEWS.projects = "v-projects";
+PAGES.projects = 7;
+BLOCKS.push({ block: "projects-plate", section: "projects", weight: 5 });
+
+el("projClear").addEventListener("click", function () { openProject(null); });
+el("projCopy").addEventListener("click", function () {
+  var url = location.href;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function () {
+      var b = el("projCopy"), was = b.textContent;
+      b.textContent = "Copied";
+      setTimeout(function () { b.textContent = was; }, 1200);
+    }, function () {});
+  }
+});
+el("projBody").addEventListener("click", function (e) {
+  var b = e.target.closest ? e.target.closest("[data-proj]") : null;
+  if (!b) return;
+  openProject(b.getAttribute("data-proj"));
+});
+
+var _watchBuildsC = watchBuilds;
+watchBuilds = function () { var r = _watchBuildsC(); startProjects(); return r; };
+
+var _applyRouteC = applyRoute;
+applyRoute = function (name) {
+  // An unrecognised name would hide every view and leave a blank page. Anything not in
+  // VIEWS resolves to home instead - cheap insurance against a bad link or a typo.
+  if (!VIEWS[name]) name = "home";
+  applyWhoParam();
+  var q = routeQuery();
+  if (name === "projects" && q.p && q.p !== PROJ_OPEN) {
+    PROJ_OPEN = q.p;
+    try { localStorage.setItem("yfbridge.project", q.p); } catch (e) {}
+  }
+  _applyRouteC(name);
+  if (name === "projects") renderProjects();
+};
+
+/* The since-bar and the shared-link notice both belong at the top of whichever view
+   they concern, so they are injected rather than living in the markup. */
+var _renderTaskLead = renderTaskLead;
+renderTaskLead = function () {
+  _renderTaskLead();
+  var host = el("taskLead-extra");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "taskLead-extra";
+    var block = document.querySelector('[data-block="tasks-lead"]');
+    if (block) block.insertBefore(host, block.firstChild);
+  }
+  host.innerHTML = sinceBarHtml();
+  host.style.marginBottom = host.innerHTML ? "12px" : "0";
+  var hide = el("sinceHide");
+  if (hide) hide.addEventListener("click", function () { SINCE = null; markSeen(); renderTaskLead(); });
+};
+
+var _renderTasksPage = renderTasksPage;
+renderTasksPage = function () {
+  _renderTasksPage();
+  var body = el("tasksBody");
+  if (body && LINK_WHO) body.insertAdjacentHTML("afterbegin", linkNoticeHtml());
+  var back = el("linkBack");
+  if (back) back.addEventListener("click", function () {
+    LINK_WHO = null;
+    var stored = WHO_ALL;
+    try { stored = localStorage.getItem("yfbridge.who") || WHO_ALL; } catch (e) {}
+    setHash("tasks", {});
+    setWho(isBuilder(stored) ? stored : WHO_ALL);
+  });
+};
+
 renderChip();
 gateDev();
 orderHome();
+applyWhoParam();
 applyRoute(routeName() || "home");
 askOnFirstOpen();
 boot();
