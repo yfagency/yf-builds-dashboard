@@ -844,6 +844,96 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .tsummary .said { font-size: clamp(19px, 2.4vw, 25px); font-weight: 600; letter-spacing: -.03em; margin: 0 0 2px; text-wrap: balance; }
 .tsummary .said.calm { color: var(--ink-2); font-weight: 500; }
 /* ================================================================
+   AVATARS, THE PROFILE CHIP, AND DEV TOOLS - added 2026-08-21
+
+   The avatars are drawn, not photographed. Two reasons: the artifact's
+   CSP blocks every external image host, so a Notion avatar URL cannot
+   load; and the Builders database in YF OS is an empty stub with no
+   photos in it. So each person gets a generated mark instead.
+
+   They vary by ANGLE, DENSITY and where the accent bar falls - never by
+   hue. The palette allows one accent, and ok/warn/crit are reserved for
+   state, so four differently-coloured avatars would have broken the one
+   rule the rest of the page keeps. Monochrome plus a single yellow bar
+   makes them unmistakably YF objects and still instantly telling apart.
+   ================================================================ */
+
+.av { display: block; flex: none; border-radius: 50%; overflow: hidden; }
+.av-ring { border: 1px solid var(--rule); }
+
+/* The chip: who you are, on every view, top right. It exists because the
+   opening gate is asked once and a one-time prompt is a bad place for the
+   only copy of an important control. */
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 999px;
+  padding: 3px 12px 3px 4px; color: var(--ink-2); font-family: var(--sans);
+}
+.chip:hover { border-color: var(--accent); color: var(--ink); }
+.chip .who {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.chip .caret { color: var(--muted); font-size: 9px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---- dev tools ----
+   Nav-only by design: it has no home-page block at all, which in the ladder is a
+   weight of 1-2. A maintenance console should be reachable, not promoted. */
+/* Two tracks at full width, not three: at minmax(330px) the 1180px content area makes
+   room for a third track that nothing fills, leaving the same orphaned column the task
+   page used to have. */
+/* min(420px, 100%) rather than a bare 420px: a track floor wider than its container
+   does not shrink, it overflows - which is how this panel first ran 44px off the right
+   edge of a phone. The min() clamps the floor to whatever room actually exists. */
+.devgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; align-items: start; }
+.devpanel {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 18px 20px 20px;
+}
+.devpanel > h2 {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 3px;
+}
+.devpanel > .sub { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; line-height: 1.45; }
+.devpanel.wide { grid-column: 1 / -1; }
+
+/* A check is a claim plus a verdict. The verdict colour is the only colour in the
+   panel, so a red line is impossible to miss in a page of grey ones. */
+.chk { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--rule-soft); }
+.chk:first-of-type { border-top: 0; }
+.chk .lbl { flex: 1 1 180px; min-width: 0; font-size: 13.5px; color: var(--ink); }
+.chk .lbl small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+.chk .val {
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13px;
+  margin-left: auto; white-space: nowrap;
+}
+.chk.ok   .val { color: var(--ok); }
+.chk.warn .val { color: var(--warn); }
+.chk.crit .val { color: var(--crit); }
+.chk.idle .val { color: var(--muted); }
+
+/* The registry: what the KB claims is automated. Deliberately labelled as claims,
+   because a row here has never been proof that anything runs. */
+.taskrow { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--rule-soft); }
+.taskrow .nm { flex: 1 1 200px; min-width: 0; font-size: 13.5px; color: var(--ink); overflow-wrap: anywhere; }
+.taskrow .sch { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-left: auto; overflow-wrap: anywhere; }
+.spill { border: 1px solid var(--rule); background: var(--surface-2); border-radius: 999px; padding: 2px 9px; font-family: var(--sans); font-size: 10.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.spill.on { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.spill.off { background: var(--surface-2); color: var(--muted); }
+
+.devnote {
+  border-left: 2px solid var(--warn); background: var(--warn-soft);
+  padding: 12px 15px; border-radius: 0 4px 4px 0; margin: 0 0 16px;
+}
+.devnote .h {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--warn); display: block; margin-bottom: 5px;
+}
+.devnote p { font-size: 13px; color: var(--ink-2); margin: 0 0 8px; line-height: 1.5; }
+.devnote p:last-child { margin-bottom: 0; }
+
+/* ================================================================
    FITTING EVERY VIEWPORT - added 2026-08-21
 
    The page was built at desktop width and broke badly below about
@@ -886,7 +976,7 @@ img, svg { max-width: 100%; }
   /* A vertical rule between stacked cells points nowhere. */
   .bandcell { border-right: 0; border-bottom: 1px solid var(--rule-soft); padding: 12px 0; }
   .bandcell:last-child { border-bottom: 0; padding-bottom: 2px; }
-  .bcols, .tcols { grid-template-columns: 1fr; }
+  .bcols, .tcols, .devgrid { grid-template-columns: 1fr; }
 }
 
 /* --- phones --- */
@@ -971,10 +1061,18 @@ img, svg { max-width: 100%; }
 
   <nav class="topbar">
     <a class="wordmark" href="#/">YF <span class="slash">&#9585;</span> Bridge</a>
-    <div class="navlinks">
-      <a href="#/tasks" data-nav="tasks">Tasks</a>
-      <a href="#/briefing" data-nav="briefing">Briefing</a>
-      <a href="#/builds" data-nav="builds">Builds</a>
+    <div class="topbar-right">
+      <div class="navlinks">
+        <a href="#/tasks" data-nav="tasks">Tasks</a>
+        <a href="#/briefing" data-nav="briefing">Briefing</a>
+        <a href="#/builds" data-nav="builds">Builds</a>
+        <a href="#/dev" data-nav="dev" id="navDev" hidden>Dev</a>
+      </div>
+      <button class="chip" id="whoChip" title="Change who you are">
+        <span id="chipAv"></span>
+        <span class="who" id="chipWho">Sign in</span>
+        <span class="caret">&#9660;</span>
+      </button>
     </div>
   </nav>
 
@@ -1062,6 +1160,29 @@ img, svg { max-width: 100%; }
       </section>
 
     </div>
+  </section>
+
+  <!-- ============================== DEV ==============================
+       No home-page block at all, which in the ladder is a weight of 1-2: nav only.
+       A maintenance console should be reachable, not promoted. Shown only when the
+       selected person is ZF - see gateDev(). That is tidiness, not security: identity
+       is self-declared, and what actually protects the KB is that every write runs
+       through the viewer's own Notion connector. -->
+  <section id="v-dev" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Dev tools</p>
+          <h1>Dev tools</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="devRefresh" title="Re-run every check">Re-run checks</button>
+        </div>
+      </div>
+      <p class="tagline">The state of YF's automation and knowledge base, checked against evidence rather than against what the registry claims.</p>
+    </header>
+    <div id="devBody"><div class="panel"><span class="spin"></span>Running checks&hellip;</div></div>
+    <p class="foot">Every check here is a live query through your own Notion connection &mdash; nothing is cached from a previous run and nothing is taken on trust from the registry. <b>A row in Scheduled Tasks has never been proof that anything runs</b>; the evidence panel exists because that distinction has caused real outages to go unnoticed.</p>
   </section>
 
   <!-- ============================= TASKS ============================= -->
@@ -3110,6 +3231,306 @@ el("taskRefresh").addEventListener("click", function () {
   mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_TASKS)).then(function () { setTimeout(restore, 600); }, restore);
 });
 
+/* ================================================================
+   AVATARS, PROFILE CHIP, DEV TOOLS - added 2026-08-21
+   ================================================================ */
+
+/* Each person's mark: diagonal bars over a dark field, with exactly one bar in the
+   accent, and their initials on top. Varies by direction, count and which bar is
+   accented - never by hue, because the palette allows one accent and reserves
+   ok/warn/crit for state. Drawn because the CSP blocks external images and there are
+   no photos in YF OS to use anyway. */
+var AV = {
+  ZF: { dir: 1,  bars: 5, hit: 1 },
+  PS: { dir: -1, bars: 4, hit: 2 },
+  BB: { dir: 1,  bars: 3, hit: 0 },
+  JK: { dir: -1, bars: 5, hit: 3 }
+};
+
+function avatarSvg(ini, size) {
+  var a = AV[ini] || { dir: 1, bars: 4, hit: 1 };
+  var s = size || 32, n = a.bars, i, bars = "";
+  // 64-unit space, scaled by the SVG viewBox, so one geometry serves every size.
+  var step = 64 / (n + 1);
+  for (i = 0; i < n; i++) {
+    var x = step * (i + 1);
+    var accent = (i === a.hit);
+    bars += '<rect x="' + (x - 3) + '" y="-16" width="' + (accent ? 5 : 3) + '" height="96" ' +
+      'fill="' + (accent ? "var(--accent)" : "var(--ink)") + '"' +
+      (accent ? "" : ' opacity=".17"') + "/>";
+  }
+  return '<svg class="av av-ring" width="' + s + '" height="' + s + '" viewBox="0 0 64 64" ' +
+    'aria-hidden="true" focusable="false">' +
+    '<rect width="64" height="64" fill="var(--surface-2)"/>' +
+    '<g transform="rotate(' + (a.dir * 32) + ' 32 32)">' + bars + "</g>" +
+    '<text x="32" y="33" text-anchor="middle" dominant-baseline="central" ' +
+    'font-family="Inter Tight, system-ui, sans-serif" font-size="23" font-weight="600" ' +
+    'letter-spacing="-1" fill="var(--ink)">' + esc(ini) + "</text></svg>";
+}
+
+/* The team avatar: the four marks overlapped, used when nobody in particular is selected. */
+function teamAvatarSvg(size) {
+  var s = size || 32;
+  return '<svg class="av av-ring" width="' + s + '" height="' + s + '" viewBox="0 0 64 64" aria-hidden="true">' +
+    '<rect width="64" height="64" fill="var(--surface-2)"/>' +
+    '<circle cx="24" cy="24" r="11" fill="var(--ink)" opacity=".20"/>' +
+    '<circle cx="41" cy="24" r="11" fill="var(--ink)" opacity=".20"/>' +
+    '<circle cx="24" cy="41" r="11" fill="var(--ink)" opacity=".20"/>' +
+    '<circle cx="41" cy="41" r="11" fill="var(--accent)" opacity=".85"/></svg>';
+}
+
+function avatarFor(id, size) {
+  return id === WHO_ALL ? teamAvatarSvg(size) : avatarSvg(whoInitials(id), size);
+}
+
+function renderChip() {
+  var av = el("chipAv"), who = el("chipWho");
+  if (!av) return;
+  av.innerHTML = avatarFor(WHO, 26);
+  who.textContent = WHO === WHO_ALL ? "Team" : whoInitials(WHO);
+}
+
+/* ---- dev tools gating ----
+   Cosmetic, and deliberately documented as such. Anyone can select ZF, because there is
+   no identity to verify against. The real boundary is the viewer's Notion connector:
+   without write access to the KB, none of these actions can succeed regardless of what
+   the page chooses to display. */
+var ZF_ID = "257d872b-594c-81b9-8dbb-00020be015be";
+function devAllowed() { return WHO === ZF_ID; }
+function gateDev() {
+  var link = el("navDev");
+  if (link) link.hidden = !devAllowed();
+  if (!devAllowed() && routeName() === "dev") { location.hash = "#/"; }
+}
+
+/* ---- the checks ---- */
+var SCHED_DS = "collection://7af41ee0-4745-4466-8342-191c9537d9ce";
+var PROJ_DS  = "collection://9e25d15a-b80a-4baf-90c1-cb7838757375";
+var PORT_DS  = "collection://2f6abe28-1d4c-8042-ac81-000b2e1b10cc";
+
+var Q_SCHED = 'SELECT "Task Name", "Status", "Schedule" FROM "' + SCHED_DS +
+  '" ORDER BY "Status", "Task Name" LIMIT 60';
+var Q_INV = 'SELECT "Project Name", CAST(julianday(\'now\') - julianday("Edited") AS INTEGER) AS d ' +
+  'FROM "' + PROJ_DS + '" WHERE "Status" = \'Ready to invoice\' ORDER BY d DESC LIMIT 60';
+var Q_PORT = 'SELECT "Portfolio Entry Status" AS s, COUNT(*) AS n FROM "' + PORT_DS + '" GROUP BY 1 LIMIT 20';
+var Q_DONE = 'SELECT MAX("date:Completed On:start") AS newest FROM "' + TASKS_DS + '"';
+
+function todayISO() {
+  var d = new Date();
+  var p = function (v) { return (v < 10 ? "0" : "") + v; };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+function daysSince(iso) {
+  var p = ymd(iso);
+  if (!p) return null;
+  var then = Date.UTC(p.y, p.m - 1, p.d);
+  var n = ymd(todayISO());
+  return Math.round((Date.UTC(n.y, n.m - 1, n.d) - then) / 86400000);
+}
+
+function chk(cls, label, why, value) {
+  return '<div class="chk ' + cls + '"><span class="lbl">' + esc(label) +
+    (why ? "<small>" + esc(why) + "</small>" : "") + '</span><span class="val">' + esc(value) + "</span></div>";
+}
+
+function renderDev() {
+  var body = el("devBody");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>These checks read YF OS directly, ' +
+      "so they need the Notion connection this page runs on.</p></div>";
+    return;
+  }
+  body.innerHTML = '<div class="panel"><span class="spin"></span>Running checks&hellip;</div>';
+
+  var opts = { cache: { staleTime: 30000 } };
+  var q = function (ds, sql) {
+    return mcp.callTool(SERVER, T_QUERY, sqlInput(ds, sql), opts).then(rows)
+      .catch(function (e) { return { __err: explain(e) }; });
+  };
+
+  Promise.all([q(SCHED_DS, Q_SCHED), q(PROJ_DS, Q_INV), q(PORT_DS, Q_PORT), q(TASKS_DS, Q_DONE)])
+    .then(function (r) {
+      var sched = r[0], inv = r[1], port = r[2], done = r[3];
+      var html = "";
+
+      // --- evidence, not claims ---
+      var checks = "";
+      var bDays = BRIEF_ROWS && briefDays().length ? daysSince(briefDays()[0]) : null;
+      checks += bDays === null
+        ? chk("idle", "Daily AI briefing", "Nothing in the archive yet, or it could not be read.", "no data")
+        : chk(bDays <= 1 ? "ok" : bDays <= 3 ? "warn" : "crit", "Daily AI briefing",
+            bDays <= 1 ? "Today's fifteen stories are recorded." : "The archive should gain a row every morning at 07:00 JST.",
+            bDays === 0 ? "today" : bDays + "d ago");
+
+      if (BUILDS_ROWS) {
+        var pool = BUILDS_ROWS.filter(function (b) { return !isSelf(b) && b.status !== "Archived"; });
+        var noshot = pool.filter(function (b) { return !thumbFor(b); }).length;
+        checks += chk(noshot ? "warn" : "ok", "Builds without a thumbnail",
+          noshot ? "Each one shows a hazard tile until somebody captures an image." : "Every build has a picture.",
+          noshot + " of " + pool.length);
+      }
+
+      if (!done.__err && done.length) {
+        var newest = done[0].newest;
+        var dd = newest ? daysSince(newest) : null;
+        checks += chk(dd === null || dd > 60 ? "crit" : "ok", "Tasks: Completed On",
+          "A dead field. Anything asking what was finished this week returns nothing, which must not be read as nobody finishing anything.",
+          newest ? "newest " + shortDate(newest) : "never set");
+      }
+
+      html += '<section class="devpanel wide"><h2>Evidence</h2>' +
+        '<p class="sub">Whether the automations actually produced anything, judged by what landed in Notion rather than by a status field.</p>' +
+        checks + "</section>";
+
+      // --- money left on the table ---
+      var money = "";
+      if (inv.__err) {
+        money = '<p class="quiet">' + esc(inv.__err.head) + "</p>";
+      } else {
+        var stale = inv.filter(function (p) { return (+p.d || 0) > 60; });
+        var oldest = inv.length ? (+inv[0].d || 0) : 0;
+        money += chk(stale.length ? "crit" : "ok", "Ready to invoice, untouched 60d+",
+          "Work finished and not billed. The single most expensive thing on this page.",
+          stale.length + " of " + inv.length);
+        money += chk(oldest > 120 ? "crit" : oldest > 60 ? "warn" : "ok", "Oldest unbilled",
+          inv.length ? esc(String(inv[0]["Project Name"] || "")).slice(0, 60) : "", oldest + " days");
+        money += inv.slice(0, 6).map(function (p) {
+          return '<div class="taskrow"><span class="nm">' + esc(p["Project Name"] || "(untitled)") +
+            '</span><span class="sch">' + (+p.d || 0) + "d</span></div>";
+        }).join("");
+      }
+      html += '<section class="devpanel"><h2>Unbilled</h2>' +
+        '<p class="sub">Projects sitting in Ready to invoice, oldest first.</p>' + money + "</section>";
+
+      // --- portfolio pipeline ---
+      var pf = "";
+      if (port.__err) {
+        pf = '<p class="quiet">' + esc(port.__err.head) + "</p>";
+      } else {
+        var by = {};
+        port.forEach(function (p) { by[p.s || "(none)"] = +p.n || 0; });
+        pf += chk(by["Refused / Feedback to Fix"] ? "warn" : "ok", "Refused / feedback to fix",
+          "Entries waiting on a fix before they can go to the site.", (by["Refused / Feedback to Fix"] || 0) + "");
+        pf += chk("idle", "Ready for website", "What the weekly Webflow sync would pick up.", (by["Ready For Website"] || 0) + "");
+        pf += chk("idle", "Live", "Already published.", (by["Live"] || 0) + "");
+        pf += chk("idle", "Not started", "No portfolio entry written yet.", (by["Not started"] || 0) + "");
+      }
+      html += '<section class="devpanel"><h2>Portfolio</h2>' +
+        '<p class="sub">The pipeline behind the two weekday Slack alerts and the weekly Webflow sync.</p>' + pf + "</section>";
+
+      // --- the registry, labelled as claims ---
+      var reg = "";
+      if (sched.__err) {
+        reg = '<p class="quiet">' + esc(sched.__err.head) + "</p>";
+      } else {
+        var act = sched.filter(function (t) { return t["Status"] === "Active"; });
+        reg = '<div class="devnote"><span class="h">Claims, not proof</span>' +
+          "<p>These " + sched.length + " rows are documentation. " + act.length +
+          " say Active, but a row has never meant a job is scheduled anywhere &mdash; " +
+          "verifying that needs a Claude session, and the Evidence panel above is the closest this page can get.</p></div>" +
+          act.map(function (t) {
+            var s = String(t["Schedule"] || "");
+            return '<div class="taskrow"><span class="nm">' + esc(t["Task Name"] || "") +
+              '</span><span class="sch">' + esc(s.length > 46 ? s.slice(0, 46) + "..." : s) + "</span></div>";
+          }).join("");
+      }
+      html += '<section class="devpanel wide"><h2>Scheduled tasks registry</h2>' +
+        '<p class="sub">Every documented automation, Active first.</p>' + reg + "</section>";
+
+      // --- write to the KB ---
+      html += '<section class="devpanel wide"><h2>Log a decision</h2>' +
+        '<p class="sub">Writes straight into Decisions &amp; Learnings, so a thought had on a phone gets recorded instead of lost. ' +
+        'Source is stamped with this environment automatically.</p>' +
+        '<div class="field"><span class="label">Entry</span>' +
+        '<input type="text" id="dlEntry" placeholder="What was decided, in one line" maxlength="200"></div>' +
+        '<div class="field"><span class="label">Summary</span>' +
+        '<textarea id="dlSummary" placeholder="The reasoning, and what it means for next time"></textarea></div>' +
+        '<div class="pair"><div class="field"><span class="label">Category</span>' +
+        '<select id="dlCat"><option>Decision</option><option>Learning</option><option>Correction</option><option>Context update</option></select></div>' +
+        '<div class="field"><span class="label">Source</span><input type="text" id="dlSrc" value="ZF - PC" readonly></div></div>' +
+        '<div class="sheet-actions"><button class="btn primary" id="dlSave">Write entry</button></div>' +
+        '<p class="formmsg" id="dlMsg"></p></section>';
+
+      body.innerHTML = '<div class="devgrid">' + html + "</div>";
+      wireDevForm();
+    });
+}
+
+function wireDevForm() {
+  var btn = el("dlSave");
+  if (!btn) return;
+  btn.addEventListener("click", function () {
+    var entry = el("dlEntry").value.trim(), summary = el("dlSummary").value.trim();
+    var msg = el("dlMsg");
+    if (!entry) { msg.className = "formmsg bad"; msg.textContent = "An entry needs a title."; el("dlEntry").focus(); return; }
+    btn.disabled = true; btn.textContent = "Writing";
+    mcp.callTool(SERVER, T_CREATE, {
+      parent: { type: "data_source_id", data_source_id: "79e8eda0-63bc-4a4a-badd-b981004c6f3c" },
+      pages: [{ properties: {
+        "Entry": entry,
+        "Summary": summary,
+        "Category": el("dlCat").value,
+        "Source": "ZF - PC",
+        "Still applies": "__YES__",
+        "date:Date:start": todayISO(),
+        "date:Date:is_datetime": 0
+      } }]
+    }).then(function () {
+      msg.className = "formmsg good";
+      msg.textContent = "Written to Decisions & Learnings.";
+      el("dlEntry").value = ""; el("dlSummary").value = "";
+    }).catch(function (err) {
+      var e = explain(err);
+      msg.className = "formmsg bad";
+      msg.textContent = e.head + " - " + e.body;
+    }).then(function () { btn.disabled = false; btn.textContent = "Write entry"; });
+  });
+}
+
+/* ---- wiring ---- */
+VIEWS.dev = "v-dev";
+PAGES.dev = 5;
+
+var _applyRouteB = applyRoute;
+applyRoute = function (name) {
+  if (name === "dev" && !devAllowed()) { name = "home"; }
+  _applyRouteB(name);
+  if (name === "dev") renderDev();
+};
+
+var _setWho = setWho;
+setWho = function (id, name) {
+  _setWho(id, name);
+  renderChip();
+  gateDev();
+};
+
+el("whoChip").addEventListener("click", openWho);
+el("devRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  Promise.all([
+    mcp.invalidate(SERVER, T_QUERY, sqlInput(SCHED_DS, Q_SCHED)).catch(function () {}),
+    mcp.invalidate(SERVER, T_QUERY, sqlInput(PROJ_DS, Q_INV)).catch(function () {}),
+    mcp.invalidate(SERVER, T_QUERY, sqlInput(PORT_DS, Q_PORT)).catch(function () {}),
+    mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_DONE)).catch(function () {})
+  ]).then(renderDev);
+});
+
+/* Avatars in the picker, so the mark and the person are learned together. */
+var _renderWhoGrid = renderWhoGrid;
+renderWhoGrid = function () {
+  _renderWhoGrid();
+  var box = el("whoGrid");
+  if (!box) return;
+  Array.prototype.forEach.call(box.querySelectorAll(".whopick"), function (b) {
+    var id = b.getAttribute("data-who"), slot = b.querySelector(".ini");
+    if (slot) slot.outerHTML = avatarFor(id, 34);
+  });
+};
+
+renderChip();
+gateDev();
 orderHome();
 applyRoute(routeName() || "home");
 askOnFirstOpen();
