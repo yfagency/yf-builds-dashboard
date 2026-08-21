@@ -163,3 +163,20 @@ Then look at the PNG. This caught two bugs that static reading did not: a `[hidd
 element staying visible because an author `display: flex` beats the UA stylesheet, and a
 near-empty row on every card. **Never commit the merged preview file** - it contains a
 stub that fakes the registry.
+
+### When the PowerShell script renders nothing
+
+If every build reports `did not render - skipped`, the Chrome calls are being blocked, and
+the cause depends on how the script was started. Verified 2026-08-21 on ZF-PC:
+
+- **Run by a person in a terminal:** works.
+- **Run by Claude as a child process** (`powershell -File tools/refresh-thumbnails.ps1`):
+  every screenshot fails. The child gets a stricter sandbox than the session's own shell,
+  and Chrome's file writes are blocked inside it. The same Chrome command line, with the
+  same flags and the same output path, succeeds when Claude runs it directly in its
+  PowerShell tool rather than through a spawned script.
+
+So when Claude needs to refresh thumbnails, it should run the render loop and the `THUMBS`
+injection **inline** rather than invoking this script, or use `tools/add-thumbnail.py`
+where Python is available. The script's abort is correct behaviour either way: it refuses
+to rewrite the page from an empty render set.
