@@ -1,4 +1,4 @@
-<title>YF Builds</title>
+<title>YF Bridge</title>
 <!-- PUBLISH SETTINGS, recorded here because they cannot be read back off the live page.
      favicon: hammer-and-wrench, U+1F6E0 U+FE0F. Settled by ZF 2026-08-21 - pass exactly
      this on every republish and never substitute another emoji; the team finds this tab by
@@ -430,15 +430,468 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .conn th, .conn td { text-align: left; padding: 5px 12px 5px 0; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
 .conn th { font-family: var(--sans); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 78ch; }
+
+/* ================================================================
+   BRIDGE SHELL - added 2026-08-21 when the registry became one
+   section of an app rather than the whole page.
+
+   Nothing below introduces a new colour. The palette above is the
+   whole vocabulary: yellow is the only accent, and ok/warn/crit stay
+   reserved for state so a section label can never be mistaken for a
+   warning. Section identity is carried typographically instead -
+   mono eyebrows, rules, rank numerals - which is also why the
+   Global/Japan/Radar colours set in Notion are deliberately ignored
+   here.
+   ================================================================ */
+
+/* The persistent bar. Present in every view including home, because a
+   tool you can get lost in needs one fixed thing; the wordmark is the
+   way back and is the only element that never moves. */
+.topbar {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule); padding-bottom: 12px; margin-bottom: 30px;
+}
+.wordmark {
+  font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: -.02em;
+  color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.wordmark:hover { color: var(--accent); }
+.wordmark:hover .slash { color: var(--ink); }
+.navlinks { display: flex; gap: 4px; flex-wrap: wrap; }
+.navlinks a {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; padding: 5px 11px; border-radius: 3px;
+  border: 1px solid transparent;
+}
+.navlinks a:hover { color: var(--ink); border-color: var(--rule); }
+/* aria-current is the state, so it is also the selector - no parallel class to keep in sync. */
+.navlinks a[aria-current="page"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+
+.view[hidden] { display: none !important; }
+
+/* ---- home ----
+   The home page's job is to route, so it is mostly negative space and
+   two large targets. The masthead is allowed to be big here and only
+   here; every section view gets a compact one instead. */
+.home-mast { position: relative; margin-bottom: 34px; }
+.home-mast h1 {
+  font-size: clamp(40px, 7vw, 76px); font-weight: 600;
+  letter-spacing: -.05em; line-height: .94;
+}
+.home-mast .tagline { max-width: 46ch; font-size: 15.5px; }
+
+.plates { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.plate {
+  display: flex; flex-direction: column; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  overflow: hidden; transition: border-color .15s ease;
+}
+.plate:hover { border-color: var(--accent); }
+/* The drawn plate is the section's portrait, so it bleeds to the card edges and carries
+   the same 16:10 as a build thumbnail - the two read as the same family of object. */
+.plate .art { aspect-ratio: 16 / 10; display: block; width: 100%; border-bottom: 1px solid var(--rule); }
+.plate .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.plate h2 { font-size: 21px; font-weight: 600; letter-spacing: -.03em; }
+.plate h2 .slash { font-size: .8em; }
+.plate .what { font-size: 13.5px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+.plate .stat {
+  font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+  margin-top: auto; padding-top: 10px; display: flex; gap: 14px; flex-wrap: wrap;
+}
+.plate .stat b { color: var(--ink-2); font-weight: 500; }
+.plate .stat .flagged { color: var(--warn); }
+
+/* ---- today's briefing, on home ----
+   Three rows, one per section, each showing only its lead story. It does not
+   move and it does not cycle: fifteen headlines rotating past is unreadable and
+   unclickable, so the home page shows the three that lead and sends you to the
+   section for the rest. */
+.digest { margin-top: 34px; border-top: 1px solid var(--rule); padding-top: 18px; }
+.digest-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap; margin-bottom: 4px;
+}
+.digest-head .stamp {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.digest-head a { font-size: 12.5px; color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.digest-head a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.drow {
+  display: grid; grid-template-columns: 92px 1fr; gap: 18px;
+  padding: 14px 0; border-bottom: 1px solid var(--rule-soft); align-items: baseline;
+}
+.drow:last-child { border-bottom: 0; }
+.dsec {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--accent);
+}
+.dlead a { font-size: 15px; font-weight: 500; color: var(--ink); text-decoration: none; letter-spacing: -.01em; }
+.dlead a:hover { color: var(--accent); }
+.dlead .src { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: 8px; white-space: nowrap; }
+.dlead .stk { font-size: 13px; color: var(--ink-2); margin: 4px 0 0; max-width: 76ch; line-height: 1.5; }
+
+/* ---- compact section masthead, used by Builds and Briefing ---- */
+.sec-mast { margin-bottom: 22px; }
+.sec-mast .crumb {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 10px;
+}
+.sec-mast h1 { font-size: clamp(30px, 4vw, 42px); font-weight: 600; letter-spacing: -.045em; line-height: 1; }
+.sec-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+
+/* ---- briefing ----
+   Three columns because the briefing is three sections of five, and a
+   ranked list is the one structure where numbering carries real
+   information: rank 1 is the lead the section was built around. */
+.dates { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 22px; }
+.dates .label { margin-right: 4px; }
+.datechip {
+  font-family: var(--mono); font-size: 11.5px; cursor: pointer;
+  padding: 5px 11px; border-radius: 999px; border: 1px solid var(--rule);
+  background: var(--surface); color: var(--ink-2);
+}
+.datechip:hover { border-color: var(--muted); }
+.datechip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 500; }
+.bcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 16px; align-items: start; }
+.bcol {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 18px 20px 8px;
+}
+.bcol > h2 {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 4px;
+}
+.bcol > .sub { font-size: 12.5px; color: var(--muted); margin: 0 0 6px; line-height: 1.45; }
+.bitem { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 14px 0; border-top: 1px solid var(--rule-soft); }
+.brank {
+  font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px;
+  color: var(--muted); padding-top: 2px;
+}
+/* The lead story is the only item that gets the accent, in either column. */
+.bitem.lead .brank { color: var(--accent); }
+.bitem a.head {
+  display: block; font-size: 14.5px; font-weight: 500; line-height: 1.4;
+  color: var(--ink); text-decoration: none; letter-spacing: -.01em;
+}
+.bitem.lead a.head { font-size: 15.5px; font-weight: 600; }
+.bitem a.head:hover { color: var(--accent); }
+.bitem .src { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin: 5px 0 0; }
+.bitem .stk { font-size: 13px; color: var(--ink-2); margin: 6px 0 0; line-height: 1.5; }
+
+/* ================================================================
+   VISUAL PRIORITY LADDER - added 2026-08-21
+
+   Every surface on the home page declares a weight from 1 to 10, and
+   the weight alone decides its treatment. The ladder is fixed so that
+   adding the fifth and sixth section is a one-line decision ("how
+   important is this, 1 to 10?") rather than a layout argument:
+
+     9-10  hero   full-width block, live content, its own structure
+     7-8   band   full-width strip, one condensed line per item
+     5-6   plate  card in the plate grid, drawn plate plus counts
+     3-4   strip  single row, a count and a link, no artwork
+     1-2   -      no home presence at all; nav bar only
+
+   A section's DESTINATION carries a separate weight, because how much
+   the home page shouts about something is a different question from how
+   much chrome its own page deserves. Briefing is the case that proves
+   it: a 7 on the home page, a 3 as a page.
+
+     7-10  chrome-full     masthead, tagline, controls
+     4-6   chrome-compact  heading and one line
+     1-3   chrome-minimal  heading only, no tagline, no display type
+
+   The order of blocks on the home page is computed from the weights at
+   render time, not written into the markup. Change a number in
+   SURFACES and the page rearranges itself.
+   ================================================================ */
+
+#homeStack { display: flex; flex-direction: column; gap: 30px; }
+
+/* ---- tier: hero (9-10) ---- */
+.tier-hero {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: 22px 24px 8px;
+}
+.hero-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.hero-head .eyebrow { margin-bottom: 8px; }
+/* The one sentence that answers "what am I doing today". It is the largest
+   type on the page after the wordmark, because it is the reason to open this. */
+.hero-line {
+  font-size: clamp(22px, 3vw, 31px); font-weight: 600;
+  letter-spacing: -.035em; line-height: 1.12; text-wrap: balance; max-width: 30ch;
+}
+.hero-line .num { color: var(--accent); }
+.hero-line.calm { color: var(--ink-2); font-weight: 500; }
+.whobtn {
+  background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); border-bottom: 1px solid var(--rule);
+}
+.whobtn:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Counts read as a row of instruments, on a hairline rather than in boxes -
+   the same device the registry uses for its gauges, so the two agree. */
+.tgauges { display: flex; flex-wrap: wrap; gap: 0; border-top: 1px solid var(--rule); padding-top: 2px; }
+.tg { padding: 13px 24px 4px 0; margin-right: 24px; border-right: 1px solid var(--rule-soft); min-width: 74px; }
+.tg:last-child { border-right: 0; margin-right: 0; }
+.tg .n {
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  font-size: 25px; line-height: 1.1; letter-spacing: -.02em; display: block;
+}
+.tg .label { display: block; margin-top: 3px; font-size: 10px; letter-spacing: .12em; }
+.tg.crit .n { color: var(--crit); }
+.tg.warn .n { color: var(--warn); }
+.tg.go   .n { color: var(--accent); }
+.tg.zero .n { color: var(--muted); }
+
+/* ---- a task row. Used by the hero and by the Tasks page, identically. ---- */
+.tgroup { margin-top: 22px; }
+.tgroup > h3 {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 2px;
+}
+.tgroup.urgent > h3 { color: var(--crit); }
+.trow {
+  display: grid; grid-template-columns: 16px 1fr auto; gap: 12px; align-items: baseline;
+  padding: 11px 0; border-bottom: 1px solid var(--rule-soft);
+}
+.trow:last-child { border-bottom: 0; }
+.trow .flame { font-family: var(--mono); font-size: 11px; color: var(--crit); text-align: center; }
+.trow .cold { color: var(--muted); }
+.trow a.tname {
+  font-size: 14.5px; font-weight: 500; color: var(--ink); text-decoration: none;
+  letter-spacing: -.01em; line-height: 1.4;
+}
+.trow a.tname:hover { color: var(--accent); }
+.trow .meta {
+  font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+  margin: 4px 0 0; display: flex; gap: 12px; flex-wrap: wrap;
+}
+.trow .meta .over { color: var(--crit); }
+.trow .right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.tpill {
+  font-family: var(--sans); font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
+  padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule);
+  background: var(--surface-2); color: var(--ink-2); white-space: nowrap;
+}
+.tpill.doing   { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.tpill.stuck   { background: var(--crit-soft); color: var(--crit); border-color: transparent; }
+.tpill.waiting { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.tmore { font-size: 13px; color: var(--muted); padding: 12px 0 4px; }
+.tmore a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--rule); }
+
+/* ---- tier: band (7-8) ---- */
+.tier-band { border-top: 1px solid var(--rule); padding-top: 16px; }
+.band-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.band-head .stamp {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.band-head a { font-size: 12.5px; color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.band-head a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+/* Three across on a wide screen, stacked on a narrow one. Each cell is one lead
+   story: section, headline, source. The stakes clause is deliberately not here -
+   at a 7 this is a pointer, and the reading happens on the page. */
+.bandrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; }
+.bandcell { padding: 12px 20px 12px 0; border-right: 1px solid var(--rule-soft); }
+.bandcell:last-child { border-right: 0; }
+.bandcell .sec {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--accent); display: block; margin-bottom: 5px;
+}
+.bandcell a {
+  font-size: 14px; font-weight: 500; color: var(--ink); text-decoration: none;
+  line-height: 1.35; letter-spacing: -.01em; display: block;
+}
+.bandcell a:hover { color: var(--accent); }
+.bandcell .src { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin: 5px 0 0; }
+
+/* ---- tier: plate (5-6) ----
+   Capped rather than fluid. A lone 1fr plate would stretch the full width and
+   read like a hero, which is exactly the confusion the ladder exists to prevent. */
+.plates { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 370px)); gap: 16px; }
+
+/* ---- tier: strip (3-4) ---- */
+.tier-strip {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap; border-top: 1px solid var(--rule-soft); padding-top: 14px;
+}
+.tier-strip .what { font-size: 13.5px; color: var(--ink-2); margin: 0; }
+.tier-strip a { font-size: 13px; color: var(--accent); text-decoration: none; }
+
+/* ---- destination chrome ---- */
+.chrome-minimal .sec-mast { margin-bottom: 16px; }
+.chrome-minimal .sec-mast h1 { font-size: 22px; letter-spacing: -.03em; }
+.chrome-minimal .sec-mast .tagline { display: none; }
+.chrome-compact .sec-mast h1 { font-size: clamp(26px, 3vw, 32px); }
+.chrome-compact .sec-mast .tagline { max-width: 62ch; font-size: 14px; }
+
+/* ---- the person picker ---- */
+.wholist { display: flex; flex-direction: column; max-height: 46vh; overflow-y: auto; margin: 4px 0 6px; }
+.whorow {
+  display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; text-align: left;
+  background: none; border: 0; border-bottom: 1px solid var(--rule-soft);
+  padding: 11px 4px; color: var(--ink); font-family: var(--sans); font-size: 14px;
+}
+.whorow:hover { background: var(--surface-2); }
+.whorow[aria-pressed="true"] .initials { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.whorow .initials {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  width: 30px; height: 30px; flex: none; border-radius: 50%;
+  border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.whorow .nm { flex: 1; }
+.whorow .nm b { font-weight: 500; display: block; }
+.whorow .nm span { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.whorow .cnt { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+
+/* ---- tasks page ---- */
+.tcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.tcol { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 16px 18px 6px; }
+.tcol > h2 {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 2px;
+}
+.tcol.urgent { border-color: var(--crit); }
+.tcol.urgent > h2 { color: var(--crit); }
+.tcol .none { font-size: 13px; color: var(--muted); padding: 10px 0 12px; margin: 0; }
 </style>
 
 <div class="wrap">
+
+  <nav class="topbar">
+    <a class="wordmark" href="#/">YF <span class="slash">&#9585;</span> Bridge</a>
+    <div class="navlinks">
+      <a href="#/tasks" data-nav="tasks">Tasks</a>
+      <a href="#/briefing" data-nav="briefing">Briefing</a>
+      <a href="#/builds" data-nav="builds">Builds</a>
+    </div>
+  </nav>
+
+  <!-- ============================ HOME ============================ -->
+  <section id="v-home" class="view">
+    <header class="home-mast">
+      <div class="grain" aria-hidden="true"></div>
+      <p class="eyebrow">Yoroshiku Fantastic <span class="slash">&#9585;</span> Internal operating surface</p>
+      <h1>YF <span class="slash">&#9585;</span> Bridge</h1>
+      <p class="tagline">Where the studio's own tools live. Everything here reads from YF OS through your Notion connection, so what you see is what the team sees.</p>
+    </header>
+
+    <!-- Blocks are ordered by declared weight at render time, not by the order they
+         appear here. See the VISUAL PRIORITY LADDER note in the stylesheet, and
+         SURFACES in the script. -->
+    <div id="homeStack">
+
+      <section data-surface="tasks">
+        <div class="tier-hero">
+          <div class="hero-head">
+            <div>
+              <p class="eyebrow" id="taskWho">Today</p>
+              <p class="hero-line" id="taskLine">Reading your tasks&hellip;</p>
+            </div>
+            <button class="whobtn" id="whoBtn">Not you?</button>
+          </div>
+          <div class="tgauges" id="taskGauges"></div>
+          <div id="taskLists"></div>
+        </div>
+      </section>
+
+      <section data-surface="briefing">
+        <div class="tier-band">
+          <div class="band-head">
+            <span class="stamp" id="bandStamp">Today's briefing</span>
+            <a href="#/briefing">All fifteen stories &rarr;</a>
+          </div>
+          <div class="bandrow" id="bandRow"></div>
+        </div>
+      </section>
+
+      <section data-surface="builds">
+        <a class="plate" href="#/builds">
+          <!-- Builds, drawn: three builds stacked front-to-back, the newest one forward and
+               carrying the accent. The stack offsets down-right so it runs with YF's
+               diagonal rather than against it, and it holds the same 16:10 as a build
+               thumbnail so a section and a build read as the same kind of object. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Three builds stacked, the newest in front">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect x="62" y="40" width="150" height="56" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="84" y="66" width="150" height="56" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="106" y="92" width="150" height="56" rx="3" fill="var(--surface)" stroke="var(--accent)"/>
+            <rect x="118" y="104" width="58" height="5" rx="2.5" fill="var(--accent)"/>
+            <rect x="118" y="116" width="94" height="4" rx="2" fill="var(--ink)" opacity=".22"/>
+            <rect x="118" y="126" width="72" height="4" rx="2" fill="var(--ink)" opacity=".22"/>
+            <rect x="240" y="132" width="8" height="8" fill="var(--accent)"/>
+          </svg>
+          <div class="body">
+            <h2>Builds</h2>
+            <p class="what">Every app, page and mock-up the team has made, with a one-click download of the latest version.</p>
+            <p class="stat" id="stBuilds"><span class="quiet">reading the registry&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
+    </div>
+  </section>
+
+  <!-- ============================= TASKS ============================= -->
+  <section id="v-tasks" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Tasks</p>
+          <h1 id="tasksTitle">Tasks</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn" id="whoBtn2">Change person</button>
+          <button class="btn ghost" id="taskRefresh" title="Re-read the tasks now">Refresh</button>
+        </div>
+      </div>
+      <p class="tagline">Everything not yet delivered, grouped the way YF OS already groups it: overdue first, then today, this week, and the rest.</p>
+    </header>
+    <div id="tasksBody"><div class="panel"><span class="spin"></span>Loading tasks&hellip;</div></div>
+    <p class="foot">Read live from the YF OS Tasks database through your own Notion connection, so you see exactly the tasks you can already see in Notion. Scoped to the <b>builders team</b> &mdash; ZF, PS, BB and JK. <b>Overdue, Today, This Week and Later come from the <span class="mono">Planning</span> field</b> &mdash; they are set by a person, not calculated from the due date, so a task with a past due date sitting in Later means nobody has re-planned it yet. Delivered and Archived tasks are excluded.</p>
+  </section>
+
+  <!-- ========================== BRIEFING ==========================
+       chrome-minimal: this page is a 3. The briefing's weight lives on the home
+       page band, not here, so the destination gets a heading and nothing else. -->
+  <section id="v-briefing" class="view chrome-minimal" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Briefing</p>
+          <h1>Briefing</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="briefRefresh" title="Re-read the archive now">Refresh</button>
+        </div>
+      </div>
+      <p class="tagline">Fifteen stories every morning at 07:00 JST, chosen for YF rather than for the news.</p>
+    </header>
+
+    <div class="dates" id="briefDates" hidden><span class="label">Archive</span></div>
+    <div id="briefBody"><div class="panel"><span class="spin"></span>Loading the briefing&hellip;</div></div>
+    <p class="foot">Posted to <span class="mono">#ai-updates</span> in Slack each morning and recorded in the AI Briefing Archive in Notion, which this page reads. The archive starts 2026-08-21 &mdash; anything earlier exists only as Slack history.</p>
+  </section>
+
+  <!-- =========================== BUILDS =========================== -->
+  <section id="v-builds" class="view" hidden>
   <header class="masthead">
     <div class="grain" aria-hidden="true"></div>
     <div class="mast-row">
       <div class="mast-id">
-        <p class="eyebrow">Yoroshiku Fantastic <span class="slash">&#9585;</span> Build registry</p>
-        <h1>YF <span class="slash">&#9585;</span> Builds</h1>
+        <p class="eyebrow">Bridge <span class="slash">&#9585;</span> Build registry</p>
+        <h1>Builds</h1>
         <p class="tagline">Every app, page and mock-up the team has built &mdash; who made it, what state it's in, and a one-click download of the latest version.</p>
       </div>
       <div class="mast-actions">
@@ -448,7 +901,6 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
     </div>
     <div class="strip" id="strip" hidden></div>
   </header>
-
   <div class="controls">
     <input type="text" id="search" placeholder="Search name, builder or client">
     <select id="fStatus"><option value="">All statuses</option></select>
@@ -478,14 +930,27 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   <main id="main"><div class="panel"><span class="spin"></span>Loading the registry&hellip;</div></main>
 
   <section class="colophon" id="colophon" hidden></section>
+  <p class="foot">Builds live in the YF Builds registry; the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads the registry through your own Notion connector and re-reads it every couple of minutes while you're looking at it &mdash; press Refresh if you can't wait. The commit line comes from git via the 06:30 JST sync, so it can lag by a day. Thumbnails are rendered images updated when the dashboard is republished.</p>
+  </section>
 
+  <!-- App-level, not section-level: when a connector is the reason nothing loaded, the
+       diagnostic has to be reachable from whichever view the person happens to be on. -->
   <details class="conn" id="conn">
     <summary>Connection</summary>
     <div class="box" id="connBox">Not checked yet.</div>
   </details>
-  <p class="foot">Builds live in the YF Builds registry; the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads the registry through your own Notion connector and re-reads it every couple of minutes while you're looking at it &mdash; press Refresh if you can't wait. The commit line comes from git via the 06:30 JST sync, so it can lag by a day. Thumbnails are rendered images updated when the dashboard is republished.</p>
 </div>
-
+<div class="scrim" id="whoScrim">
+  <div class="sheet" style="max-width:460px">
+    <h2>Who are you?</h2>
+    <p class="quiet">So Bridge shows your tasks instead of everyone's. Asked once, then remembered in this browser &mdash; it is a local preference, not a login, and it changes nothing in Notion.</p>
+    <div class="wholist" id="whoList"></div>
+    <p class="quiet" style="font-size:12px;margin:2px 0 0">Bridge covers the <b>builders team</b> for now &mdash; ZF, PS, BB and JK. The rest of the studio's tasks live in the same Notion database but are not shown here.</p>
+    <div class="sheet-actions">
+      <button class="btn" id="whoCancel">Cancel</button>
+    </div>
+  </div>
+</div>
 <div class="scrim" id="guideScrim">
   <div class="sheet guide">
     <header class="guide-top">
@@ -1645,5 +2110,669 @@ el("addSave").addEventListener("click", function () {
 });
 el("refreshBtn").addEventListener("click", refreshNow);
 
+
+/* ================================================================
+   BRIDGE SHELL - routing, home, and the Briefing section.
+   Added 2026-08-21, when the registry became one section of an app.
+
+   Everything below is additive. The registry code above is untouched;
+   where this needs to run alongside it, it wraps the existing function
+   rather than editing it, so a future change to the registry cannot
+   silently drop the home page's counts.
+   ================================================================ */
+
+var BRIEF    = "collection://4ebf7258-542d-4819-ba72-72a3d2d6e2d2";
+var Q_BRIEF  = 'SELECT url, "Headline", "Section", "Rank", "Source", "Link", "Stakes", ' +
+  '"date:Date:start" FROM "' + BRIEF + '" ' +
+  'ORDER BY "date:Date:start" DESC, "Section" ASC, "Rank" ASC LIMIT 300';
+
+/* Global, Japan, Radar - in that order everywhere, which is also what
+   "Section" ASC returns, so the SQL sort and the display agree. */
+var SECTIONS = [
+  { key: "Global", sub: "Worldwide AI, the past 48 hours" },
+  { key: "Japan",  sub: "Policy, enterprise and market" },
+  { key: "Radar",  sub: "For creative and brand teams" }
+];
+
+var BRIEF_ROWS = null;   // null = not read yet; [] = read and genuinely empty
+var BRIEF_DAY  = null;   // the date string the Briefing section is showing
+
+var MONTHS = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+var WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/* Date-only strings are formatted by hand rather than through Date.toLocale*, which
+   would shift the day for any viewer west of UTC and print yesterday's briefing as
+   today's. The weekday still needs a Date, so it is built at UTC noon where no
+   offset can move it across a day boundary. */
+function ymd(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || "");
+  return m ? { y: +m[1], m: +m[2], d: +m[3] } : null;
+}
+function longDate(s) {
+  var p = ymd(s);
+  if (!p) return "";
+  var wd = WEEKDAYS[new Date(Date.UTC(p.y, p.m - 1, p.d, 12)).getUTCDay()];
+  return wd + ", " + MONTHS[p.m - 1] + " " + p.d + ", " + p.y;
+}
+function shortDate(s) {
+  var p = ymd(s);
+  return p ? MONTHS[p.m - 1].slice(0, 3) + " " + p.d : "";
+}
+
+function briefDays() {
+  if (!BRIEF_ROWS) return [];
+  var seen = {}, out = [];
+  BRIEF_ROWS.forEach(function (r) {
+    var d = r["date:Date:start"];
+    if (d && !seen[d]) { seen[d] = 1; out.push(d); }
+  });
+  return out;                        // already newest-first from the query
+}
+function briefFor(day) {
+  return (BRIEF_ROWS || []).filter(function (r) { return r["date:Date:start"] === day; });
+}
+function leadOf(day, section) {
+  var pick = null;
+  briefFor(day).forEach(function (r) {
+    if (r["Section"] !== section) return;
+    if (!pick || (+r["Rank"] || 99) < (+pick["Rank"] || 99)) pick = r;
+  });
+  return pick;
+}
+
+/* ---- home ---- */
+
+function renderHomeStats() {
+  var b = el("stBuilds");
+  if (b) {
+    if (!BUILDS_ROWS) {
+      b.innerHTML = '<span class="quiet">registry unavailable</span>';
+    } else {
+      var pool = BUILDS_ROWS.filter(function (r) { return !isSelf(r) && r.status !== "Archived"; });
+      var live = pool.filter(function (r) { return r.status === "Live"; }).length;
+      var noshot = pool.filter(function (r) { return !thumbFor(r); }).length;
+      b.innerHTML = "<span><b>" + pool.length + "</b> builds</span>" +
+        "<span><b>" + live + "</b> live</span>" +
+        (noshot ? '<span class="flagged"><b>' + noshot + "</b> without a thumbnail</span>" : "");
+    }
+  }
+
+  var n = el("stBrief");
+  if (!n) return;
+  if (!BRIEF_ROWS) { n.innerHTML = '<span class="quiet">reading the archive&hellip;</span>'; return; }
+  var days = briefDays();
+  if (!days.length) { n.innerHTML = '<span class="quiet">nothing recorded yet</span>'; return; }
+  n.innerHTML = "<span><b>" + briefFor(days[0]).length + "</b> stories today</span>" +
+    "<span><b>" + days.length + "</b> " + (days.length === 1 ? "day" : "days") + " archived</span>";
+}
+
+function renderDigest() {
+  var wrap = el("digest");
+  if (!wrap) return;
+  var days = briefDays();
+  if (!days.length) { wrap.hidden = true; return; }
+  var day = days[0];
+
+  el("digestStamp").textContent = "Today's briefing " + String.fromCharCode(183) + " " + longDate(day);
+
+  var html = SECTIONS.map(function (s) {
+    var r = leadOf(day, s.key);
+    if (!r) return "";
+    return '<div class="drow">' +
+      '<span class="dsec">' + esc(s.key) + "</span>" +
+      '<div class="dlead">' +
+        '<a href="' + esc(r["Link"] || "#") + '" target="_blank" rel="noopener noreferrer">' + esc(r["Headline"]) + "</a>" +
+        (r["Source"] ? '<span class="src">' + esc(r["Source"]) + "</span>" : "") +
+        (r["Stakes"] ? '<p class="stk">' + esc(r["Stakes"]) + "</p>" : "") +
+      "</div>" +
+    "</div>";
+  }).join("");
+
+  el("digestBody").innerHTML = html;
+  wrap.hidden = !html;
+}
+
+/* ---- briefing section ---- */
+
+function renderBrief() {
+  var body = el("briefBody"), chips = el("briefDates");
+  if (!body) return;
+
+  if (!BRIEF_ROWS) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the briefing&hellip;</div>';
+    return;
+  }
+  var days = briefDays();
+  if (!days.length) {
+    chips.hidden = true;
+    body.innerHTML = '<div class="panel"><h2>Nothing recorded yet</h2>' +
+      "<p>The briefing posts to Slack every morning at 07:00 JST and writes its fifteen stories here at the same time. " +
+      "If Slack has today's briefing and this is empty, the run posted but could not reach Notion &mdash; the next run will catch up.</p></div>";
+    return;
+  }
+
+  if (!BRIEF_DAY || days.indexOf(BRIEF_DAY) < 0) BRIEF_DAY = days[0];
+
+  // Only worth a picker once there is more than one day to pick between.
+  if (days.length > 1) {
+    chips.hidden = false;
+    chips.innerHTML = '<span class="label">Archive</span>' + days.map(function (d) {
+      return '<button class="datechip" data-day="' + esc(d) + '" aria-pressed="' +
+        (d === BRIEF_DAY ? "true" : "false") + '">' + esc(shortDate(d)) + "</button>";
+    }).join("");
+  } else {
+    chips.hidden = true;
+  }
+
+  var day = BRIEF_DAY;
+  var cols = SECTIONS.map(function (s) {
+    var items = briefFor(day).filter(function (r) { return r["Section"] === s.key; })
+      .sort(function (a, b) { return (+a["Rank"] || 99) - (+b["Rank"] || 99); });
+
+    var inner = items.length
+      ? items.map(function (r, i) {
+          return '<div class="bitem' + (i === 0 ? " lead" : "") + '">' +
+            '<span class="brank">' + (r["Rank"] != null ? esc(String(+r["Rank"])) : String(i + 1)) + "</span>" +
+            "<div>" +
+              '<a class="head" href="' + esc(r["Link"] || "#") + '" target="_blank" rel="noopener noreferrer">' +
+                esc(r["Headline"]) + "</a>" +
+              (r["Source"] ? '<p class="src">' + esc(r["Source"]) + "</p>" : "") +
+              (r["Stakes"] ? '<p class="stk">' + esc(r["Stakes"]) + "</p>" : "") +
+            "</div>" +
+          "</div>";
+        }).join("")
+      : '<div class="bitem"><span class="brank">&mdash;</span><div><p class="src">No stories recorded in this section.</p></div></div>';
+
+    return '<section class="bcol"><h2>' + esc(s.key) + "</h2>" +
+      '<p class="sub">' + esc(s.sub) + "</p>" + inner + "</section>";
+  }).join("");
+
+  body.innerHTML = '<p class="quiet mono" style="margin:-6px 0 16px">' + esc(longDate(day)) +
+    " " + String.fromCharCode(183) + " " + briefFor(day).length + " stories</p>" +
+    '<div class="bcols">' + cols + "</div>";
+}
+
+function startBrief() {
+  if (!mcp || !SERVER) return;
+  mcp.watchTool(SERVER, T_QUERY, sqlInput(BRIEF, Q_BRIEF), function (ev) {
+    if (ev.type === "data") {
+      BRIEF_ROWS = rows(ev.result);
+      renderBrief(); renderDigest(); renderHomeStats();
+      return;
+    }
+    // The briefing is one section of the app, so a failure here reports itself in place
+    // and never takes the whole page down the way a registry failure does.
+    var err = ev.error || {};
+    if (!BRIEF_ROWS) {
+      var e = explain(err);
+      el("briefBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
+      el("stBrief").innerHTML = '<span class="quiet">archive unavailable</span>';
+    }
+  }, { cache: { staleTime: 60000 }, refetchInterval: 300000 });
+}
+
+/* ---- routing ----
+   Hash-based so a section is linkable and the browser's back button works. The guard
+   on "#/" matters: the Guide's own contents rail uses plain "#g-..." anchors, and
+   without it every jump inside the Guide would be read as a route and bounce home. */
+var VIEWS = { home: "v-home", builds: "v-builds", briefing: "v-briefing" };
+
+function routeName() {
+  var h = location.hash || "";
+  if (h.indexOf("#/") !== 0) return null;
+  var k = h.slice(2).replace(/\/+$/, "");
+  return VIEWS[k] ? k : "home";
+}
+
+function applyRoute(name) {
+  Object.keys(VIEWS).forEach(function (k) {
+    var v = el(VIEWS[k]);
+    if (v) v.hidden = k !== name;
+  });
+  document.querySelectorAll(".navlinks a[data-nav]").forEach(function (a) {
+    if (a.getAttribute("data-nav") === name) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  });
+  document.title = name === "home" ? "YF Bridge"
+    : "YF Bridge " + String.fromCharCode(183) + " " + name.charAt(0).toUpperCase() + name.slice(1);
+  if (name === "briefing") renderBrief();
+  if (name === "home") { renderDigest(); renderHomeStats(); }
+}
+
+function onRoute() {
+  var n = routeName();
+  if (n === null) return;              // an in-page anchor, not a route
+  applyRoute(n);
+  window.scrollTo(0, 0);
+}
+
+window.addEventListener("hashchange", onRoute);
+
+el("briefDates").addEventListener("click", function (e) {
+  var b = e.target.closest("button[data-day]");
+  if (!b) return;
+  BRIEF_DAY = b.getAttribute("data-day");
+  renderBrief();
+});
+
+el("briefRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  var btn = el("briefRefresh"), restore = function () { btn.disabled = false; btn.textContent = "Refresh"; };
+  btn.disabled = true; btn.textContent = "Refreshing";
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(BRIEF, Q_BRIEF)).then(function () { setTimeout(restore, 600); }, restore);
+});
+
+/* Wrap rather than edit: the registry's render() keeps owning the gallery, and the home
+   page's counts ride along with it so the two can never disagree. */
+var _render = render;
+render = function () { _render(); renderHomeStats(); };
+
+/* Same reason. watchBuilds() runs once the connector has resolved, which is exactly when
+   the briefing watch can safely start too. */
+var _watchBuilds = watchBuilds;
+watchBuilds = function () { var r = _watchBuilds(); startBrief(); return r; };
+
+applyRoute(routeName() || "home");
+
+/* ================================================================
+   VISUAL PRIORITY + TASK INTELLIGENCE - added 2026-08-21
+
+   SURFACES is the whole layout argument, in one place. `home` is how
+   loudly the home page should speak about a section (1-10); `page` is
+   how much chrome its own destination deserves (1-10). They are
+   separate on purpose - Briefing is a 7 on the home page and a 3 as a
+   page - and the ladder that turns a number into a treatment is
+   documented in the stylesheet.
+
+   To add a section: add an entry here, add a markup block carrying
+   `data-surface="<key>"` inside #homeStack, and give the view an id of
+   `v-<key>`. Order and treatment follow from the weight. Nothing else
+   in this file needs to know about it.
+   ================================================================ */
+
+var SURFACES = [
+  { key: "tasks",    label: "Tasks",    home: 9, page: 6 },
+  { key: "briefing", label: "Briefing", home: 7, page: 3 },
+  { key: "builds",   label: "Builds",   home: 5, page: 7 }
+];
+
+function tierFor(w) {
+  return w >= 9 ? "hero" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
+}
+
+/* Consecutive plate-weight sections share one grid so they sit side by side; any
+   other tier breaks the run. Everything else is appended in weight order. */
+function orderHome() {
+  var stack = el("homeStack");
+  if (!stack) return;
+  var byKey = {};
+  Array.prototype.forEach.call(stack.querySelectorAll("[data-surface]"), function (n) {
+    byKey[n.getAttribute("data-surface")] = n;
+  });
+  var order = SURFACES.slice().sort(function (a, b) { return b.home - a.home; });
+  var plateWrap = null;
+  order.forEach(function (s) {
+    var node = byKey[s.key];
+    if (!node) return;
+    var tier = tierFor(s.home);
+    if (tier === "none") { node.parentNode.removeChild(node); return; }
+    if (tier === "plate") {
+      if (!plateWrap) {
+        plateWrap = document.createElement("div");
+        plateWrap.className = "plates";
+        stack.appendChild(plateWrap);
+      }
+      var inner = node.firstElementChild;
+      if (inner) plateWrap.appendChild(inner);
+      node.parentNode.removeChild(node);
+      return;
+    }
+    plateWrap = null;
+    stack.appendChild(node);
+  });
+}
+
+/* ---- who is looking ----
+   There is no viewer identity available to an artifact - the runtime serves no
+   such capability - so this is self-declared and stored per browser. It is a
+   filter, not a login: it changes nothing in Notion and grants nothing, and the
+   viewer can only ever see tasks their own Notion connection can already read. */
+
+var TASKS_DS = "collection://19b2e65a-2537-462e-9d93-9c2f8e965c3b";
+var Q_TASKS = 'SELECT url, "Tasks", "Assignee", "Planning", "Progress", "Priority", "Projects", ' +
+  '"Task Objective", "date:Due:start", "Estimated Hours" FROM "' + TASKS_DS + '" ' +
+  "WHERE \"Progress\" NOT IN ('Delivered','Archived') " +
+  'ORDER BY "date:Due:start" ASC LIMIT 400';
+var TASK_CAP = 400;
+
+/* The builders team, and deliberately only them (ZF, 2026-08-21). Bridge is scoped to
+   the four people using it; the rest of the studio is not shown here even though their
+   tasks are in the same database. Widening it later means adding entries below and
+   nothing else - every count, filter and label reads from this map.
+
+   Notion returns initials as account names, so full names are mapped here; resolved
+   2026-08-21 from notion-get-users. */
+var PEOPLE = {
+  "257d872b-594c-81b9-8dbb-00020be015be": { ini: "ZF", name: "Zia Firouz",       role: "Strategist, Technology & AI" },
+  "51885300-ccbc-4ca8-b257-2a393906f9f3": { ini: "PS", name: "Polina Savenkova", role: "Designer, Media & Creative" },
+  "1298f431-181e-484b-abf1-8d82ab6f3a87": { ini: "BB", name: "Brano Beres",      role: "Partner, Strategy & Creative" },
+  "94da9330-c68f-4628-9474-4e74de5f83a5": { ini: "JK", name: "Jasmyne Koh",      role: "Manager, Account & Creative" }
+};
+function isBuilder(id) { return !!id && Object.prototype.hasOwnProperty.call(PEOPLE, id); }
+
+var WHO_ALL = "*";
+var WHO = WHO_ALL;
+try { WHO = localStorage.getItem("yfbridge.who") || WHO_ALL; } catch (e) { WHO = WHO_ALL; }
+// A stored id that is not on the team any more (or was never on it) falls back to the
+// team view rather than silently showing an empty page under someone else's name.
+if (WHO !== WHO_ALL && !isBuilder(WHO)) WHO = WHO_ALL;
+
+var TASK_ROWS = null;
+var BUCKETS = ["Overdue", "Today", "This Week", "Later"];
+
+function whoLabel(id) {
+  if (id === WHO_ALL) return "the builders team";
+  var p = PEOPLE[id];
+  return p ? p.name : "Unassigned";
+}
+function whoInitials(id) {
+  if (id === WHO_ALL) return "ALL";
+  var p = PEOPLE[id];
+  return p ? p.ini : "?";
+}
+
+/* The Assignee cell is a JSON array of "user://<uuid>" values - despite the schema
+   describing a single id - and can also hold a permission group, which is nobody. */
+function assigneeOf(t) {
+  var list = asList(t["Assignee"]);
+  for (var i = 0; i < list.length; i++) {
+    var s = String(list[i]);
+    if (s.indexOf("user://") === 0) return s.slice(7);
+  }
+  return null;
+}
+/* "Everyone" means everyone on the builders team, not everyone in the database. A task
+   assigned to someone outside the team never appears here, which is the intended scope. */
+function minePredicate(t) {
+  var id = assigneeOf(t);
+  return WHO === WHO_ALL ? isBuilder(id) : id === WHO;
+}
+function myTasks() {
+  return (TASK_ROWS || []).filter(minePredicate);
+}
+function inBucket(list, b) {
+  return list.filter(function (t) { return (t["Planning"] || "Later") === b; });
+}
+
+var HOT  = String.fromCharCode(0xD83D, 0xDD25);  // U+1F525 fire, the Priority high value
+var COLD = String.fromCharCode(0x2744);           // U+2744 snowflake, its low value
+function isHot(t)  { return String(t["Priority"] || "").indexOf(HOT) >= 0; }
+function isCold(t) { return String(t["Priority"] || "").indexOf(COLD) >= 0; }
+
+var STUCK   = { "Blocked": 1 };
+var WAITING = { "On Hold": 1, "Waiting for feedback": 1 };
+function progressClass(p) {
+  if (p === "In Progress") return "doing";
+  if (STUCK[p]) return "stuck";
+  if (WAITING[p]) return "waiting";
+  return "";
+}
+
+function projectNameOf(t) {
+  var list = asList(t["Projects"]);
+  if (!list.length) return "";
+  return PROJECT_NAME[list[0]] || "";
+}
+
+/* One task row, shared by the hero and the Tasks page so they cannot drift. */
+function taskRow(t) {
+  var flame = isHot(t) ? '<span class="flame" title="High priority">*</span>'
+    : isCold(t) ? '<span class="flame cold" title="Low priority">.</span>'
+    : "<span></span>";
+  var proj = projectNameOf(t);
+  var due = t["date:Due:start"] ? shortDate(t["date:Due:start"]) : "";
+  var over = (t["Planning"] === "Overdue");
+  var meta = [];
+  if (proj) meta.push("<span>" + esc(proj) + "</span>");
+  if (due) meta.push('<span class="' + (over ? "over" : "") + '">' + (over ? "due " : "due ") + esc(due) + "</span>");
+  if (t["Estimated Hours"]) meta.push("<span>" + esc(String(t["Estimated Hours"])) + "h</span>");
+
+  var pc = progressClass(t["Progress"]);
+  return '<div class="trow">' + flame +
+    "<div>" +
+      '<a class="tname" href="' + esc(t.url || "#") + '" target="_blank" rel="noopener noreferrer">' +
+        esc(t["Tasks"] || "(untitled task)") + "</a>" +
+      (meta.length ? '<p class="meta">' + meta.join("") + "</p>" : "") +
+    "</div>" +
+    '<div class="right">' +
+      (t["Progress"] ? '<span class="tpill ' + pc + '">' + esc(t["Progress"]) + "</span>" : "") +
+    "</div>" +
+  "</div>";
+}
+
+function taskGroup(title, list, cap, urgent) {
+  if (!list.length) return "";
+  var shown = list.slice(0, cap);
+  var rest = list.length - shown.length;
+  return '<div class="tgroup' + (urgent ? " urgent" : "") + '"><h3>' + esc(title) +
+    " &middot; " + list.length + "</h3>" +
+    shown.map(taskRow).join("") +
+    (rest ? '<p class="tmore">' + rest + " more in <a href=\"#/tasks\">Tasks</a></p>" : "") +
+    "</div>";
+}
+
+/* ---- the hero: what am I doing today ---- */
+function renderTaskHero() {
+  var line = el("taskLine"), gauges = el("taskGauges"), lists = el("taskLists");
+  if (!line) return;
+
+  el("taskWho").innerHTML = "Today <span class=\"slash\">&#9585;</span> " +
+    esc(WHO === WHO_ALL ? "Builders team" : whoLabel(WHO));
+
+  if (!TASK_ROWS) {
+    line.textContent = "Reading your tasks...";
+    line.className = "hero-line calm";
+    return;
+  }
+
+  var mine = myTasks();
+  var over = inBucket(mine, "Overdue"), today = inBucket(mine, "Today"),
+      week = inBucket(mine, "This Week"), later = inBucket(mine, "Later");
+  var stuck = mine.filter(function (t) { return STUCK[t["Progress"]] || WAITING[t["Progress"]]; });
+
+  var n = function (v) { return '<span class="num">' + v + "</span>"; };
+  var txt, calm = false;
+  if (over.length && today.length) {
+    txt = n(over.length) + (over.length === 1 ? " thing overdue" : " things overdue") + ", " + n(today.length) + " for today.";
+  } else if (over.length) {
+    txt = n(over.length) + (over.length === 1 ? " thing overdue" : " things overdue") + ", nothing else scheduled for today.";
+  } else if (today.length) {
+    txt = n(today.length) + (today.length === 1 ? " thing" : " things") + " for today, nothing overdue.";
+  } else if (week.length) {
+    txt = "Nothing for today. " + n(week.length) + " this week."; calm = true;
+  } else if (later.length) {
+    txt = "Nothing planned. " + n(later.length) + " sitting in Later."; calm = true;
+  } else {
+    txt = WHO === WHO_ALL ? "Nothing open across the team." : "Nothing open. Clear."; calm = true;
+  }
+  line.innerHTML = txt;
+  line.className = "hero-line" + (calm ? " calm" : "");
+
+  var g = function (cls, num, label) {
+    return '<div class="tg ' + (num ? cls : "zero") + '"><span class="n">' + num +
+      '</span><span class="label">' + label + "</span></div>";
+  };
+  gauges.innerHTML =
+    g("crit", over.length, "overdue") +
+    g("go", today.length, "today") +
+    g("", week.length, "this week") +
+    g("warn", stuck.length, "blocked or waiting") +
+    g("", later.length, "later");
+
+  // Overdue before today: the ladder says this block is the most important thing on
+  // the page, so it leads with the most important thing in the block.
+  lists.innerHTML =
+    taskGroup("Overdue", over, 4, true) +
+    taskGroup("Today", today, 6, false) +
+    (!over.length && !today.length && week.length ? taskGroup("This week", week, 4, false) : "");
+}
+
+/* ---- the Tasks page ---- */
+function renderTasksPage() {
+  var body = el("tasksBody");
+  if (!body) return;
+  el("tasksTitle").textContent = "Tasks, " + whoLabel(WHO);
+
+  if (!TASK_ROWS) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading tasks&hellip;</div>';
+    return;
+  }
+  var mine = myTasks();
+  if (!mine.length) {
+    body.innerHTML = '<div class="panel"><h2>Nothing open</h2><p>' +
+      (WHO === WHO_ALL
+        ? "Nobody on the builders team has an undelivered task assigned. Tasks belonging to the rest of the studio are deliberately not shown here."
+        : esc(whoLabel(WHO)) + " has no undelivered tasks assigned. Use <b>Change person</b> if that is not who you are.") +
+      "</p></div>";
+    return;
+  }
+  var cols = BUCKETS.map(function (b) {
+    var list = inBucket(mine, b);
+    var urgent = (b === "Overdue" && list.length);
+    var shown = list.slice(0, 25), rest = list.length - shown.length;
+    return '<section class="tcol' + (urgent ? " urgent" : "") + '">' +
+      "<h2>" + esc(b) + " &middot; " + list.length + "</h2>" +
+      (list.length ? shown.map(taskRow).join("") : '<p class="none">Nothing here.</p>') +
+      (rest ? '<p class="tmore">' + rest + " more not shown</p>" : "") +
+      "</section>";
+  }).join("");
+
+  var capped = TASK_ROWS.length >= TASK_CAP
+    ? '<p class="foot" style="margin:0 0 16px">Showing the first ' + TASK_CAP +
+      " undelivered tasks by due date. There are more; the rest are not on this page.</p>"
+    : "";
+  body.innerHTML = capped + '<div class="tcols">' + cols + "</div>";
+}
+
+/* ---- the person picker ----
+   The four builders, always all four in a fixed order, each with a live count of open
+   tasks. Fixed rather than derived from the data so that somebody with nothing open
+   still appears and can still pick themselves. */
+function rosterFrom(list) {
+  var counts = {};
+  (list || []).forEach(function (t) {
+    var id = assigneeOf(t);
+    if (!isBuilder(id)) return;
+    counts[id] = (counts[id] || 0) + 1;
+  });
+  return Object.keys(PEOPLE).map(function (id) { return { id: id, n: counts[id] || 0 }; });
+}
+
+function renderWhoList() {
+  var box = el("whoList");
+  if (!box) return;
+  var people = rosterFrom(TASK_ROWS);
+  var row = function (id, label, sub, count) {
+    return '<button class="whorow" data-who="' + esc(id) + '" aria-pressed="' + (id === WHO ? "true" : "false") + '">' +
+      '<span class="initials">' + esc(whoInitials(id)) + "</span>" +
+      '<span class="nm"><b>' + esc(label) + "</b><span>" + esc(sub) + "</span></span>" +
+      '<span class="cnt">' + count + "</span></button>";
+  };
+  var total = people.reduce(function (a, p) { return a + p.n; }, 0);
+  box.innerHTML = row(WHO_ALL, "The builders team", "ZF, PS, BB and JK together", total) +
+    people.map(function (p) { return row(p.id, PEOPLE[p.id].name, PEOPLE[p.id].role, p.n); }).join("");
+}
+
+function setWho(id) {
+  WHO = id;
+  try { localStorage.setItem("yfbridge.who", id); } catch (e) {}
+  // Keep the registry's check-out name in step, so nobody is asked who they are twice.
+  var p = PEOPLE[id];
+  if (p) {
+    ME = p.ini;
+    try { localStorage.setItem("yfbuilds.me", ME); } catch (e) {}
+  }
+  renderTaskHero();
+  renderTasksPage();
+  renderWhoList();
+  if (typeof render === "function" && BUILDS_ROWS) render();
+}
+
+function openWho() { renderWhoList(); openSheet("whoScrim"); }
+
+/* ---- data ---- */
+function startTasks() {
+  if (!mcp || !SERVER) return;
+  mcp.watchTool(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_TASKS), function (ev) {
+    if (ev.type === "data") {
+      TASK_ROWS = rows(ev.result);
+      renderTaskHero(); renderTasksPage(); renderWhoList();
+      return;
+    }
+    var err = ev.error || {};
+    if (!TASK_ROWS) {
+      var e = explain(err);
+      el("taskLine").innerHTML = esc(e.head);
+      el("taskLine").className = "hero-line calm";
+      el("taskGauges").innerHTML = "";
+      el("taskLists").innerHTML = '<p class="quiet" style="padding-bottom:14px">' + esc(e.body) + "</p>";
+      el("tasksBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
+    }
+  }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
+}
+
+/* ---- the briefing band replaces the old home digest ----
+   Same data, less of it: at a 7 the home page names the three leads and stops. */
+renderDigest = function () {
+  var rowEl = el("bandRow");
+  if (!rowEl) return;
+  var days = briefDays();
+  var host = document.querySelector('[data-surface="briefing"]');
+  if (!days.length) { if (host) host.hidden = true; return; }
+  if (host) host.hidden = false;
+  var day = days[0];
+  el("bandStamp").textContent = "Today's briefing " + String.fromCharCode(183) + " " + longDate(day);
+  rowEl.innerHTML = SECTIONS.map(function (s) {
+    var r = leadOf(day, s.key);
+    if (!r) return "";
+    return '<div class="bandcell"><span class="sec">' + esc(s.key) + "</span>" +
+      '<a href="' + esc(r["Link"] || "#") + '" target="_blank" rel="noopener noreferrer">' + esc(r["Headline"]) + "</a>" +
+      (r["Source"] ? '<p class="src">' + esc(r["Source"]) + "</p>" : "") + "</div>";
+  }).join("");
+};
+
+/* ---- wire the new surfaces into the existing router ---- */
+VIEWS.tasks = "v-tasks";
+
+var _applyRoute = applyRoute;
+applyRoute = function (name) {
+  _applyRoute(name);
+  if (name === "tasks") renderTasksPage();
+  if (name === "home") renderTaskHero();
+};
+
+var _watchBuildsB = watchBuilds;
+watchBuilds = function () { var r = _watchBuildsB(); startTasks(); return r; };
+
+el("whoBtn").addEventListener("click", openWho);
+el("whoBtn2").addEventListener("click", openWho);
+el("whoCancel").addEventListener("click", function () { closeSheet("whoScrim"); });
+el("whoScrim").addEventListener("click", function (e) {
+  if (e.target.id === "whoScrim") closeSheet("whoScrim");
+  var b = e.target.closest ? e.target.closest("button[data-who]") : null;
+  if (!b) return;
+  setWho(b.getAttribute("data-who"));
+  closeSheet("whoScrim");
+});
+el("taskRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  var btn = el("taskRefresh"), restore = function () { btn.disabled = false; btn.textContent = "Refresh"; };
+  btn.disabled = true; btn.textContent = "Refreshing";
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_TASKS)).then(function () { setTimeout(restore, 600); }, restore);
+});
+
+orderHome();
+applyRoute(routeName() || "home");
 boot();
 </script>

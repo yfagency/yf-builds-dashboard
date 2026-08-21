@@ -46,7 +46,7 @@ if ($missing) { $fail.Add("thumbnails on disk but NOT in the page: $($missing -j
 if ($extra)   { $warn.Add("thumbnails in the page with no file in $ShotDir : $($extra -join ', ')") }
 
 # --- 3. structure ------------------------------------------------------------------
-if ($lines[0].Trim() -ne "<title>YF Builds</title>") { $fail.Add("first line is not the <title> - a stray fragment may sit above it: '$($lines[0].Substring(0, [Math]::Min(60, $lines[0].Length)))'") }
+if ($lines[0].Trim() -ne "<title>YF Bridge</title>") { $fail.Add("first line is not the <title> - a stray fragment may sit above it: '$($lines[0].Substring(0, [Math]::Min(60, $lines[0].Length)))'") }
 foreach ($pair in @(@("<style>", "</style>"), @("<script>", "</script>"))) {
   # \r? before the line end: this repo is checked out with CRLF, and $ anchors before the
   # \n, leaving the \r unmatched.

@@ -1,20 +1,34 @@
-# YF Builds — dashboard
+# YF / Bridge
 
-The team-facing view of the YF Builds registry: every app, page and mock-up the studio
-has built with Claude, who built it, what state it's in, and a one-click download of the
-latest version of each.
+YF's internal operating surface, and the repo that builds it. **Bridge** is the app;
+**Builds** and **Briefing** are its two sections. Named 2026-08-21 (it was previously
+called YF Builds, after the only section it then had).
 
-Two variants of the same dashboard live here, because they run in different places.
+The mark between the letters is `&#9585;` (U+2571) &mdash; the forward-leaning
+diagonal. It is not a backslash and not U+27CD; getting it wrong is the most common
+mistake in docs about this page.
+
+| Section | Route | Reads | Written by |
+| --- | --- | --- | --- |
+| Home | `#/` | both of the below | - |
+| Builds | `#/builds` | YF Builds registry, `collection://10d63098-...` | the `yf-builds-publish` skill, plus the 06:30 JST GitHub sync |
+| Briefing | `#/briefing` | AI Briefing Archive, `collection://4ebf7258-...` | the `yf-daily-ai-briefing` cron, 07:00 JST |
+
+Routing is hash-based and client-side: one artifact, one URL, one connector grant per
+viewer. Anything not starting `#/` is left alone, because the in-page Guide uses plain
+`#g-...` anchors of its own.
+
+Two variants of the dashboard live here, because they run in different places.
 
 | File | Runs in | Data access |
 | --- | --- | --- |
 | `yf-builds-dashboard.artifact.html` | claude.ai (published Artifact) | the viewer's own Notion connector, via the artifact `mcp` capability |
 | `yf-builds-dashboard.cowork.html` | Cowork desktop | `window.cowork.callMcpTool` |
 
-Both read the same registry and render the same cards, filters, freshness dots and
-Download-latest links. The Cowork variant is the original; the artifact variant exists so
-the dashboard can be opened as a plain URL by anyone on the team, without Cowork and
-without the connector grants being cleared on every republish.
+The artifact variant is the one the team opens and the only one that is Bridge. **The
+Cowork variant was not carried forward on 2026-08-21** &mdash; it is still a builds-only
+dashboard with no home page and no Briefing section. Treat it as frozen unless someone
+actually needs it.
 
 ## How a build gets here
 
