@@ -20,7 +20,7 @@ without the connector grants being cleared on every republish.
 
 Publishing is done from **Claude Code**, on the builder's own machine:
 
-> "log this build"
+> "push this build"
 
 That creates a public GitHub repo under the `yfagency` org, pushes the files, and registers
 the row. Cowork cannot push to GitHub — its sandbox proxy refuses to supply credentials for

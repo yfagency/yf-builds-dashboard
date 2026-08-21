@@ -538,7 +538,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
             <p>&ldquo;Build me a one-page microsite for the TDK town hall&rdquo;. It writes the files in that folder; the <b>Browser</b> pane previews them as it goes, so you can look at the thing rather than read about it. Type <code>/</code> to see the skills available to you.</p>
           </li>
           <li>
-            <h4>When you like it, say &ldquo;log this build&rdquo;</h4>
+            <h4>When you like it, say &ldquo;push this build&rdquo;</h4>
             <p>That's the handover to <a href="#g-publish" data-goto="g-publish">Publishing</a>. Everything from there is automatic.</p>
           </li>
         </ol>
@@ -548,7 +548,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
       <section id="g-publish">
         <h3>Publishing your own build</h3>
         <p>Publishing happens in <b>Claude Code</b>, on your own machine. It can't happen in Cowork: that sandbox can read GitHub but not push to it, which is a limit of the sandbox rather than a setting anyone can change.</p>
-        <p class="say">&ldquo;log this build&rdquo;</p>
+        <p class="say">&ldquo;push this build&rdquo;</p>
         <p>Said in Claude Code, in the folder containing the thing you made. It creates the repo, pushes the files, turns on hosting, and registers the card. It asks what to call it and which client it's for only if that isn't obvious from what you've been doing.</p>
         <p><b>Never done this before? Say it anyway.</b> There's no setup for you to do first. If your machine is missing anything &mdash; the GitHub CLI, a login, a git identity &mdash; Claude installs and configures it as part of the same request. The only moment it needs you is approving a GitHub login in your browser, and it will tell you exactly what to click.</p>
         <p>The one thing it can't do for you is put you in the <code>yfagency</code> organisation. If you're not in it yet, it stops and says so &mdash; then it's one line for ZF and you try again.</p>
@@ -561,7 +561,10 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 
       <section id="g-update">
         <h3>Updating a build you already published</h3>
-        <p>Exactly the same sentence, in the same folder. It notices the build already exists and adds a version rather than making a second entry. Everyone downloading gets the new one immediately, and every earlier version stays recoverable under <b>GitHub &amp; history</b>.</p>
+        <p>Name the build you mean:</p>
+        <p class="say">&ldquo;update this build &mdash; Work Mosaic&rdquo;</p>
+        <p>Use the name as it appears on its card. Naming it is what makes this unambiguous: Claude finds that build in the registry, checks you're pointing at the right repo, and adds a version rather than creating a second entry. Everyone downloading gets the new one immediately, and every earlier version stays recoverable under <b>GitHub &amp; history</b>.</p>
+        <p>If somebody else has the build <a href="#g-checkout" data-goto="g-checkout">checked out</a>, it tells you who and since when before pushing over their work.</p>
         <p class="quiet">The commit line and the freshness dot catch up at the next sync rather than instantly &mdash; see <a href="#g-fresh" data-goto="g-fresh">How current is this</a>.</p>
       </section>
 
@@ -1003,8 +1006,8 @@ function card(b) {
 
 var EMPTY = '<div class="panel"><h2>No builds tracked yet</h2>' +
   "<p>When you've made something the team should be able to find later, say this <strong>in Claude Code</strong>:</p>" +
-  '<p class="say">&ldquo;log this build&rdquo;</p>' +
-  "<p>It creates the repo, pushes the files and registers the build. Same sentence for a new version of something that already exists.</p>" +
+  '<p class="say">&ldquo;push this build&rdquo;</p>' +
+  "<p>It creates the repo, pushes the files and registers the build. Later, to publish a new version of something already here, say <strong>&ldquo;update this build&rdquo;</strong> and name it.</p>" +
   '<p class="quiet">Claude Code is the one tool that can write to GitHub &mdash; Cowork can read it but not push. The skill that does it is already shared with the team, so none of the steps are yours to remember.</p>' +
   '<p><a class="guidelink" href="#g-publish" data-guide="g-publish">Read how publishing works</a></p></div>';
 
