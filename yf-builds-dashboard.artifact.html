@@ -162,12 +162,16 @@ input.pick {
 .claim { display: flex; align-items: center; gap: 8px; }
 .claim .who { color: var(--accent); font-weight: 600; }
 .claim.held { color: var(--ink-2); }
-/* A quiet inline affordance, not a sixth button competing with Download latest. */
-.claimlink {
-  background: none; border: 0; padding: 0; cursor: pointer; font: inherit;
-  color: var(--muted); border-bottom: 1px solid var(--rule);
+/* Claim control: parked at the right edge of the commit line, where nothing competes with
+   it. Accent-tinted so it reads as available without becoming a second yellow button. */
+.freshline { display: flex; align-items: center; gap: 10px; }
+.claimbtn {
+  margin-left: auto; flex: none; cursor: pointer;
+  font-family: var(--sans); font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(235, 178, 12, .35);
 }
-.claimlink:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.claimbtn:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn.tiny { padding: 3px 8px; font-size: 11.5px; font-weight: 500; }
 .card {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
@@ -933,12 +937,12 @@ function card(b) {
     checkoutLine(b) +
     (b.stack.length ? '<div class="chips">' + b.stack.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : "") +
     '<p class="line" style="margin:0">' + (who ? "Built by <strong>" + esc(who) + "</strong>" : "Builder not set") +
-      (b.version ? ' &middot; <span class="sha">' + esc(b.version) + "</span>" : "") +
-      // The claim affordance rides the line that always exists, so it is findable without
-      // costing the card a row of its own.
-      (b.pageId && !b.coBy ? ' &middot; <button class="claimlink" data-checkout="' + esc(b.pageId) +
+      (b.version ? ' &middot; <span class="sha">' + esc(b.version) + "</span>" : "") + "</p>" +
+    // The commit line carries the claim control at its right edge: the line always exists,
+    // and the right edge is empty space rather than a queue of buttons.
+    '<p class="line freshline" style="margin:0"><span>' + freshLine(b) + "</span>" +
+      (b.pageId && !b.coBy ? '<button class="claimbtn" data-checkout="' + esc(b.pageId) +
         '" title="Tell the team you are working on this">Check out</button>' : "") + "</p>" +
-    '<p class="line" style="margin:0">' + freshLine(b) + "</p>" +
     ((b.client || b.project) ? '<p class="line" style="margin:0">' +
       (b.client ? "Client <strong>" + esc(b.client) + "</strong>" : "") +
       (b.client && b.project ? " &middot; " : "") +
