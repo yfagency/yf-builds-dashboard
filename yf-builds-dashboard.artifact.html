@@ -1865,6 +1865,21 @@ function pageIdFrom(url) {
   var m = String(url || "").match(/[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}/i);
   return m ? m[0] : null;
 }
+/* Every link to a Notion record goes through here.
+   The query API hands back page URLs as `https://app.notion.com/<id>` - with NO `/p/`
+   segment - and that form is a 404. Measured 2026-08-21:
+     app.notion.com/<id>    404
+     app.notion.com/p/<id>  200
+     www.notion.so/<id>     200
+   So the id is re-hosted on www.notion.so, which is the long-standing canonical form and
+   hands off to the desktop app correctly. Funnelling every Notion link through one
+   function is the point: the first version built hrefs inline in three places, so one
+   bad host shape broke the project record and every task title at once. */
+function notionUrl(raw) {
+  var id = pageIdFrom(raw);
+  if (!id) return String(raw || "#");
+  return "https://www.notion.so/" + id.replace(/-/g, "");
+}
 function repoBase(u) { return u ? u.trim().replace(/\/+$/, "").replace(/\.git$/, "") : null; }
 function tidyPath(p) { return p ? p.trim().replace(/^\/+|\/+$/g, "") : ""; }
 function encPath(p) { return p.split("/").map(encodeURIComponent).join("/"); }
@@ -3163,7 +3178,7 @@ function taskRow(t) {
   var tid = pageIdFrom(t.url);
   return '<div class="trow">' + mark +
     '<div class="tbody">' +
-      '<a class="tname" href="' + esc(t.url || "#") + '" target="_blank" rel="noopener noreferrer">' +
+      '<a class="tname" href="' + esc(notionUrl(t.url)) + '" target="_blank" rel="noopener noreferrer">' +
         esc(t["Tasks"] || "(untitled task)") + "</a>" +
       (meta.length ? '<p class="meta">' + meta.join("") + "</p>" : "") +
     "</div>" +
@@ -3983,7 +3998,7 @@ function renderProjects() {
         (code ? '<p class="code">' + esc(code) + "</p>" : "") +
         "<h2>" + esc(projTitle(open)) + "</h2>" +
         '<div class="row">' +
-          '<a class="btn" href="' + esc(open.url) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' +
+          '<a class="btn" href="' + esc(notionUrl(open.url)) + '" target="_blank" rel="noopener noreferrer">Open in Notion</a>' +
           '<button class="btn ghost" id="projPick">Choose another</button>' +
         "</div>" +
       "</div>" +
@@ -4081,7 +4096,7 @@ function palActions() {
   });
   (TASK_ROWS || []).filter(minePredicate).slice(0, 60).forEach(function (t) {
     a.push({ k: "Task", t: String(t["Tasks"] || ""), sub: t["Planning"] || "",
-      run: function () { window.open(t.url, "_blank", "noopener"); } });
+      run: function () { window.open(notionUrl(t.url), "_blank", "noopener"); } });
   });
   return a;
 }
@@ -4294,7 +4309,7 @@ function renderLeadPins() {
     } else {
       var t = (TASK_ROWS || []).filter(function (x) { return pageIdFrom(x.url) === p.id; })[0];
       label = t ? String(t["Tasks"] || p.t) : p.t;
-      href = t ? t.url : "#/tasks";
+      href = t ? notionUrl(t.url) : "#/tasks";
     }
     var ext = (p.k === "t" && href.indexOf("#") !== 0);
     return '<span class="pinchip"><span class="kind">' + (p.k === "p" ? "PRJ" : "TSK") + "</span>" +
