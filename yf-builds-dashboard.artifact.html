@@ -1132,6 +1132,100 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .pincard .meta { font-family: var(--mono); font-size: 10px; color: var(--muted); margin: 4px 0 0; }
 
 /* ================================================================
+   THE REEL - added 2026-08-21
+
+   A slim fixed strip along the bottom carrying what has just happened:
+   commits, decisions logged to the KB, the day's lead stories, and a few
+   operational readings. Everything in it is already in memory for other
+   sections, apart from Decisions & Learnings which needs one small query.
+
+   Three things this has to get right or it becomes an irritant:
+
+   - It must PAUSE on hover and on keyboard focus. A moving link cannot be
+     clicked, so a ticker that never stops is decoration pretending to be
+     navigation.
+   - It must not move at all under prefers-reduced-motion. There it turns
+     into an ordinary horizontally scrollable strip, which is genuinely
+     usable rather than a degraded animation.
+   - It must be dismissible, and stay dismissed. It occupies the bottom of
+     every view, which is a lot of rent for a novelty.
+
+   position: fixed is safe here: the frame runtime saves and restores the
+   iframe's own scrollY, so the iframe has a real viewport rather than
+   being sized to its content.
+   ================================================================ */
+
+.reel {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; align-items: stretch; height: 34px;
+  background: var(--surface); border-top: 1px solid var(--rule);
+}
+.reel-badge {
+  display: flex; align-items: center; gap: 7px; flex: none; padding: 0 12px;
+  border-right: 1px solid var(--rule); background: var(--surface-2);
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--muted);
+}
+.reel-badge i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex: none;
+  animation: reelpulse 2.4s ease-in-out infinite;
+}
+@keyframes reelpulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.reel-win { flex: 1 1 auto; min-width: 0; overflow: hidden; position: relative; }
+.reel-track {
+  display: flex; align-items: center; gap: 0; height: 100%;
+  width: max-content; will-change: transform;
+  animation: reelroll linear infinite;
+}
+/* The track holds the item list twice, so -50% lands exactly where it started. */
+@keyframes reelroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.reel:hover .reel-track, .reel:focus-within .reel-track { animation-play-state: paused; }
+
+.reel-dup { display: flex; align-items: center; }
+.reel-item {
+  display: inline-flex; align-items: center; gap: 8px; flex: none;
+  padding: 0 18px; text-decoration: none; white-space: nowrap;
+  border-right: 1px solid var(--rule-soft);
+}
+.reel-item .k {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); flex: none;
+}
+.reel-item .x { font-size: 12px; color: var(--ink-2); }
+.reel-item .w { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.reel-item:hover .x { color: var(--ink); }
+.reel-item:hover { background: var(--surface-2); }
+.reel-item.crit .k { color: var(--crit); }
+.reel-item.warn .k { color: var(--warn); }
+
+.reel-hide {
+  flex: none; background: none; border: 0; border-left: 1px solid var(--rule); cursor: pointer;
+  padding: 0 11px; color: var(--muted); font-family: var(--mono); font-size: 12px;
+}
+.reel-hide:hover { color: var(--ink); background: var(--surface-2); }
+
+/* Brought back by a tab that sits in the corner rather than being gone for good. */
+.reel-show {
+  position: fixed; right: 0; bottom: 0; z-index: 30; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--rule); border-right: 0; border-bottom: 0;
+  border-radius: 4px 0 0 0; padding: 5px 12px; color: var(--muted);
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+}
+.reel-show:hover { color: var(--accent); }
+
+/* Room at the foot of every page so the strip never covers the last line. */
+body.has-reel .wrap { padding-bottom: 76px; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* No crawl, no pulse. A plain scrollable strip instead - the content stays
+     reachable, which the animation was only ever in the way of. */
+  .reel-track { animation: none; width: auto; }
+  .reel-badge i { animation: none; }
+  .reel-win { overflow-x: auto; }
+  .reel-track .reel-dup { display: none; }
+}
+
+/* ================================================================
    FITTING EVERY VIEWPORT - added 2026-08-21
 
    The page was built at desktop width and broke badly below about
@@ -1529,6 +1623,14 @@ img, svg { max-width: 100%; }
     <div class="box" id="connBox">Not checked yet.</div>
   </details>
 </div>
+<!-- The reel. Outside .wrap because it is fixed to the viewport, not part of the page flow. -->
+<div class="reel" id="reel" hidden>
+  <span class="reel-badge"><i></i>Live</span>
+  <div class="reel-win"><div class="reel-track" id="reelTrack"></div></div>
+  <button class="reel-hide" id="reelHide" title="Hide the reel">x</button>
+</div>
+<button class="reel-show" id="reelShow" hidden>Reel</button>
+
 <div class="scrim pal" id="palScrim">
   <div class="sheet">
     <div class="palbox">
@@ -4461,8 +4563,165 @@ renderProjects = function () {
 var _rtlPins = renderTaskLead;
 renderTaskLead = function () { _rtlPins(); renderLeadPins(); };
 
+/* ================================================================
+   THE REEL - what has just happened, along the bottom
+   ================================================================ */
+
+var DL_DS = "collection://79e8eda0-63bc-4a4a-badd-b981004c6f3c";
+var Q_DL = 'SELECT url, "Entry", "Category", "Source", "date:Date:start" FROM "' + DL_DS +
+  '" ORDER BY "date:Date:start" DESC LIMIT 12';
+var DL_ROWS = null;
+var REEL_ON = true;
+try { REEL_ON = localStorage.getItem("yfbridge.reel") !== "off"; } catch (e) {}
+
+/* Relative time, coarse on purpose: the reel is glanceable, and "3d" carries as much
+   as a timestamp would at this size. */
+function shortAgo(iso) {
+  var d = daysSince(String(iso || "").slice(0, 10));
+  if (d === null) return "";
+  return d <= 0 ? "today" : d === 1 ? "1d" : d + "d";
+}
+
+/* Everything here is already in memory for another section, apart from Decisions.
+   Ops readings are ZF-only, matching the Dev tools boundary. */
+function reelItems() {
+  var out = [];
+
+  (BUILDS_ROWS || []).forEach(function (b) {
+    if (isSelf(b) || !b.commit) return;
+    // Drop the leading short SHA and whatever separator follows it. A punctuation class
+    // rather than a list of dashes, because this file cannot hold an em dash.
+    out.push({ k: "Build", x: b.name + " " + String(b.commit).replace(/^[0-9a-f]{6,10}\s*[^0-9A-Za-z]*/i, ""),
+      who: b.committer || b.builder, when: b.commitDate, href: "#/builds" });
+  });
+
+  (DL_ROWS || []).forEach(function (d) {
+    out.push({ k: d["Category"] || "Note", x: d["Entry"] || "", who: d["Source"] || "",
+      when: d["date:Date:start"], href: notionUrl(d.url), ext: true });
+  });
+
+  if (BRIEF_ROWS && briefDays().length) {
+    var day = briefDays()[0];
+    briefFor(day).filter(function (r) { return (+r["Rank"] || 9) <= 2; }).forEach(function (r) {
+      out.push({ k: r["Section"], x: r["Headline"], who: r["Source"], when: day,
+        href: r["Link"], ext: true });
+    });
+  }
+
+  // Operational readings, derived rather than queried.
+  if (devAllowed()) {
+    if (PROJ_ROWS) {
+      var inv = PROJ_ROWS.filter(function (p) { return p["Status"] === "Ready to invoice"; });
+      var aged = inv.map(function (p) { return daysSince(p.edited) || 0; }).sort(function (a, b) { return b - a; });
+      var stale = aged.filter(function (d) { return d > 60; }).length;
+      if (stale) {
+        out.push({ k: "Unbilled", tone: "crit", x: stale + " ready to invoice, untouched 60d+ (oldest " + aged[0] + "d)",
+          who: "", when: todayISO(), href: "#/dev" });
+      }
+    }
+    if (BUILDS_ROWS) {
+      var noshot = BUILDS_ROWS.filter(function (b) { return !isSelf(b) && b.status !== "Archived" && !thumbFor(b); }).length;
+      if (noshot) {
+        out.push({ k: "Thumbs", tone: "warn", x: noshot + " build" + (noshot === 1 ? "" : "s") + " without a thumbnail",
+          who: "", when: todayISO(), href: "#/dev" });
+      }
+    }
+    var bd = BRIEF_ROWS && briefDays().length ? daysSince(briefDays()[0]) : null;
+    if (bd !== null && bd > 1) {
+      out.push({ k: "Briefing", tone: "warn", x: "no briefing recorded for " + bd + " days",
+        who: "", when: todayISO(), href: "#/dev" });
+    }
+  }
+
+  var mine = myTasks();
+  var over = inBucket(mine, "Overdue").length;
+  if (over) {
+    out.push({ k: "Overdue", tone: "crit", x: over + " task" + (over === 1 ? "" : "s") + " overdue" +
+      (WHO === WHO_ALL ? " across the team" : ""), who: "", when: todayISO(), href: "#/tasks" });
+  }
+
+  out.sort(function (a, b) { return String(b.when || "").localeCompare(String(a.when || "")); });
+  return out.slice(0, 22);
+}
+
+function renderReel() {
+  var reel = el("reel"), track = el("reelTrack"), show = el("reelShow");
+  if (!reel) return;
+
+  if (!REEL_ON) {
+    reel.hidden = true; show.hidden = false;
+    document.body.classList.remove("has-reel");
+    return;
+  }
+  var items = reelItems();
+  if (!items.length) {
+    reel.hidden = true; show.hidden = true;
+    document.body.classList.remove("has-reel");
+    return;
+  }
+  show.hidden = true;
+  reel.hidden = false;
+  document.body.classList.add("has-reel");
+
+  var one = items.map(function (i) {
+    var ext = i.ext && String(i.href || "").indexOf("#") !== 0;
+    return '<a class="reel-item' + (i.tone ? " " + i.tone : "") + '" href="' + esc(i.href || "#") + '"' +
+      (ext ? ' target="_blank" rel="noopener noreferrer"' : "") + ">" +
+      '<span class="k">' + esc(i.k) + "</span>" +
+      '<span class="x">' + esc(i.x) + "</span>" +
+      (i.who ? '<span class="w">' + esc(i.who) + "</span>" : "") +
+      (i.when ? '<span class="w">' + esc(shortAgo(i.when)) + "</span>" : "") +
+      "</a>";
+  }).join("");
+
+  // Twice, so translateX(-50%) returns to the exact starting frame. The duplicate is
+  // hidden from assistive tech and dropped entirely under reduced motion.
+  // No inline display here: an inline style would beat the reduced-motion rule that
+  // hides this duplicate, leaving twice the content to scroll through by hand.
+  track.innerHTML = one + '<span class="reel-dup" aria-hidden="true">' + one + "</span>";
+
+  // Constant speed regardless of how much there is to say: ~55px per second.
+  var w = track.scrollWidth / 2;
+  track.style.animationDuration = Math.max(24, Math.round(w / 55)) + "s";
+}
+
+function startReel() {
+  if (!mcp || !SERVER) { renderReel(); return; }
+  mcp.watchTool(SERVER, T_QUERY, sqlInput(DL_DS, Q_DL), function (ev) {
+    if (ev.type === "data") { DL_ROWS = rows(ev.result); renderReel(); return; }
+    // The reel is decoration with benefits: if decisions cannot be read, it simply
+    // carries the other sources rather than reporting an error nobody asked for.
+    renderReel();
+  }, { cache: { staleTime: 300000 }, refetchInterval: 600000 });
+}
+
+el("reelHide").addEventListener("click", function () {
+  REEL_ON = false;
+  try { localStorage.setItem("yfbridge.reel", "off"); } catch (e) {}
+  renderReel();
+});
+el("reelShow").addEventListener("click", function () {
+  REEL_ON = true;
+  try { localStorage.setItem("yfbridge.reel", "on"); } catch (e) {}
+  renderReel();
+});
+
+/* The reel reflects whatever the rest of the page has loaded, so it re-renders on the
+   same beats. */
+var _rebuildTasksReel = rebuildTasks;
+rebuildTasks = function () { _rebuildTasksReel(); renderReel(); };
+var _renderDigestReel = renderDigest;
+renderDigest = function () { _renderDigestReel(); renderReel(); };
+var _renderReelOnWho = setWho;
+setWho = function (id, name) { _renderReelOnWho(id, name); renderReel(); };
+var _watchBuildsReel = watchBuilds;
+watchBuilds = function () { var r = _watchBuildsReel(); startReel(); return r; };
+var _renderReelBuilds = render;
+render = function () { _renderReelBuilds(); renderReel(); };
+
 loadPins();
 renderLeadPins();
+renderReel();
 
 renderChip();
 gateDev();
