@@ -1,0 +1,145 @@
+name: Thumbnails
+
+# Renders a thumbnail for any live YF Build that has not got one, bakes the whole set into
+# the dashboard page, and commits the result.
+#
+# WHY THIS RUNS HERE AND NOT ON A LAPTOP. Thumbnails used to be rendered by
+# tools/refresh-thumbnails.ps1 on ZF-PC, from a slug list a human maintained, in a repo only
+# ZF and BB can push to. So a build published by anyone else got a hazard tile until ZF
+# noticed — twice in one week. Nothing about rendering a public web page needs a particular
+# person's machine, so it happens here instead, and the slug list is derived rather than
+# maintained. See tools/render-thumbnails.mjs.
+#
+# What is still manual: republishing the claude.ai artifact. Only ZF's account can do that,
+# and the page's CSP blocks external images so the data URIs must be baked in. This workflow
+# gets the repo correct and then says so loudly — see the republish-due issue at the end.
+
+on:
+  schedule:
+    # 22:10 UTC = 07:10 JST, forty minutes after the 06:30 JST GitHub-to-Notion sync, so a
+    # build registered overnight is tiled by the time anyone opens the dashboard.
+    - cron: "10 22 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Re-render existing thumbnails: "all", or a comma-separated slug list. Empty = only builds with no image.'
+        required: false
+        default: ""
+  # Lets the yf-builds-publish skill fire this the moment a build goes live, so a builder
+  # does not wait for the nightly run:
+  #   gh api -X POST repos/yfagency/yf-builds-dashboard/dispatches \
+  #     -f event_type=build-published
+  repository_dispatch:
+    types: [build-published]
+
+concurrency:
+  group: thumbnails
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # YF works bilingually and several builds set Japanese type. Without CJK fonts the
+      # runner renders tofu boxes and the thumbnail is worse than no thumbnail.
+      - name: Install CJK fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
+
+      # puppeteer brings its own Chrome rather than trusting whatever the runner image
+      # happens to ship this month. sharp does the 640x400 JPEG.
+      - name: Install renderer
+        run: npm install --no-save --no-fund --no-audit puppeteer@23 sharp@0.33
+
+      - name: Render and inject
+        id: render
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FORCE: ${{ github.event.inputs.force || github.event.client_payload.force || '' }}
+        run: node tools/render-thumbnails.mjs
+
+      # check-artifact.ps1 is the pre-publish gate and it is PowerShell, which is available
+      # on ubuntu runners. It refuses a page that is not pure ASCII, that is missing a
+      # rendered thumbnail, or whose brackets are unbalanced — all of which this job could
+      # in principle cause.
+      - name: Validate the artifact page
+        shell: pwsh
+        run: ./tools/check-artifact.ps1
+
+      - name: Commit
+        id: commit
+        run: |
+          git config user.name  "yf-builds-thumbnails[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add thumbs yf-builds-dashboard.artifact.html
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          added="${{ steps.render.outputs.added }}"
+          if [ -n "$added" ]; then
+            msg="Thumbnails: render $added"
+          else
+            msg="Thumbnails: refresh"
+          fi
+          git commit -m "$msg"
+          # Another session may have pushed while Chrome was working. Rebase rather than
+          # force — the repo is the shared state and the artifact is a copy of it.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      # The one step no machine can take. Keep exactly one open issue rather than a new one
+      # per run, so it reads as a standing "the artifact is behind the repo" flag.
+      - name: Flag that a republish is due
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create republish-due --color FBCA04 \
+            --description "The repo has thumbnails the published artifact does not" 2>/dev/null || true
+          existing=$(gh issue list --label republish-due --state open --limit 1 --json number --jq '.[0].number')
+          body=$(printf '%s\n' \
+            "New or changed thumbnails are committed to \`main\`. The published Bridge artifact still" \
+            "carries the old ones — only ZF's account can republish it." \
+            "" \
+            "In Claude Code, from this repo:" \
+            "" \
+            '```' \
+            "git pull" \
+            "powershell -File tools/check-artifact.ps1" \
+            '```' \
+            "" \
+            "Then republish with the \`Artifact\` tool against the existing URL," \
+            "\`https://claude.ai/code/artifact/89f3d2c0-86ef-4561-8c51-2778f38aad48\`, favicon 🛠️," \
+            "passing nothing for \`capabilities\` or \`contract\`. Close this issue afterwards." \
+            "" \
+            "Rendered by ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Republish the Bridge artifact" \
+              --label republish-due --assignee zfirouz7 --body "$body"
+          fi
+
+      # Red X on the run is the notification. A live build that will not render is the one
+      # case here that genuinely needs a person to look at it.
+      - name: Fail if a live build still has no thumbnail
+        if: steps.render.outputs.missing_count != '0'
+        run: |
+          echo "::error::No thumbnail for: ${{ steps.render.outputs.missing }}"
+          echo "These builds are live but did not render. Re-run with force set to the slug," \
+               "or check whether the page loads at all." >&2
+          exit 1

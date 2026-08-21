@@ -38,7 +38,10 @@ if ($nonAscii.Count -gt 0) {
 # (the only option for a build with no live page, e.g. a supplied screenshot).
 $inPage = [regex]::Matches($text, '"(?:https://yfagency\.github\.io/)?([a-z0-9][a-z0-9-]*)/?"\s*:\s*"data:image') |
           ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
-$onDisk = Get-ChildItem "$ShotDir\*.jpg" -ErrorAction SilentlyContinue |
+# Join-Path, not "$ShotDir\*.jpg": this check also runs on the ubuntu runner in the
+# Thumbnails workflow, where a backslash is a legal filename character rather than a
+# separator, so the literal form silently matches nothing and check 2 stops checking.
+$onDisk = Get-ChildItem (Join-Path $ShotDir "*.jpg") -ErrorAction SilentlyContinue |
           ForEach-Object { $_.BaseName } | Sort-Object -Unique
 $missing = $onDisk | Where-Object { $inPage -notcontains $_ }
 $extra   = $inPage | Where-Object { $onDisk -notcontains $_ }

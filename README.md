@@ -71,16 +71,56 @@ because the artifact CSP blocks every external host — a remote `<img>` cannot 
 neither can an `<iframe>` of the build itself, so a live preview is impossible by
 construction. `thumbs/` holds the rendered JPEGs.
 
-To refresh them after publishing or changing a build:
+**Nobody has to ask for a thumbnail.** The `Thumbnails` workflow
+(`.github/workflows/thumbnails.yml`) runs nightly at 07:10 JST, finds every live build,
+renders the ones with no image, bakes the set into the page and commits. A builder does
+nothing; they do not even need write access here.
 
-```powershell
-powershell -File tools/refresh-thumbnails.ps1
+It discovers builds rather than reading a list: every repo in the org whose description
+starts with `[YF Build]`, minus the ones whose Pages URL does not answer 200. That second
+filter is why `yf-builds-dashboard` and `test-page` drop out on their own and why there is
+no exclude list to keep in step.
+
+**`thumbs/builds.txt` is now generated output**, not input. It records what got tiled.
+Adding a slug to it does nothing.
+
+That matters because the list *was* the input twice, and both times the same thing
+happened: a build was published correctly, registered correctly, served correctly, and got
+a hazard tile because its slug never reached a file only two people could push.
+`yf-operating-model-visualization` on 2026-08-21, `yf-brand-os-visuals` the same week —
+both published by PS, neither of whom could have fixed it. Moving the list from a
+PowerShell array into a text file made the manual step easier, not unnecessary. Deriving
+it removes the step.
+
+To render a build immediately instead of waiting for the nightly run — any org member can
+do this, from anywhere:
+
+```bash
+gh workflow run Thumbnails --repo yfagency/yf-builds-dashboard
 ```
 
-It renders each build's GitHub Pages URL with headless Chrome, shrinks it to 640x400,
-and rewrites the `THUMBS` block in `yf-builds-dashboard.artifact.html`. Republish the
-artifact afterwards so the team sees the new tiles. Add new builds to the `$builds` list
-at the top of that script.
+To re-render an existing tile, say after changing a build's design, pass `force` with the
+slug (or `all`):
+
+```bash
+gh workflow run Thumbnails --repo yfagency/yf-builds-dashboard -f force=work-mosaic
+```
+
+Default runs render **only** builds with no image on disk. Animated and WebGL builds do not
+capture byte-identically twice, so re-rendering everything nightly would churn a 600KB diff
+and bury the one change that mattered.
+
+**Republishing the artifact is still ZF's, and always will be.** The CSP forces the images
+to be data URIs inside the page, and only ZF's account can republish it. So the workflow
+gets the repo right and then opens a single `republish-due` issue assigned to ZF, updating
+it rather than opening a new one each run. A green run with no issue means there is nothing
+to do.
+
+### Rendering locally
+
+`tools/refresh-thumbnails.ps1` and `tools/add-thumbnail.py` still work and are unchanged in
+behaviour, but they are fallbacks now — for checking a capture on your own machine before CI
+takes it. Everything below about their quirks still holds.
 
 ### Adding a single build
 
