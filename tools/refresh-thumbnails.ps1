@@ -35,7 +35,12 @@ $builds = @(
   "cta-diagnostic-landing",
   "work-mosaic",
   "yf-grid-specimen",
-  "brand-os-ribbon"
+  "brand-os-ribbon",
+  "brand-os-index",
+  "construct-v2-lab",
+  "lcd-panel-lab",
+  "hero-aligned-v6",
+  "hero-aligned-v2"
 )
 
 New-Item -ItemType Directory -Force $ShotDir | Out-Null
