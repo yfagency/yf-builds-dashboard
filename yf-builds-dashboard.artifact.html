@@ -1166,9 +1166,18 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   font-family: var(--mono); font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--muted);
 }
+.reel-badge b { font-weight: 400; }
 .reel-badge i {
   width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex: none;
   animation: reelpulse 2.4s ease-in-out infinite;
+}
+/* On a narrow screen the label costs more than it says. The dot carries it, and the
+   66px the word occupied is a third of the readable strip on a 320px phone. */
+@media (max-width: 430px) {
+  .reel-badge { padding: 0 10px; }
+  .reel-badge b { display: none; }
+  .reel-item { padding: 0 12px; gap: 6px; }
+  .reel-hide { padding: 0 9px; }
 }
 @keyframes reelpulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 /* A real scroll container, not a CSS animation.
@@ -1180,6 +1189,10 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   overflow-x: auto; overflow-y: hidden;
   cursor: grab; scrollbar-width: none; -ms-overflow-style: none;
   overscroll-behavior-x: contain;
+  /* pan-x, not auto. A horizontally scrolling strip inside a bar fixed to the bottom
+     of a phone screen will otherwise swallow vertical swipes that start on it, and the
+     page appears not to scroll when your thumb happens to land there. */
+  touch-action: pan-x;
 }
 .reel-win::-webkit-scrollbar { display: none; }
 .reel-win.dragging { cursor: grabbing; }
@@ -1281,12 +1294,20 @@ img, svg { max-width: 100%; }
 @media (max-width: 640px) {
   .wrap { padding: 18px 14px 44px; }
 
-  /* The bar stays one line: the wordmark is the anchor and the section links scroll
-     sideways inside their own strip if they cannot all fit. */
+  /* Wordmark on the first line, then the section links and the profile chip share the
+     second. The links SCROLL sideways rather than wrapping - the base rule sets
+     flex-wrap: wrap, which was stacking them into two or three rows on a phone and
+     pushing the chip onto a line of its own. */
   .topbar { gap: 10px 14px; padding-bottom: 10px; margin-bottom: 22px; }
-  .navlinks { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .topbar-right { width: 100%; flex-wrap: nowrap; gap: 8px; }
+  .navlinks {
+    flex: 1 1 auto; min-width: 0; flex-wrap: nowrap;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    touch-action: pan-x;
+  }
   .navlinks::-webkit-scrollbar { display: none; }
-  .navlinks a { padding: 6px 9px; }
+  .navlinks a { padding: 6px 9px; white-space: nowrap; }
+  .chip { flex: none; }
 
   .home-mast { margin-bottom: 26px; }
   .home-mast .tagline, .sec-mast .tagline { font-size: 14px; }
@@ -1631,7 +1652,7 @@ img, svg { max-width: 100%; }
 </div>
 <!-- The reel. Outside .wrap because it is fixed to the viewport, not part of the page flow. -->
 <div class="reel" id="reel" hidden>
-  <span class="reel-badge"><i></i>Live</span>
+  <span class="reel-badge"><i></i><b>Live</b></span>
   <div class="reel-win" id="reelWin" tabindex="0" role="region" aria-label="Recent activity. Drag or scroll sideways."><div class="reel-track" id="reelTrack"></div></div>
   <button class="reel-hide" id="reelHide" title="Hide the reel">x</button>
 </div>
