@@ -69,8 +69,11 @@ h1, h2, h3, h4 { font-family: var(--sans); text-wrap: balance; margin: 0; }
    The diagonal is YF's own mark, and the grain is lifted from the Brand Spiral build, so
    the header is the studio's typography rather than a generic app bar. */
 .masthead { position: relative; padding: 4px 0 0; margin-bottom: 26px; }
+/* The grain bleeds vertically but NOT horizontally. It used to sit at -60px on each side,
+   which fit inside the leftover margin at full width and pushed the document sideways at
+   every width below it - a horizontal scrollbar on every phone, caused by decoration. */
 .grain {
-  position: absolute; inset: -40px -60px -10px; pointer-events: none; opacity: .045; z-index: 0;
+  position: absolute; inset: -40px 0 -10px; pointer-events: none; opacity: .045; z-index: 0;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .mast-row {
@@ -431,6 +434,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .conn th { font-family: var(--sans); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 78ch; }
 
+
 /* ================================================================
    BRIDGE SHELL - added 2026-08-21 when the registry became one
    section of an app rather than the whole page.
@@ -676,31 +680,59 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .tg.go   .n { color: var(--accent); }
 .tg.zero .n { color: var(--muted); }
 
-/* ---- a task row. Used by the hero and by the Tasks page, identically. ---- */
-.tgroup { margin-top: 22px; }
-.tgroup > h3 {
+/* ---- the task list ----
+   Full-width stacked groups, one per Planning bucket. The earlier version laid the four
+   buckets out as auto-fit columns, which orphaned the fourth onto its own row and gave
+   four wildly different heights whenever the buckets were uneven - which they always
+   are. A stack cannot orphan, reads the same at every width, and lets a title have the
+   whole row instead of a third of it. */
+.tstack { display: flex; flex-direction: column; gap: 14px; }
+.tgroup {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: var(--radius); padding: 0 18px 8px;
+}
+.tgroup.urgent { border-color: var(--crit); }
+.ghead, .tgroup > summary {
+  display: flex; align-items: baseline; gap: 10px; list-style: none;
+  padding: 14px 0 10px; margin: 0;
   font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 2px;
+  color: var(--muted);
 }
-.tgroup.urgent > h3 { color: var(--crit); }
+.tgroup > summary { cursor: pointer; }
+.tgroup > summary::-webkit-details-marker { display: none; }
+.tgroup > summary::marker { content: ""; }
+.tgroup > summary:hover { color: var(--ink-2); }
+.tgroup.urgent .ghead { color: var(--crit); }
+.ghead .gn, .tgroup > summary .gn { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ghead .ghint, .tgroup > summary .ghint {
+  margin-left: auto; font-family: var(--sans); font-size: 12px;
+  letter-spacing: 0; text-transform: none; color: var(--muted);
+}
 .trow {
-  display: grid; grid-template-columns: 16px 1fr auto; gap: 12px; align-items: baseline;
-  padding: 11px 0; border-bottom: 1px solid var(--rule-soft);
+  display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: flex-start;
+  padding: 11px 0; border-top: 1px solid var(--rule-soft);
 }
-.trow:last-child { border-bottom: 0; }
-.trow .flame { font-family: var(--mono); font-size: 11px; color: var(--crit); text-align: center; }
-.trow .cold { color: var(--muted); }
+/* A drawn marker, not a glyph: the emoji cannot go in this ASCII-only file, and the
+   ASCII stand-ins it replaced ("*" and ".") read as debris rather than as priority. */
+.trow .mark { flex: 0 0 9px; margin-top: 6px; }
+.trow .mark i { display: block; width: 8px; height: 8px; border-radius: 50%; }
+.trow .mark i.hi { background: var(--crit); }
+.trow .mark i.lo { border: 1px solid var(--muted); }
+/* min-width:0 is what lets a long title shrink instead of forcing the row wider than
+   the screen. Without it a flex child refuses to go below its min-content width. */
+.trow .tbody { flex: 1 1 260px; min-width: 0; }
 .trow a.tname {
   font-size: 14.5px; font-weight: 500; color: var(--ink); text-decoration: none;
-  letter-spacing: -.01em; line-height: 1.4;
+  letter-spacing: -.01em; line-height: 1.4; overflow-wrap: anywhere;
 }
 .trow a.tname:hover { color: var(--accent); }
 .trow .meta {
   font-family: var(--mono); font-size: 10.5px; color: var(--muted);
-  margin: 4px 0 0; display: flex; gap: 12px; flex-wrap: wrap;
+  margin: 4px 0 0; display: flex; gap: 6px 12px; flex-wrap: wrap;
 }
+.trow .meta span { overflow-wrap: anywhere; }
 .trow .meta .over { color: var(--crit); }
-.trow .right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.trow .right { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .tpill {
   font-family: var(--sans); font-size: 10.5px; font-weight: 600; letter-spacing: .03em;
   padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule);
@@ -709,8 +741,6 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .tpill.doing   { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
 .tpill.stuck   { background: var(--crit-soft); color: var(--crit); border-color: transparent; }
 .tpill.waiting { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
-.tmore { font-size: 13px; color: var(--muted); padding: 12px 0 4px; }
-.tmore a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--rule); }
 
 /* ---- tier: band (7-8) ---- */
 .tier-band { border-top: 1px solid var(--rule); padding-top: 16px; }
@@ -808,16 +838,133 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .whoskip:hover { color: var(--ink); }
 
-/* ---- tasks page ---- */
-.tcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
-.tcol { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 16px 18px 6px; }
-.tcol > h2 {
-  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 2px;
+.tgroup .none { font-size: 13px; color: var(--muted); padding: 4px 0 12px; margin: 0; border-top: 1px solid var(--rule-soft); padding-top: 12px; }
+/* The summary that opens the Tasks page. Its own line, then the instruments. */
+.tsummary { margin-bottom: 22px; }
+.tsummary .said { font-size: clamp(19px, 2.4vw, 25px); font-weight: 600; letter-spacing: -.03em; margin: 0 0 2px; text-wrap: balance; }
+.tsummary .said.calm { color: var(--ink-2); font-weight: 500; }
+/* ================================================================
+   FITTING EVERY VIEWPORT - added 2026-08-21
+
+   The page was built at desktop width and broke badly below about
+   700px: every view scrolled sideways and content ran off the right
+   edge. One cause did most of the damage, and it is worth naming
+   because it will happen again in the next section somebody adds.
+
+   A flex or grid child defaults to `min-width: auto`, which means it
+   refuses to become narrower than its own min-content. A long task
+   title, a wide status pill, or a mono commit line therefore pushes its
+   row wider than the screen rather than wrapping, and the whole
+   document inherits the overflow. The fix is `min-width: 0` on any
+   flexible child that holds text, plus `overflow-wrap: anywhere` on the
+   text itself. Both are applied below, per component, rather than with
+   `overflow-x: hidden` on the body - which would have hidden the
+   symptom and left the content unreachable.
+
+   The second cause was decorative: hairline dividers drawn with
+   `border-right` dangle in mid-air the moment a row wraps. Those
+   strips become grids at narrow widths instead.
+   ================================================================ */
+
+/* --- shrink-and-wrap hardening, all viewports --- */
+.mast-row, .sec-row, .lead-top, .band-head, .digest-head, .colophon .body,
+.card-top, .freshline, .claim, .whopick, .linkfall .grab, .guide-top { min-width: 0; }
+.mast-id, .sec-row > div, .colophon > .body > div, .plate .body, .bandcell,
+.whopick > span, .tsummary { min-width: 0; }
+.card h3, .plate h2, .bandcell a, .colophon h2, .sec-mast h1, .home-mast h1,
+.lead-line, .tsummary .said, .notes, .line, .quiet, .foot, .panel p,
+.bitem a.head, .bitem .stk, .dlead a, .trow a.tname { overflow-wrap: anywhere; }
+/* Mono strings - commit subjects, URLs, ids - are the worst offenders because they
+   contain no spaces to break at. */
+.line .sha, .mono, code, kbd, .conn td, .linkfall input { overflow-wrap: anywhere; }
+.linkfall input { min-width: 0; }
+#search, .controls select, .controls input { min-width: 0; }
+img, svg { max-width: 100%; }
+
+/* --- tablet and below --- */
+@media (max-width: 900px) {
+  /* A vertical rule between stacked cells points nowhere. */
+  .bandcell { border-right: 0; border-bottom: 1px solid var(--rule-soft); padding: 12px 0; }
+  .bandcell:last-child { border-bottom: 0; padding-bottom: 2px; }
+  .bcols, .tcols { grid-template-columns: 1fr; }
 }
-.tcol.urgent { border-color: var(--crit); }
-.tcol.urgent > h2 { color: var(--crit); }
-.tcol .none { font-size: 13px; color: var(--muted); padding: 10px 0 12px; margin: 0; }
+
+/* --- phones --- */
+@media (max-width: 640px) {
+  .wrap { padding: 18px 14px 44px; }
+
+  /* The bar stays one line: the wordmark is the anchor and the section links scroll
+     sideways inside their own strip if they cannot all fit. */
+  .topbar { gap: 10px 14px; padding-bottom: 10px; margin-bottom: 22px; }
+  .navlinks { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .navlinks::-webkit-scrollbar { display: none; }
+  .navlinks a { padding: 6px 9px; }
+
+  .home-mast { margin-bottom: 26px; }
+  .home-mast .tagline, .sec-mast .tagline { font-size: 14px; }
+  #homeStack { gap: 24px; }
+
+  /* Section headers stack, and their buttons become a full-width row rather than
+     floating off the right edge. */
+  .sec-row { flex-direction: column; align-items: stretch; gap: 14px; }
+  .mast-row { gap: 16px; }
+  .mast-actions { width: 100%; }
+  .mast-actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  /* Instrument strips: a grid, so wrapping cannot leave a divider hanging. */
+  .strip, .tgauges {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    gap: 4px 12px; padding-top: 10px;
+  }
+  .gauge, .tg {
+    border-right: 0; margin-right: 0; padding: 8px 0 2px; min-width: 0;
+  }
+  .gauge .n, .tg .n { font-size: 21px; }
+
+  .plates { grid-template-columns: 1fr; }
+  .tier-lead { padding: 13px 14px 14px; }
+  .lead-top { gap: 6px 14px; }
+  .lead-go { font-size: 10px; }
+  .lead-counts { gap: 10px 14px; }
+
+  .tgroup { padding: 0 14px 8px; }
+  .trow { padding: 12px 0; }
+  .trow .right { margin-left: 0; }
+
+  /* Cards: the thumbnail bleed and the action row both assumed a wider card. */
+  .grid { grid-template-columns: 1fr; }
+  .card { padding: 14px; }
+  .thumb { margin: -14px -14px 3px; }
+  .actions { gap: 6px; }
+  .actions .btn { flex: 1 1 44%; justify-content: center; }
+  .controls { gap: 8px; }
+  #search { flex: 1 1 100%; }
+  .colophon .body { gap: 14px; }
+
+  /* Sheets: nearly full-bleed, because 24px of padding inside 14px of scrim on a
+     360px screen leaves nothing for the content. */
+  .scrim { padding: 12px 10px; align-items: flex-start; }
+  .sheet { padding: 18px 16px; border-radius: 12px; }
+  .whogrid { grid-template-columns: 1fr; gap: 8px; }
+  .pair { gap: 0; }
+  .sheet.guide { max-height: calc(100vh - 24px); }
+  .guide-top { padding: 18px 16px 14px; }
+  .guide-nav { padding: 10px 16px; }
+  .guide-body { padding: 4px 16px 24px; }
+  .guide-body section { padding-top: 22px; }
+  dl.anat > div { grid-template-columns: 1fr; gap: 3px; padding: 9px 0; }
+  .guide-body ol.steps > li { padding-left: 32px; }
+
+  .bitem { grid-template-columns: 20px 1fr; gap: 10px; }
+  .drow { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* --- very narrow, and large text --- */
+@media (max-width: 380px) {
+  .wrap { padding: 16px 11px 40px; }
+  .actions .btn { flex: 1 1 100%; }
+  .tpill { font-size: 10px; }
+}
 </style>
 
 <div class="wrap">
@@ -930,7 +1077,6 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
           <button class="btn ghost" id="taskRefresh" title="Re-read the tasks now">Refresh</button>
         </div>
       </div>
-      <p class="tagline">Everything not yet delivered, grouped the way YF OS already groups it: overdue first, then today, this week, and the rest.</p>
     </header>
     <div id="tasksBody"><div class="panel"><span class="spin"></span>Loading tasks&hellip;</div></div>
     <p class="foot">Read live from the YF OS Tasks database through your own Notion connection, so you see exactly the tasks you can already see in Notion. Scoped to the <b>builders team</b> &mdash; ZF, PS, BB and JK. <b>Overdue, Today, This Week and Later come from the <span class="mono">Planning</span> field</b> &mdash; they are set by a person, not calculated from the due date, so a task with a past due date sitting in Later means nobody has re-planned it yet. Delivered and Archived tasks are excluded.</p>
@@ -2560,7 +2706,6 @@ try { WHO = localStorage.getItem("yfbridge.who") || WHO_ALL; } catch (e) { WHO =
 if (WHO !== WHO_ALL && !isBuilder(WHO)) WHO = WHO_ALL;
 
 var TASK_ROWS = null;
-var BUCKETS = ["Overdue", "Today", "This Week", "Later"];
 
 function whoLabel(id) {
   if (id === WHO_ALL) return "the builders team";
@@ -2616,22 +2761,23 @@ function projectNameOf(t) {
   return PROJECT_NAME[list[0]] || "";
 }
 
-/* One task row, shared by the hero and the Tasks page so they cannot drift. */
+/* One task row. The priority marker is drawn rather than written: the emoji cannot live
+   in this ASCII-only file, and the ASCII stand-ins it replaced read as stray punctuation. */
 function taskRow(t) {
-  var flame = isHot(t) ? '<span class="flame" title="High priority">*</span>'
-    : isCold(t) ? '<span class="flame cold" title="Low priority">.</span>'
-    : "<span></span>";
+  var mark = '<span class="mark">' +
+    (isHot(t) ? '<i class="hi" title="High priority"></i>'
+      : isCold(t) ? '<i class="lo" title="Low priority"></i>' : "") + "</span>";
   var proj = projectNameOf(t);
   var due = t["date:Due:start"] ? shortDate(t["date:Due:start"]) : "";
   var over = (t["Planning"] === "Overdue");
   var meta = [];
   if (proj) meta.push("<span>" + esc(proj) + "</span>");
-  if (due) meta.push('<span class="' + (over ? "over" : "") + '">' + (over ? "due " : "due ") + esc(due) + "</span>");
+  if (due) meta.push('<span class="' + (over ? "over" : "") + '">due ' + esc(due) + "</span>");
   if (t["Estimated Hours"]) meta.push("<span>" + esc(String(t["Estimated Hours"])) + "h</span>");
 
   var pc = progressClass(t["Progress"]);
-  return '<div class="trow">' + flame +
-    "<div>" +
+  return '<div class="trow">' + mark +
+    '<div class="tbody">' +
       '<a class="tname" href="' + esc(t.url || "#") + '" target="_blank" rel="noopener noreferrer">' +
         esc(t["Tasks"] || "(untitled task)") + "</a>" +
       (meta.length ? '<p class="meta">' + meta.join("") + "</p>" : "") +
@@ -2640,6 +2786,22 @@ function taskRow(t) {
       (t["Progress"] ? '<span class="tpill ' + pc + '">' + esc(t["Progress"]) + "</span>" : "") +
     "</div>" +
   "</div>";
+}
+
+/* One bucket. Later is collapsed by default - it is the bucket nobody opens the page
+   for, and for some people it holds fifty rows. */
+function bucketPanel(name, list, opts) {
+  var o = opts || {};
+  var head = '<span>' + esc(name) + '</span><span class="gn">' + list.length + "</span>" +
+    (o.hint ? '<span class="ghint">' + esc(o.hint) + "</span>" : "");
+  var rows = list.length ? list.map(taskRow).join("")
+    : '<p class="none">Nothing here.</p>';
+  var cls = "tgroup" + (o.urgent && list.length ? " urgent" : "");
+
+  if (o.collapsed) {
+    return '<details class="' + cls + '"><summary>' + head + "</summary>" + rows + "</details>";
+  }
+  return '<section class="' + cls + '"><p class="ghead">' + head + "</p>" + rows + "</section>";
 }
 
 /* Buckets and the one-sentence read of them, shared by the lead strip and the page. */
@@ -2735,16 +2897,12 @@ function renderTasksPage() {
       "</p></div>";
     return;
   }
-  var cols = BUCKETS.map(function (b) {
-    var list = inBucket(mine, b);
-    var urgent = (b === "Overdue" && list.length);
-    var shown = list.slice(0, 25), rest = list.length - shown.length;
-    return '<section class="tcol' + (urgent ? " urgent" : "") + '">' +
-      "<h2>" + esc(b) + " &middot; " + list.length + "</h2>" +
-      (list.length ? shown.map(taskRow).join("") : '<p class="none">Nothing here.</p>') +
-      (rest ? '<p class="tmore">' + rest + " more not shown</p>" : "") +
-      "</section>";
-  }).join("");
+  var t = tally();
+  var groups =
+    bucketPanel("Overdue", t.over, { urgent: true }) +
+    bucketPanel("Today", t.today, {}) +
+    bucketPanel("This week", t.week, {}) +
+    bucketPanel("Later", t.later, { collapsed: true, hint: "not planned yet" });
 
   var capped = TASK_ROWS.length >= TASK_CAP
     ? '<p class="foot" style="margin:0 0 16px">Showing the first ' + TASK_CAP +
@@ -2752,23 +2910,22 @@ function renderTasksPage() {
     : "";
 
   // The read and the counts live here now, not on the home page.
-  var t = tally();
   var said = taskSentence(t, null);
   var g = function (cls, num, label) {
     return '<div class="tg ' + (num ? cls : "zero") + '"><span class="n">' + num +
       '</span><span class="label">' + label + "</span></div>";
   };
-  var summary = '<p class="lead-line' + (said.calm ? " calm" : "") + '" style="margin:0 0 4px">' +
-      esc(said.txt) + "</p>" +
-    '<div class="tgauges" style="margin-bottom:24px">' +
+  var summary = '<div class="tsummary">' +
+    '<p class="said' + (said.calm ? " calm" : "") + '">' + esc(said.txt) + "</p>" +
+    '<div class="tgauges">' +
       g("crit", t.over.length, "overdue") +
       g("go", t.today.length, "today") +
       g("", t.week.length, "this week") +
       g("warn", t.stuck.length, "blocked or waiting") +
       g("", t.later.length, "later") +
-    "</div>";
+    "</div></div>";
 
-  body.innerHTML = capped + summary + '<div class="tcols">' + cols + "</div>";
+  body.innerHTML = capped + summary + '<div class="tstack">' + groups + "</div>";
 }
 
 /* ---- the person picker ----
