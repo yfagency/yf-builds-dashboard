@@ -3086,11 +3086,45 @@ function orderHome() {
    viewer can only ever see tasks their own Notion connection can already read. */
 
 var TASKS_DS = "collection://19b2e65a-2537-462e-9d93-9c2f8e965c3b";
-var Q_TASKS = 'SELECT url, "Tasks", "Assignee", "Planning", "Progress", "Priority", "Projects", ' +
-  '"Task Objective", "date:Due:start", "Estimated Hours" FROM "' + TASKS_DS + '" ' +
-  "WHERE \"Progress\" NOT IN ('Delivered','Archived') " +
-  'ORDER BY "date:Due:start" ASC LIMIT 400';
-var TASK_CAP = 400;
+
+/* ONE QUERY PER PERSON, and the reason matters.
+   The first version asked for every open task in one go - 390 rows - with LIMIT 400. The
+   connector caps a SQL result at about 100 rows regardless of the LIMIT, sets has_more,
+   and SQL mode exposes NO cursor, so there is no way to page. Bridge therefore received
+   the first ~100 rows sorted by due date and silently dropped the rest: ZF's 22 tasks
+   showed up as 9, because only 9 of them fell inside that first page.
+
+   Filtering by assignee in SQL is the only fix available. Measured 2026-08-21, open
+   tasks per builder: JK 79, BB 52, PS 40, ZF 22 - every one comfortably inside a single
+   page. Four small queries beat one truncated one.
+
+   If a person ever crosses ~100 open tasks this breaks again, so has_more is checked on
+   every response and reported in the UI rather than swallowed. */
+function taskQueryFor(id) {
+  return 'SELECT url, "Tasks", "Assignee", "Planning", "Progress", "Priority", "Projects", ' +
+    '"date:Due:start", "Estimated Hours", "Last edited time" FROM "' + TASKS_DS + '" ' +
+    "WHERE \"Progress\" NOT IN ('Delivered','Archived') AND \"Assignee\" LIKE '%" + id + "%' " +
+    'ORDER BY "date:Due:start" ASC LIMIT 200';
+}
+var TASKS_BY = {};     // person id -> their rows
+var TASK_TRUNC = {};   // person id -> true when the connector said has_more
+
+/* rows() throws the envelope away, but has_more lives on it and is the difference
+   between "no tasks" and "we were not sent them". */
+function hasMoreOf(result) {
+  var p = result && result.payload;
+  if (typeof p === "string") { try { p = JSON.parse(p); } catch (e) { p = null; } }
+  if (!p && result && result.content) {
+    for (var i = 0; i < result.content.length; i++) {
+      var b = result.content[i];
+      if (b && b.type === "text") { try { p = JSON.parse(b.text); break; } catch (e) {} }
+    }
+  }
+  return !!(p && p.has_more);
+}
+function truncatedPeople() {
+  return Object.keys(TASK_TRUNC).filter(function (id) { return TASK_TRUNC[id]; });
+}
 
 /* The builders team, and deliberately only them (ZF, 2026-08-21). Bridge is scoped to
    the four people using it; the rest of the studio is not shown here even though their
@@ -3318,9 +3352,16 @@ function renderTasksPage() {
     bucketPanel("This week", t.week, {}) +
     bucketPanel("Later", t.later, { collapsed: true, open: t.later.length <= 12, hint: "not planned yet" });
 
-  var capped = TASK_ROWS.length >= TASK_CAP
-    ? '<p class="foot" style="margin:0 0 16px">Showing the first ' + TASK_CAP +
-      " undelivered tasks by due date. There are more; the rest are not on this page.</p>"
+  /* Never swallow a truncated read. If the connector said has_more for somebody, their
+     list is incomplete and the page has to admit it rather than quietly under-report. */
+  var trunc = truncatedPeople();
+  var capped = trunc.length
+    ? '<div class="devnote" style="margin:0 0 16px"><span class="h">Incomplete read</span>' +
+      "<p>The connector returned only part of the task list for " +
+      esc(trunc.map(function (id) { return whoInitials(id); }).join(", ")) +
+      ", so counts for " + (trunc.length === 1 ? "that person" : "those people") +
+      " are lower than the truth. A single person has passed the connector's page limit; " +
+      "the per-person queries need splitting further.</p></div>"
     : "";
 
   // The read and the counts live here now, not on the home page.
@@ -3439,24 +3480,36 @@ function askOnFirstOpen() {
 }
 
 /* ---- data ---- */
+function rebuildTasks() {
+  var out = [];
+  Object.keys(PEOPLE).forEach(function (id) {
+    (TASKS_BY[id] || []).forEach(function (r) { out.push(r); });
+  });
+  TASK_ROWS = out;
+  renderTaskLead(); renderTasksPage(); renderWhoGrid();
+}
+
 function startTasks() {
   if (!mcp || !SERVER) return;
-  mcp.watchTool(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_TASKS), function (ev) {
-    if (ev.type === "data") {
-      TASK_ROWS = rows(ev.result);
-      renderTaskLead(); renderTasksPage(); renderWhoGrid();
-      return;
-    }
-    var err = ev.error || {};
-    if (!TASK_ROWS) {
-      var e = explain(err);
-      el("taskLine").textContent = e.head;
-      el("taskLine").className = "lead-line calm";
-      el("taskCounts").innerHTML = '<span class="lead-who">tasks unavailable</span>';
-      el("stTasks").innerHTML = '<span class="quiet">tasks unavailable</span>';
-      el("tasksBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
-    }
-  }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
+  Object.keys(PEOPLE).forEach(function (id) {
+    mcp.watchTool(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(id)), function (ev) {
+      if (ev.type === "data") {
+        TASKS_BY[id] = rows(ev.result);
+        TASK_TRUNC[id] = hasMoreOf(ev.result);
+        rebuildTasks();
+        return;
+      }
+      // One person's query failing must not blank the others.
+      var e = explain(ev.error || {});
+      if (!TASK_ROWS) {
+        el("taskLine").textContent = e.head;
+        el("taskLine").className = "lead-line calm";
+        el("taskCounts").innerHTML = '<span class="lead-who">tasks unavailable</span>';
+        el("stTasks").innerHTML = '<span class="quiet">tasks unavailable</span>';
+        el("tasksBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
+      }
+    }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
+  });
 }
 
 /* ---- the briefing band replaces the old home digest ----
@@ -3526,7 +3579,10 @@ el("taskRefresh").addEventListener("click", function () {
   if (!mcp || !SERVER) return;
   var btn = el("taskRefresh"), restore = function () { btn.disabled = false; btn.textContent = "Refresh"; };
   btn.disabled = true; btn.textContent = "Refreshing";
-  mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_TASKS)).then(function () { setTimeout(restore, 600); }, restore);
+  // One invalidation per person, since there is one query per person now.
+  Promise.all(Object.keys(PEOPLE).map(function (id) {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(id))).catch(function () {});
+  })).then(function () { setTimeout(restore, 600); }, restore);
 });
 
 /* ================================================================
