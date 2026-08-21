@@ -583,21 +583,33 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 /* ================================================================
    VISUAL PRIORITY LADDER - added 2026-08-21
 
-   Every surface on the home page declares a weight from 1 to 10, and
-   the weight alone decides its treatment. The ladder is fixed so that
+   Every BLOCK on the home page declares a weight from 1 to 10, and the
+   weight alone decides its treatment. The ladder is fixed so that
    adding the fifth and sixth section is a one-line decision ("how
    important is this, 1 to 10?") rather than a layout argument:
 
-     9-10  hero   full-width block, live content, its own structure
+     9-10  lead   full-width strip, accent-marked, the whole thing is a
+                  link into its section. FIRST on the page.
      7-8   band   full-width strip, one condensed line per item
      5-6   plate  card in the plate grid, drawn plate plus counts
      3-4   strip  single row, a count and a link, no artwork
      1-2   -      no home presence at all; nav bar only
 
-   A section's DESTINATION carries a separate weight, because how much
-   the home page shouts about something is a different question from how
-   much chrome its own page deserves. Briefing is the case that proves
-   it: a 7 on the home page, a 3 as a page.
+   Revised 2026-08-21 after the first attempt: a 9 used to render as a
+   tall panel with its own internal lists, and ZF was right that it was
+   too much. Weight buys POSITION and EMPHASIS, not bulk - a 9 is the
+   first thing you see and the only thing wearing the accent, at roughly
+   the height of a 7. The detail belongs on the section's own page, and
+   the lead strip's job is to make going there obvious.
+
+   A section may own MORE THAN ONE block: Tasks has both the lead strip
+   at 9 and a plate at 5 down in the grid, because a summary and a door
+   are different jobs. That is why blocks, not sections, carry weights.
+
+   A section's DESTINATION carries a separate weight in PAGES, because
+   how much the home page shouts about something is a different question
+   from how much chrome its own page deserves. Briefing is the case that
+   proves it: a 7 on the home page, a 3 as a page.
 
      7-10  chrome-full     masthead, tagline, controls
      4-6   chrome-compact  heading and one line
@@ -605,35 +617,49 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 
    The order of blocks on the home page is computed from the weights at
    render time, not written into the markup. Change a number in
-   SURFACES and the page rearranges itself.
+   BLOCKS and the page rearranges itself.
    ================================================================ */
 
 #homeStack { display: flex; flex-direction: column; gap: 30px; }
 
-/* ---- tier: hero (9-10) ---- */
-.tier-hero {
+/* ---- tier: lead (9-10) ----
+   A strip, not a panel. The accent rail down the left edge is the only one on the
+   page, which is how a 9 announces itself without taking a 9's worth of space. The
+   whole strip is an anchor, so the target is the block rather than a small link
+   inside it. */
+.tier-lead {
+  display: block; text-decoration: none; color: inherit;
   background: var(--surface); border: 1px solid var(--rule);
-  border-radius: var(--radius); padding: 22px 24px 8px;
+  border-left: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 14px 18px 15px; transition: border-color .15s ease;
 }
-.hero-head {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 20px; flex-wrap: wrap; margin-bottom: 18px;
+.tier-lead:hover { border-color: var(--accent); }
+.lead-top {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 18px; flex-wrap: wrap;
 }
-.hero-head .eyebrow { margin-bottom: 8px; }
-/* The one sentence that answers "what am I doing today". It is the largest
-   type on the page after the wordmark, because it is the reason to open this. */
-.hero-line {
-  font-size: clamp(22px, 3vw, 31px); font-weight: 600;
-  letter-spacing: -.035em; line-height: 1.12; text-wrap: balance; max-width: 30ch;
+.lead-line {
+  font-size: clamp(17px, 2.1vw, 22px); font-weight: 600;
+  letter-spacing: -.028em; line-height: 1.25; text-wrap: balance;
 }
-.hero-line .num { color: var(--accent); }
-.hero-line.calm { color: var(--ink-2); font-weight: 500; }
-.whobtn {
-  background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap;
-  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--muted); border-bottom: 1px solid var(--rule);
+.lead-line .num { color: var(--accent); }
+.lead-line.calm { color: var(--ink-2); font-weight: 500; }
+.lead-go {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent); white-space: nowrap;
 }
-.whobtn:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.tier-lead:hover .lead-go { color: var(--ink); }
+/* Counts as one quiet mono line. At this weight they are reassurance that the
+   sentence above is accurate, not instruments to be read individually. */
+.lead-counts {
+  display: flex; gap: 18px; flex-wrap: wrap; margin: 9px 0 0;
+  font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+}
+.lead-counts span { white-space: nowrap; }
+.lead-counts b { font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.lead-counts .over b { color: var(--crit); }
+.lead-counts .now b { color: var(--accent); }
+.lead-who { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
 /* Counts read as a row of instruments, on a hairline rather than in boxes -
    the same device the registry uses for its gauges, so the two agree. */
@@ -755,6 +781,33 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .whorow .nm span { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
 .whorow .cnt { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 
+/* The opening gate. Four targets, sized to be hit without reading, because on the
+   first open this is the only thing between a person and the page. */
+.whogrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 4px; }
+.whopick {
+  display: flex; align-items: center; gap: 11px; cursor: pointer; text-align: left;
+  background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 13px 14px; color: var(--ink); font-family: var(--sans);
+}
+.whopick:hover { border-color: var(--accent); background: var(--surface); }
+.whopick .ini {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  width: 34px; height: 34px; flex: none; border-radius: 50%;
+  border: 1px solid var(--rule); background: var(--paper); color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+}
+.whopick:hover .ini { border-color: var(--accent); color: var(--accent); }
+.whopick .who-n { display: block; font-size: 14px; font-weight: 500; letter-spacing: -.01em; }
+.whopick .who-r { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; }
+.whoother { border-top: 1px solid var(--rule); margin-top: 16px; padding-top: 14px; }
+.whoother .row { display: flex; gap: 8px; align-items: stretch; }
+.whoother input { flex: 1; min-width: 0; }
+.whoskip {
+  background: none; border: 0; padding: 0; margin-top: 12px; cursor: pointer;
+  font-size: 12.5px; color: var(--muted); border-bottom: 1px solid var(--rule);
+}
+.whoskip:hover { color: var(--ink); }
+
 /* ---- tasks page ---- */
 .tcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
 .tcol { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 16px 18px 6px; }
@@ -789,24 +842,20 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 
     <!-- Blocks are ordered by declared weight at render time, not by the order they
          appear here. See the VISUAL PRIORITY LADDER note in the stylesheet, and
-         SURFACES in the script. -->
+         BLOCKS in the script. -->
     <div id="homeStack">
 
-      <section data-surface="tasks">
-        <div class="tier-hero">
-          <div class="hero-head">
-            <div>
-              <p class="eyebrow" id="taskWho">Today</p>
-              <p class="hero-line" id="taskLine">Reading your tasks&hellip;</p>
-            </div>
-            <button class="whobtn" id="whoBtn">Not you?</button>
+      <section data-block="tasks-lead">
+        <a class="tier-lead" href="#/tasks">
+          <div class="lead-top">
+            <p class="lead-line" id="taskLine">Reading your tasks&hellip;</p>
+            <span class="lead-go">Open tasks &rarr;</span>
           </div>
-          <div class="tgauges" id="taskGauges"></div>
-          <div id="taskLists"></div>
-        </div>
+          <p class="lead-counts" id="taskCounts"><span class="lead-who" id="taskWho"></span></p>
+        </a>
       </section>
 
-      <section data-surface="briefing">
+      <section data-block="briefing">
         <div class="tier-band">
           <div class="band-head">
             <span class="stamp" id="bandStamp">Today's briefing</span>
@@ -816,7 +865,32 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
         </div>
       </section>
 
-      <section data-surface="builds">
+      <section data-block="tasks-plate">
+        <a class="plate" href="#/tasks">
+          <!-- Tasks, drawn: four rows with a marker column, the first marker overdue-red
+               and the second accent - the Planning buckets themselves, in the order the
+               page shows them. Same 16:10 and the same materials as the Builds plate, so
+               the two read as a pair sitting next to each other. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Four task rows, the first marked overdue and the second marked for today">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect x="52" y="50" width="11" height="11" rx="2" fill="var(--crit)"/>
+            <rect x="75" y="53" width="128" height="6" rx="2" fill="var(--ink)" opacity=".30"/>
+            <rect x="52" y="86" width="11" height="11" rx="2" fill="var(--accent)"/>
+            <rect x="75" y="89" width="164" height="6" rx="2" fill="var(--ink)" opacity=".30"/>
+            <rect x="52" y="122" width="11" height="11" rx="2" fill="var(--ink)" opacity=".22"/>
+            <rect x="75" y="125" width="104" height="6" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="52" y="158" width="11" height="11" rx="2" fill="var(--ink)" opacity=".22"/>
+            <rect x="75" y="161" width="140" height="6" rx="2" fill="var(--ink)" opacity=".16"/>
+          </svg>
+          <div class="body">
+            <h2>Tasks</h2>
+            <p class="what">Everything not yet delivered, grouped overdue first &mdash; yours, or the whole builders team.</p>
+            <p class="stat" id="stTasks"><span class="quiet">reading the tasks&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
+      <section data-block="builds-plate">
         <a class="plate" href="#/builds">
           <!-- Builds, drawn: three builds stacked front-to-back, the newest one forward and
                carrying the accent. The stack offsets down-right so it runs with YF's
@@ -943,11 +1017,18 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 <div class="scrim" id="whoScrim">
   <div class="sheet" style="max-width:460px">
     <h2>Who are you?</h2>
-    <p class="quiet">So Bridge shows your tasks instead of everyone's. Asked once, then remembered in this browser &mdash; it is a local preference, not a login, and it changes nothing in Notion.</p>
-    <div class="wholist" id="whoList"></div>
-    <p class="quiet" style="font-size:12px;margin:2px 0 0">Bridge covers the <b>builders team</b> for now &mdash; ZF, PS, BB and JK. The rest of the studio's tasks live in the same Notion database but are not shown here.</p>
-    <div class="sheet-actions">
-      <button class="btn" id="whoCancel">Cancel</button>
+    <p class="quiet">So Bridge opens on your tasks instead of everyone's. Asked once, then remembered in this browser &mdash; it is a local preference, not a login, and it changes nothing in Notion.</p>
+
+    <div class="whogrid" id="whoGrid"></div>
+
+    <div class="whoother">
+      <p class="quiet" style="margin:0 0 8px;font-size:12.5px">Someone else? Bridge only tracks tasks for the four above, so you'll get the team view &mdash; but your name is still used when you check a build out.</p>
+      <div class="row">
+        <input type="text" id="whoField" placeholder="Your name or initials" maxlength="40" autocomplete="off">
+        <button class="btn" id="whoOther">Continue</button>
+      </div>
+      <p class="formmsg" id="whoMsg"></p>
+      <button class="whoskip" id="whoSkip">Skip &mdash; just show me the team</button>
     </div>
   </div>
 </div>
@@ -2378,27 +2459,37 @@ applyRoute(routeName() || "home");
 /* ================================================================
    VISUAL PRIORITY + TASK INTELLIGENCE - added 2026-08-21
 
-   SURFACES is the whole layout argument, in one place. `home` is how
-   loudly the home page should speak about a section (1-10); `page` is
-   how much chrome its own destination deserves (1-10). They are
-   separate on purpose - Briefing is a 7 on the home page and a 3 as a
-   page - and the ladder that turns a number into a treatment is
-   documented in the stylesheet.
+   BLOCKS is the whole layout argument, in one place: every block on the
+   home page, and how loudly it should speak (1-10). PAGES carries the
+   separate weight for each section's own destination, because those are
+   different questions - Briefing is a 7 on the home page and a 3 as a
+   page. The ladder that turns a number into a treatment is documented
+   in the stylesheet.
 
-   To add a section: add an entry here, add a markup block carrying
-   `data-surface="<key>"` inside #homeStack, and give the view an id of
-   `v-<key>`. Order and treatment follow from the weight. Nothing else
-   in this file needs to know about it.
+   A section may own several blocks. Tasks owns two: the lead strip at 9
+   and a plate at 5, because a summary and a door are different jobs.
+
+   To add a section: add a BLOCKS entry, add a PAGES weight, add markup
+   carrying data-block="{block}" inside #homeStack, give the view an id
+   of v-{section}, add a nav link with data-nav="{section}", and
+   register VIEWS.{section}. Order and treatment follow from the weight.
+   Nothing else in this file needs to know about it.
+
+   (Braces, not angle brackets, on purpose - check-artifact.ps1 counts
+   tag names and a literal angle-bracketed word in a comment reads as an
+   unclosed tag.)
    ================================================================ */
 
-var SURFACES = [
-  { key: "tasks",    label: "Tasks",    home: 9, page: 6 },
-  { key: "briefing", label: "Briefing", home: 7, page: 3 },
-  { key: "builds",   label: "Builds",   home: 5, page: 7 }
+var BLOCKS = [
+  { block: "tasks-lead",   section: "tasks",    weight: 9 },
+  { block: "briefing",     section: "briefing", weight: 7 },
+  { block: "tasks-plate",  section: "tasks",    weight: 5 },
+  { block: "builds-plate", section: "builds",   weight: 5 }
 ];
+var PAGES = { tasks: 6, briefing: 3, builds: 7 };
 
 function tierFor(w) {
-  return w >= 9 ? "hero" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
+  return w >= 9 ? "lead" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
 }
 
 /* Consecutive plate-weight sections share one grid so they sit side by side; any
@@ -2407,15 +2498,15 @@ function orderHome() {
   var stack = el("homeStack");
   if (!stack) return;
   var byKey = {};
-  Array.prototype.forEach.call(stack.querySelectorAll("[data-surface]"), function (n) {
-    byKey[n.getAttribute("data-surface")] = n;
+  Array.prototype.forEach.call(stack.querySelectorAll("[data-block]"), function (n) {
+    byKey[n.getAttribute("data-block")] = n;
   });
-  var order = SURFACES.slice().sort(function (a, b) { return b.home - a.home; });
+  var order = BLOCKS.slice().sort(function (a, b) { return b.weight - a.weight; });
   var plateWrap = null;
   order.forEach(function (s) {
-    var node = byKey[s.key];
+    var node = byKey[s.block];
     if (!node) return;
-    var tier = tierFor(s.home);
+    var tier = tierFor(s.weight);
     if (tier === "none") { node.parentNode.removeChild(node); return; }
     if (tier === "plate") {
       if (!plateWrap) {
@@ -2551,71 +2642,78 @@ function taskRow(t) {
   "</div>";
 }
 
-function taskGroup(title, list, cap, urgent) {
-  if (!list.length) return "";
-  var shown = list.slice(0, cap);
-  var rest = list.length - shown.length;
-  return '<div class="tgroup' + (urgent ? " urgent" : "") + '"><h3>' + esc(title) +
-    " &middot; " + list.length + "</h3>" +
-    shown.map(taskRow).join("") +
-    (rest ? '<p class="tmore">' + rest + " more in <a href=\"#/tasks\">Tasks</a></p>" : "") +
-    "</div>";
+/* Buckets and the one-sentence read of them, shared by the lead strip and the page. */
+function tally() {
+  var mine = myTasks();
+  return {
+    all: mine,
+    over: inBucket(mine, "Overdue"),
+    today: inBucket(mine, "Today"),
+    week: inBucket(mine, "This Week"),
+    later: inBucket(mine, "Later"),
+    stuck: mine.filter(function (t) { return STUCK[t["Progress"]] || WAITING[t["Progress"]]; })
+  };
 }
 
-/* ---- the hero: what am I doing today ---- */
-function renderTaskHero() {
-  var line = el("taskLine"), gauges = el("taskGauges"), lists = el("taskLists");
-  if (!line) return;
+/* One sentence, in numbers a person can act on. `wrap` lets the caller decide whether
+   the figures are marked up - the lead strip accents them, the page does not. */
+function taskSentence(t, wrap) {
+  var n = wrap || function (v) { return String(v); };
+  var plural = function (c, one, many) { return c === 1 ? one : many; };
+  if (t.over.length && t.today.length) {
+    return { txt: n(t.over.length) + plural(t.over.length, " thing overdue", " things overdue") +
+      ", " + n(t.today.length) + " for today.", calm: false };
+  }
+  if (t.over.length) {
+    return { txt: n(t.over.length) + plural(t.over.length, " thing overdue", " things overdue") +
+      ", nothing else scheduled for today.", calm: false };
+  }
+  if (t.today.length) {
+    return { txt: n(t.today.length) + plural(t.today.length, " thing", " things") +
+      " for today, nothing overdue.", calm: false };
+  }
+  if (t.week.length) return { txt: "Nothing for today. " + n(t.week.length) + " this week.", calm: true };
+  if (t.later.length) return { txt: "Nothing planned. " + n(t.later.length) + " sitting in Later.", calm: true };
+  return { txt: WHO === WHO_ALL ? "Nothing open across the team." : "Nothing open. Clear.", calm: true };
+}
 
-  el("taskWho").innerHTML = "Today <span class=\"slash\">&#9585;</span> " +
-    esc(WHO === WHO_ALL ? "Builders team" : whoLabel(WHO));
+/* ---- the lead strip (weight 9) ----
+   A summary and a door, nothing else. Every list, group and gauge lives on the Tasks
+   page; putting them here is what made the first version too heavy. */
+function renderTaskLead() {
+  var line = el("taskLine"), counts = el("taskCounts");
+  if (!line) return;
 
   if (!TASK_ROWS) {
     line.textContent = "Reading your tasks...";
-    line.className = "hero-line calm";
+    line.className = "lead-line calm";
+    counts.innerHTML = '<span class="lead-who">' + esc(WHO === WHO_ALL ? "Builders team" : whoLabel(WHO)) + "</span>";
     return;
   }
 
-  var mine = myTasks();
-  var over = inBucket(mine, "Overdue"), today = inBucket(mine, "Today"),
-      week = inBucket(mine, "This Week"), later = inBucket(mine, "Later");
-  var stuck = mine.filter(function (t) { return STUCK[t["Progress"]] || WAITING[t["Progress"]]; });
+  var t = tally();
+  var said = taskSentence(t, function (v) { return '<span class="num">' + v + "</span>"; });
+  line.innerHTML = said.txt;
+  line.className = "lead-line" + (said.calm ? " calm" : "");
 
-  var n = function (v) { return '<span class="num">' + v + "</span>"; };
-  var txt, calm = false;
-  if (over.length && today.length) {
-    txt = n(over.length) + (over.length === 1 ? " thing overdue" : " things overdue") + ", " + n(today.length) + " for today.";
-  } else if (over.length) {
-    txt = n(over.length) + (over.length === 1 ? " thing overdue" : " things overdue") + ", nothing else scheduled for today.";
-  } else if (today.length) {
-    txt = n(today.length) + (today.length === 1 ? " thing" : " things") + " for today, nothing overdue.";
-  } else if (week.length) {
-    txt = "Nothing for today. " + n(week.length) + " this week."; calm = true;
-  } else if (later.length) {
-    txt = "Nothing planned. " + n(later.length) + " sitting in Later."; calm = true;
-  } else {
-    txt = WHO === WHO_ALL ? "Nothing open across the team." : "Nothing open. Clear."; calm = true;
-  }
-  line.innerHTML = txt;
-  line.className = "hero-line" + (calm ? " calm" : "");
-
-  var g = function (cls, num, label) {
-    return '<div class="tg ' + (num ? cls : "zero") + '"><span class="n">' + num +
-      '</span><span class="label">' + label + "</span></div>";
+  var bit = function (cls, num, label) {
+    return num ? '<span class="' + cls + '"><b>' + num + "</b> " + label + "</span>" : "";
   };
-  gauges.innerHTML =
-    g("crit", over.length, "overdue") +
-    g("go", today.length, "today") +
-    g("", week.length, "this week") +
-    g("warn", stuck.length, "blocked or waiting") +
-    g("", later.length, "later");
+  counts.innerHTML =
+    '<span class="lead-who">' + esc(WHO === WHO_ALL ? "Builders team" : whoLabel(WHO)) + "</span>" +
+    bit("over", t.over.length, "overdue") +
+    bit("now", t.today.length, "today") +
+    bit("", t.week.length, "this week") +
+    bit("", t.stuck.length, "blocked or waiting") +
+    bit("", t.later.length, "later");
 
-  // Overdue before today: the ladder says this block is the most important thing on
-  // the page, so it leads with the most important thing in the block.
-  lists.innerHTML =
-    taskGroup("Overdue", over, 4, true) +
-    taskGroup("Today", today, 6, false) +
-    (!over.length && !today.length && week.length ? taskGroup("This week", week, 4, false) : "");
+  var st = el("stTasks");
+  if (st) {
+    st.innerHTML = t.all.length
+      ? "<span><b>" + t.all.length + "</b> open</span>" +
+        (t.over.length ? '<span class="flagged"><b>' + t.over.length + "</b> overdue</span>" : "")
+      : '<span class="quiet">nothing open</span>';
+  }
 }
 
 /* ---- the Tasks page ---- */
@@ -2652,7 +2750,25 @@ function renderTasksPage() {
     ? '<p class="foot" style="margin:0 0 16px">Showing the first ' + TASK_CAP +
       " undelivered tasks by due date. There are more; the rest are not on this page.</p>"
     : "";
-  body.innerHTML = capped + '<div class="tcols">' + cols + "</div>";
+
+  // The read and the counts live here now, not on the home page.
+  var t = tally();
+  var said = taskSentence(t, null);
+  var g = function (cls, num, label) {
+    return '<div class="tg ' + (num ? cls : "zero") + '"><span class="n">' + num +
+      '</span><span class="label">' + label + "</span></div>";
+  };
+  var summary = '<p class="lead-line' + (said.calm ? " calm" : "") + '" style="margin:0 0 4px">' +
+      esc(said.txt) + "</p>" +
+    '<div class="tgauges" style="margin-bottom:24px">' +
+      g("crit", t.over.length, "overdue") +
+      g("go", t.today.length, "today") +
+      g("", t.week.length, "this week") +
+      g("warn", t.stuck.length, "blocked or waiting") +
+      g("", t.later.length, "later") +
+    "</div>";
+
+  body.innerHTML = capped + summary + '<div class="tcols">' + cols + "</div>";
 }
 
 /* ---- the person picker ----
@@ -2669,37 +2785,82 @@ function rosterFrom(list) {
   return Object.keys(PEOPLE).map(function (id) { return { id: id, n: counts[id] || 0 }; });
 }
 
-function renderWhoList() {
-  var box = el("whoList");
+/* Four buttons, in a fixed order, each with a live count once the tasks have loaded.
+   No search, no scrolling: four is a number you point at. */
+function renderWhoGrid() {
+  var box = el("whoGrid");
   if (!box) return;
-  var people = rosterFrom(TASK_ROWS);
-  var row = function (id, label, sub, count) {
-    return '<button class="whorow" data-who="' + esc(id) + '" aria-pressed="' + (id === WHO ? "true" : "false") + '">' +
-      '<span class="initials">' + esc(whoInitials(id)) + "</span>" +
-      '<span class="nm"><b>' + esc(label) + "</b><span>" + esc(sub) + "</span></span>" +
-      '<span class="cnt">' + count + "</span></button>";
-  };
-  var total = people.reduce(function (a, p) { return a + p.n; }, 0);
-  box.innerHTML = row(WHO_ALL, "The builders team", "ZF, PS, BB and JK together", total) +
-    people.map(function (p) { return row(p.id, PEOPLE[p.id].name, PEOPLE[p.id].role, p.n); }).join("");
+  var counts = {};
+  rosterFrom(TASK_ROWS).forEach(function (p) { counts[p.id] = p.n; });
+  box.innerHTML = Object.keys(PEOPLE).map(function (id) {
+    var p = PEOPLE[id];
+    var n = counts[id];
+    return '<button class="whopick" data-who="' + esc(id) + '">' +
+      '<span class="ini">' + esc(p.ini) + "</span>" +
+      "<span><span class=\"who-n\">" + esc(p.name) + "</span>" +
+      '<span class="who-r">' + (TASK_ROWS ? (n || 0) + " open" : esc(p.role.split(",")[0])) + "</span></span>" +
+      "</button>";
+  }).join("");
 }
 
-function setWho(id) {
+function setWho(id, name) {
   WHO = id;
   try { localStorage.setItem("yfbridge.who", id); } catch (e) {}
   // Keep the registry's check-out name in step, so nobody is asked who they are twice.
-  var p = PEOPLE[id];
-  if (p) {
-    ME = p.ini;
+  var label = PEOPLE[id] ? PEOPLE[id].ini : (name || "");
+  if (label) {
+    ME = label;
     try { localStorage.setItem("yfbuilds.me", ME); } catch (e) {}
   }
-  renderTaskHero();
+  renderTaskLead();
   renderTasksPage();
-  renderWhoList();
+  renderWhoGrid();
   if (typeof render === "function" && BUILDS_ROWS) render();
 }
 
-function openWho() { renderWhoList(); openSheet("whoScrim"); }
+function openWho() {
+  renderWhoGrid();
+  el("whoMsg").textContent = "";
+  el("whoMsg").className = "formmsg";
+  el("whoField").value = "";
+  openSheet("whoScrim");
+}
+
+/* Typed names are matched against the four first, so "zf", "ZF ", "Zia" or "zia firouz"
+   all land on the right person instead of falling through to the team view. */
+function matchPerson(text) {
+  var q = text.trim().toLowerCase();
+  if (!q) return null;
+  var ids = Object.keys(PEOPLE), i;
+  for (i = 0; i < ids.length; i++) {
+    var p = PEOPLE[ids[i]];
+    if (q === p.ini.toLowerCase() || q === p.name.toLowerCase()) return ids[i];
+  }
+  for (i = 0; i < ids.length; i++) {
+    var q2 = PEOPLE[ids[i]].name.toLowerCase();
+    if (q2.split(" ")[0] === q || q2.indexOf(q) === 0) return ids[i];
+  }
+  return null;
+}
+
+/* First open, once per browser. Anything that settles an identity - a button, a typed
+   name, or Skip - also records that the question was asked, so it is never asked twice. */
+var ASKED_THIS_LOAD = false;
+/* If storage is unreadable, ask - never silently skip. Getting the question wrong once
+   is recoverable; never asking means everyone quietly gets the team view forever. The
+   in-memory flag keeps that case to one prompt per page load. */
+function whoAsked() {
+  try { return !!localStorage.getItem("yfbridge.asked"); } catch (e) { return false; }
+}
+function markAsked() {
+  ASKED_THIS_LOAD = true;
+  try { localStorage.setItem("yfbridge.asked", "1"); } catch (e) {}
+}
+function askOnFirstOpen() {
+  if (ASKED_THIS_LOAD || whoAsked()) return;
+  markAsked();
+  openWho();
+}
 
 /* ---- data ---- */
 function startTasks() {
@@ -2707,16 +2868,16 @@ function startTasks() {
   mcp.watchTool(SERVER, T_QUERY, sqlInput(TASKS_DS, Q_TASKS), function (ev) {
     if (ev.type === "data") {
       TASK_ROWS = rows(ev.result);
-      renderTaskHero(); renderTasksPage(); renderWhoList();
+      renderTaskLead(); renderTasksPage(); renderWhoGrid();
       return;
     }
     var err = ev.error || {};
     if (!TASK_ROWS) {
       var e = explain(err);
-      el("taskLine").innerHTML = esc(e.head);
-      el("taskLine").className = "hero-line calm";
-      el("taskGauges").innerHTML = "";
-      el("taskLists").innerHTML = '<p class="quiet" style="padding-bottom:14px">' + esc(e.body) + "</p>";
+      el("taskLine").textContent = e.head;
+      el("taskLine").className = "lead-line calm";
+      el("taskCounts").innerHTML = '<span class="lead-who">tasks unavailable</span>';
+      el("stTasks").innerHTML = '<span class="quiet">tasks unavailable</span>';
       el("tasksBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
     }
   }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
@@ -2728,11 +2889,11 @@ renderDigest = function () {
   var rowEl = el("bandRow");
   if (!rowEl) return;
   var days = briefDays();
-  var host = document.querySelector('[data-surface="briefing"]');
+  var host = document.querySelector('[data-block="briefing"]');
   if (!days.length) { if (host) host.hidden = true; return; }
   if (host) host.hidden = false;
   var day = days[0];
-  el("bandStamp").textContent = "Today's briefing " + String.fromCharCode(183) + " " + longDate(day);
+  el("bandStamp").textContent = "Briefing " + String.fromCharCode(183) + " " + longDate(day);
   rowEl.innerHTML = SECTIONS.map(function (s) {
     var r = leadOf(day, s.key);
     if (!r) return "";
@@ -2749,21 +2910,41 @@ var _applyRoute = applyRoute;
 applyRoute = function (name) {
   _applyRoute(name);
   if (name === "tasks") renderTasksPage();
-  if (name === "home") renderTaskHero();
+  if (name === "home") renderTaskLead();
 };
 
 var _watchBuildsB = watchBuilds;
 watchBuilds = function () { var r = _watchBuildsB(); startTasks(); return r; };
 
-el("whoBtn").addEventListener("click", openWho);
 el("whoBtn2").addEventListener("click", openWho);
-el("whoCancel").addEventListener("click", function () { closeSheet("whoScrim"); });
+el("whoSkip").addEventListener("click", function () { setWho(WHO_ALL); closeSheet("whoScrim"); });
 el("whoScrim").addEventListener("click", function (e) {
   if (e.target.id === "whoScrim") closeSheet("whoScrim");
   var b = e.target.closest ? e.target.closest("button[data-who]") : null;
   if (!b) return;
   setWho(b.getAttribute("data-who"));
   closeSheet("whoScrim");
+});
+
+function submitTypedName() {
+  var v = el("whoField").value.trim();
+  var msg = el("whoMsg");
+  if (!v) { el("whoField").focus(); return; }
+  var hit = matchPerson(v);
+  if (hit) {
+    // Typed one of the four - treat it exactly as pressing their button.
+    setWho(hit);
+    closeSheet("whoScrim");
+    return;
+  }
+  setWho(WHO_ALL, v);
+  msg.className = "formmsg good";
+  msg.textContent = "Thanks, " + v + " - showing the whole team's tasks.";
+  setTimeout(function () { closeSheet("whoScrim"); }, 900);
+}
+el("whoOther").addEventListener("click", submitTypedName);
+el("whoField").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") { e.preventDefault(); submitTypedName(); }
 });
 el("taskRefresh").addEventListener("click", function () {
   if (!mcp || !SERVER) return;
@@ -2774,5 +2955,6 @@ el("taskRefresh").addEventListener("click", function () {
 
 orderHome();
 applyRoute(routeName() || "home");
+askOnFirstOpen();
 boot();
 </script>
