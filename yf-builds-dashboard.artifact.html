@@ -1171,15 +1171,22 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   animation: reelpulse 2.4s ease-in-out infinite;
 }
 @keyframes reelpulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-.reel-win { flex: 1 1 auto; min-width: 0; overflow: hidden; position: relative; }
-.reel-track {
-  display: flex; align-items: center; gap: 0; height: 100%;
-  width: max-content; will-change: transform;
-  animation: reelroll linear infinite;
+/* A real scroll container, not a CSS animation.
+   The crawl, the drag, the wheel and the reduced-motion fallback are all the same
+   thing - scrollLeft - which is why this is a scroller driven by rAF rather than a
+   keyframed transform. A transform animation cannot be grabbed and moved. */
+.reel-win {
+  flex: 1 1 auto; min-width: 0; position: relative;
+  overflow-x: auto; overflow-y: hidden;
+  cursor: grab; scrollbar-width: none; -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
 }
-/* The track holds the item list twice, so -50% lands exactly where it started. */
-@keyframes reelroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.reel:hover .reel-track, .reel:focus-within .reel-track { animation-play-state: paused; }
+.reel-win::-webkit-scrollbar { display: none; }
+.reel-win.dragging { cursor: grabbing; }
+.reel-win:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.reel-track { display: flex; align-items: center; height: 100%; width: max-content; }
+/* Text selection would fight the drag. */
+.reel-win.dragging, .reel-win.dragging * { user-select: none; }
 
 .reel-dup { display: flex; align-items: center; }
 .reel-item {
@@ -1217,11 +1224,10 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 body.has-reel .wrap { padding-bottom: 76px; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No crawl, no pulse. A plain scrollable strip instead - the content stays
-     reachable, which the animation was only ever in the way of. */
-  .reel-track { animation: none; width: auto; }
+  /* No crawl and no pulse. The strip is still a scroller and still draggable - what
+     stops is the movement nobody asked for, not the interaction. The duplicate track
+     goes too, since without the crawl there is nothing to loop seamlessly. */
   .reel-badge i { animation: none; }
-  .reel-win { overflow-x: auto; }
   .reel-track .reel-dup { display: none; }
 }
 
@@ -1626,7 +1632,7 @@ img, svg { max-width: 100%; }
 <!-- The reel. Outside .wrap because it is fixed to the viewport, not part of the page flow. -->
 <div class="reel" id="reel" hidden>
   <span class="reel-badge"><i></i>Live</span>
-  <div class="reel-win"><div class="reel-track" id="reelTrack"></div></div>
+  <div class="reel-win" id="reelWin" tabindex="0" role="region" aria-label="Recent activity. Drag or scroll sideways."><div class="reel-track" id="reelTrack"></div></div>
   <button class="reel-hide" id="reelHide" title="Hide the reel">x</button>
 </div>
 <button class="reel-show" id="reelShow" hidden>Reel</button>
@@ -4678,12 +4684,144 @@ function renderReel() {
   // hidden from assistive tech and dropped entirely under reduced motion.
   // No inline display here: an inline style would beat the reduced-motion rule that
   // hides this duplicate, leaving twice the content to scroll through by hand.
+  var win = el("reelWin");
+  var keep = win ? win.scrollLeft : 0;
   track.innerHTML = one + '<span class="reel-dup" aria-hidden="true">' + one + "</span>";
-
-  // Constant speed regardless of how much there is to say: ~55px per second.
-  var w = track.scrollWidth / 2;
-  track.style.animationDuration = Math.max(24, Math.round(w / 55)) + "s";
+  // Data refreshes should not yank the strip back to the start under someone's cursor.
+  if (win) win.scrollLeft = Math.min(keep, Math.max(0, track.scrollWidth / 2));
 }
+
+/* ---- the reel as a control ----
+   Auto-crawl, drag, wheel and keyboard all move the same scrollLeft. */
+var REEL_REDUCED = false;
+try { REEL_REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+var reelDragging = false, reelHold = 0, reelLast = 0;
+var dragFrom = 0, dragScroll = 0, dragMoved = 0, dragVel = 0, dragLastX = 0, dragLastT = 0;
+
+/* The track carries the item list twice, so wrapping by half its width makes the strip
+   endless in BOTH directions - which matters once it can be dragged backwards. */
+function reelWrap() {
+  if (REEL_REDUCED) return;
+  var win = el("reelWin"), track = el("reelTrack");
+  if (!win || !track) return;
+  var half = track.scrollWidth / 2;
+  if (half <= 0) return;
+  if (win.scrollLeft >= half) win.scrollLeft -= half;
+  else if (win.scrollLeft <= 0) win.scrollLeft += half;
+}
+
+/* Paused whenever a person is plainly engaged with it, or could not see it move. */
+function reelPaused() {
+  var r = el("reel");
+  if (!r || r.hidden || REEL_REDUCED) return true;
+  if (reelDragging || document.hidden) return true;
+  if (Date.now() < reelHold) return true;
+  try { if (r.matches(":hover")) return true; } catch (e) {}
+  if (document.activeElement && r.contains(document.activeElement)) return true;
+  return false;
+}
+
+function reelStep(ts) {
+  requestAnimationFrame(reelStep);
+  var win = el("reelWin");
+  var dt = reelLast ? Math.min(90, ts - reelLast) : 16;
+  reelLast = ts;
+  if (!win || reelPaused()) return;
+  win.scrollLeft += 55 * dt / 1000;   // ~55px per second, frame-rate independent
+  reelWrap();
+}
+requestAnimationFrame(reelStep);
+
+/* A flick keeps going and settles, rather than stopping dead under the finger. */
+function reelGlide(vPxPerMs) {
+  var speed = -vPxPerMs * 1000;
+  if (Math.abs(speed) < 60) return;
+  var last = 0;
+  function step(ts) {
+    if (reelDragging) return;
+    if (!last) last = ts;
+    var dt = Math.min(90, ts - last);
+    last = ts;
+    speed *= Math.pow(0.93, dt / 16);
+    if (Math.abs(speed) < 25) return;
+    var win = el("reelWin");
+    if (!win) return;
+    win.scrollLeft += speed * dt / 1000;
+    reelWrap();
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+(function wireReel() {
+  var win = el("reelWin");
+  if (!win) return;
+
+  /* Mouse and pen only. Touch already pans an overflow container natively, and
+     hijacking it with pointer handling would fight the browser's own momentum. */
+  win.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "touch" || e.button !== 0) return;
+    reelDragging = true;
+    dragFrom = e.clientX; dragScroll = win.scrollLeft;
+    dragMoved = 0; dragVel = 0;
+    dragLastX = e.clientX; dragLastT = e.timeStamp || Date.now();
+    win.classList.add("dragging");
+    try { win.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+
+  win.addEventListener("pointermove", function (e) {
+    if (!reelDragging) return;
+    var dx = e.clientX - dragFrom;
+    if (Math.abs(dx) > dragMoved) dragMoved = Math.abs(dx);
+    win.scrollLeft = dragScroll - dx;
+    reelWrap();
+    var t = e.timeStamp || Date.now(), gap = t - dragLastT;
+    if (gap > 0) dragVel = (e.clientX - dragLastX) / gap;
+    dragLastX = e.clientX; dragLastT = t;
+  });
+
+  function release() {
+    if (!reelDragging) return;
+    reelDragging = false;
+    win.classList.remove("dragging");
+    reelHold = Date.now() + 2500;   // let go, read it, then it drifts again
+    reelGlide(dragVel);
+  }
+  win.addEventListener("pointerup", release);
+  win.addEventListener("pointercancel", release);
+  win.addEventListener("lostpointercapture", release);
+
+  /* A drag that ends on a link must not open it. Capture phase, so it beats the
+     anchor's own activation. */
+  win.addEventListener("click", function (e) {
+    if (dragMoved > 4) { e.preventDefault(); e.stopPropagation(); }
+    dragMoved = 0;
+  }, true);
+
+  /* A mouse wheel only produces deltaY, so it is translated. Trackpad sideways
+     gestures arrive as deltaX and the container handles those itself. */
+  win.addEventListener("wheel", function (e) {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      win.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+    reelHold = Date.now() + 2500;
+    reelWrap();
+  }, { passive: false });
+
+  /* Focused, arrow keys nudge it and Home jumps back. */
+  win.addEventListener("keydown", function (e) {
+    var k = e.key, step = e.shiftKey ? 400 : 120;
+    if (k === "ArrowRight") { win.scrollLeft += step; }
+    else if (k === "ArrowLeft") { win.scrollLeft -= step; }
+    else if (k === "Home") { win.scrollLeft = 0; }
+    else return;
+    e.preventDefault();
+    reelHold = Date.now() + 2500;
+    reelWrap();
+  });
+})();
 
 function startReel() {
   if (!mcp || !SERVER) { renderReel(); return; }
