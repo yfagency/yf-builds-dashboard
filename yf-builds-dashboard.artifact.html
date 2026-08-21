@@ -772,9 +772,19 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .bandcell .src { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin: 5px 0 0; }
 
 /* ---- tier: plate (5-6) ----
-   Capped rather than fluid. A lone 1fr plate would stretch the full width and
-   read like a hero, which is exactly the confusion the ladder exists to prevent. */
-.plates { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 370px)); gap: 16px; }
+   auto-FIT with a 1fr max, not auto-fill with a fixed max.
+
+   The earlier rule was `repeat(auto-fill, minmax(290px, 370px))`, to stop a lone plate
+   stretching the full width and reading like a hero. It had a bug: when the max track
+   size is a definite length, the browser computes the repeat count from the MAX, not the
+   min - so 370+16 into 1132px of content gave TWO tracks, and the third plate wrapped
+   onto its own row with 390px sitting empty beside it. The cap meant to protect the
+   layout was the thing breaking it.
+
+   auto-fit collapses the empty tracks instead, so three plates share the row and stretch
+   to fill it. The lone-plate case is handled where it belongs - in orderHome(), which
+   already knows how many there are - rather than by a track size that has to guess. */
+.plates { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr)); gap: 16px; }
 
 /* ---- tier: strip (3-4) ---- */
 .tier-strip {
@@ -2909,13 +2919,17 @@ applyRoute(routeName() || "home");
    unclosed tag.)
    ================================================================ */
 
+/* Equal weights keep their declaration order - Array.prototype.sort is stable - so the
+   order of this list is how ties are broken. Tasks, Projects, Builds here matches the
+   nav, which is the order the sections actually matter in. */
 var BLOCKS = [
-  { block: "tasks-lead",   section: "tasks",    weight: 9 },
-  { block: "briefing",     section: "briefing", weight: 7 },
-  { block: "tasks-plate",  section: "tasks",    weight: 5 },
-  { block: "builds-plate", section: "builds",   weight: 5 }
+  { block: "tasks-lead",     section: "tasks",    weight: 9 },
+  { block: "briefing",       section: "briefing", weight: 7 },
+  { block: "tasks-plate",    section: "tasks",    weight: 6 },
+  { block: "projects-plate", section: "projects", weight: 6 },
+  { block: "builds-plate",   section: "builds",   weight: 5 }
 ];
-var PAGES = { tasks: 6, briefing: 3, builds: 7 };
+var PAGES = { tasks: 6, projects: 7, briefing: 3, builds: 7 };
 
 function tierFor(w) {
   return w >= 9 ? "lead" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
@@ -2950,6 +2964,16 @@ function orderHome() {
     }
     plateWrap = null;
     stack.appendChild(node);
+  });
+
+  /* A single plate in a 1fr track would stretch the full width and read like a hero,
+     which is the confusion the ladder exists to prevent. Capped here, where the count
+     is actually known, instead of with a fixed max track size - that approach also
+     capped the number of columns and pushed the third plate onto its own row. */
+  var wraps = stack.querySelectorAll(".plates");
+  Array.prototype.forEach.call(wraps, function (w) {
+    var n = w.querySelectorAll(".plate").length;
+    w.style.maxWidth = n === 1 ? "400px" : "";
   });
 }
 
@@ -4046,8 +4070,6 @@ document.addEventListener("keydown", function (e) {
 
 /* ---- wiring ---- */
 VIEWS.projects = "v-projects";
-PAGES.projects = 7;
-BLOCKS.push({ block: "projects-plate", section: "projects", weight: 5 });
 
 el("projClear").addEventListener("click", function () { openProject(null); });
 el("projCopy").addEventListener("click", function () {
