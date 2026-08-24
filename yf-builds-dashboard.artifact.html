@@ -619,9 +619,30 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .lb td { color: var(--ink-2); }
 .lb td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.lb td.rk { font-family: var(--mono); color: var(--muted); width: 24px; }
+
+/* The placement number carries its own placement. First is accent and large; each step
+   down loses size, weight and contrast, and fourth onward is a quiet index. A rank column
+   where every number looks identical is not a ranking, it is a row count.
+
+   line-height is a FIXED 19px, not a ratio. A ratio scales with each tier's font-size, so
+   first place got a 28px line box and the four rows came out 43/37/33/32px tall - a
+   staircase down the left edge of the table. Digits have almost no descender, so a 21px
+   glyph in a 19px box is fine; matching row heights are not. */
+.lb td.rk {
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  width: 26px; text-align: right; padding-right: 10px;
+  font-size: 11.5px; line-height: 19px; color: var(--muted);
+}
+.lb td.rk1 { font-size: 21px; font-weight: 600; color: var(--accent); letter-spacing: -.02em; }
+.lb td.rk2 { font-size: 16px; font-weight: 500; color: var(--ink); }
+.lb td.rk3 { font-size: 13.5px; color: var(--ink-2); }
+
 .lb tr.me td { color: var(--accent); }
 .lb tr.me td.nm { font-weight: 600; }
+/* Being first already reads as first - do not let the "this is you" accent overwrite the
+   tier colours it sits on top of. */
+.lb tr.me td.rk2 { color: var(--ink); }
+.lb tr.me td.rk3 { color: var(--ink-2); }
 
 /* ---- game data resets, #/dev only ----
    Destructive and irreversible, so they are drawn as such: outlined in the crit colour
@@ -5531,25 +5552,38 @@ function renderPlayBox() {
 }
 
 /* Initials rather than names: 340px does not hold four full names and six columns, and
-   this studio reads ZF/PS/BB/JK everywhere else anyway. */
+   this studio reads ZF/PS/BB/JK everywhere else anyway.
+
+   Column order is ZF's: streak first, then who, points, guesses, days. Still SORTED on
+   points - the order of the columns and the order of the rows are separate decisions, and
+   leading with streak does not mean ranking on it.
+
+   The placement number is weighted by placement: first place is accent and large, and each
+   step down loses size, weight and contrast. A rank column where every number looks the
+   same is just an index. */
 function lbHtml() {
   var all = standings(), ini = myIni();
   var body = all.map(function (s, i) {
+    var tier = i < 3 ? " rk" + (i + 1) : "";
     return '<tr' + (s.ini === ini ? ' class="me"' : "") + ">" +
-      '<td class="rk">' + (i + 1) + "</td>" +
+      '<td class="rk' + tier + '">' + (i + 1) + "</td>" +
+      '<td class="n">' + s.streak + "</td>" +
       '<td class="nm">' + esc(s.ini) + "</td>" +
       '<td class="n">' + s.pts + "</td>" +
-      '<td class="n">' + s.streak + "</td>" +
-      '<td class="n">' + s.days + "</td>" +
-      '<td class="n">' + s.guesses + "</td></tr>";
+      '<td class="n">' + s.guesses + "</td>" +
+      '<td class="n">' + s.days + "</td></tr>";
   }).join("");
-  return '<table class="lb"><tr><th></th><th>Who</th><th>Pts</th><th>Streak</th>' +
-    "<th>Days</th><th>Guesses</th></tr>" + body + "</table>";
+  return '<table class="lb"><tr><th></th><th>Streak</th><th>Who</th><th>Pts</th>' +
+    "<th>Guesses</th><th>Days</th></tr>" + body + "</table>";
 }
 
 function renderBoardView(stat) {
+  // "Back to the code" only makes sense while there is still a code to go back to; after a
+  // crack the same button returns to the result.
+  var mid = PZ && !PZ.done;
   el("playBox").innerHTML = gbTop("Leaderboard", stat) + lbHtml() +
-    '<div class="gb-acts"><button class="btn" id="gbBack">Back to the code</button></div>';
+    '<div class="gb-acts"><button class="btn" id="gbBack">' +
+    (mid ? "Back to the code" : "Back") + "</button></div>";
   el("gbBack").addEventListener("click", function () { GB_BOARD = false; renderPlayBox(); });
 }
 
@@ -5590,7 +5624,7 @@ function renderGame(stat) {
       '<span><i class="red"></i>not in it</span></div>' +
     '<div class="gb-acts">' +
       '<button class="btn primary" id="gbGuess"' + (entryFull() ? "" : " disabled") + ">Guess</button>" +
-      '<button class="btn" id="gbBoard">Leaderboard</button></div>' +
+      '<button class="btn" id="gbBoard">View board</button></div>' +
     '<p class="verdict" id="gbVerdict">' + (PZ.hist.length
       ? PZ.hist.length + " guess" + (PZ.hist.length === 1 ? "" : "es") + " so far"
       : "Four digits, no repeats") + "</p>" +
@@ -5666,6 +5700,10 @@ function submitGuess() {
   renderGame(myStat());
 }
 
+/* Finished, and deliberately small: the score, one line of context, and a way to the
+   board. The leaderboard used to sit here permanently, which meant that from the moment
+   anybody played, the masthead carried a six-column table for the rest of the day. It is
+   behind a button in both states now - the same button, in the same place. */
 function showResult(score, guesses, already, stat) {
   el("playBox").innerHTML =
     gbTop(PLAY_FREE ? "Practice run" : (already ? "Cracked already" : "Cracked it"), stat) +
@@ -5674,7 +5712,8 @@ function showResult(score, guesses, already, stat) {
     '<p class="verdict">' + (PLAY_FREE
       ? "Nothing written. The leaderboard has not moved."
       : "One code a day. The next lands at midnight JST.") + "</p>" +
-    lbHtml() + histHtml();
+    '<div class="gb-acts"><button class="btn" id="gbBoard">View board</button></div>';
+  el("gbBoard").addEventListener("click", function () { GB_BOARD = true; renderPlayBox(); });
 }
 /* Writing the result. A viewer without Notion write access simply does not get recorded -
    the game is not worth a red banner over. */

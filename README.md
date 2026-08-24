@@ -220,10 +220,24 @@ account's roster** (only `artifact`, `downloads`, `mcp`, `self`), so Notion it i
 
 **The ranked number is points, and the streak is capped at one a day by construction.**
 
-The leaderboard columns are **Pts, Streak, Days, Guesses** — initials rather than names,
-because 340px does not hold four full names and six columns, and this studio reads
-ZF/PS/BB/JK everywhere else anyway. `Guesses` counts only days that were actually
-finished.
+**The board is always behind a `View board` button** — the same button in the same place,
+whether you are mid-game or finished. It sat open permanently in the finished state for one
+version, which meant that from the moment anybody played, the masthead carried a
+six-column table for the rest of the day. The finished state is now just the score, one
+line of context, and the button: 167px tall against 280px for the board.
+
+The guess log is dropped in the finished state too. The game is over; the log's job is done.
+
+Columns are **`#` · Streak · Who · Pts · Guesses · Days**, with initials rather than names
+because 340px does not hold four full names and six columns. **Column order and row order
+are separate decisions** — it leads with streak and still sorts on points. `Guesses` counts
+only days that were actually finished.
+
+**The placement number is weighted by placement**: 1st is 21px accent, 2nd 16px ink, 3rd
+13.5px, 4th onward a quiet 11.5px. Its `line-height` is a fixed 19px rather than a ratio —
+a ratio scales per tier and produced rows of 43/37/33/32px, a staircase down the left edge.
+Digits have almost no descender, so a 21px glyph in a 19px box is fine; mismatched row
+heights are not.
 
 `Opens` — how many times each person loaded Bridge that day — is **still recorded** and is
 still the thing `countOpen` writes, but it was taken off the leaderboard on 2026-08-24 and
