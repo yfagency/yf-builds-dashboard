@@ -233,6 +233,12 @@ because 340px does not hold four full names and six columns. **Column order and 
 are separate decisions** — it leads with streak and still sorts on points. `Guesses` counts
 only days that were actually finished.
 
+Every numeric column is centred, header and cells together — the `th` carries the same `.n`
+class as its cells so one rule does both, since a centred column under a left-aligned label
+reads as a mistake. Their padding is symmetric on purpose: the table's default right padding
+is 0, so a centred cell with padding on one side only sits visibly off-centre. `Who` stays
+left-aligned; it is a name, not a measurement.
+
 **The placement number is weighted by placement**: 1st is 21px accent, 2nd 16px ink, 3rd
 13.5px, 4th onward a quiet 11.5px. Its `line-height` is a fixed 19px rather than a ratio —
 a ratio scales per tier and produced rows of 43/37/33/32px, a staircase down the left edge.
@@ -268,7 +274,26 @@ ZF only. Four controls under **Game data**:
 | Reset all | every row, every person |
 | Reset person | one person, all days |
 | Reset day | one JST day, one person or everyone |
+| **Roll the code** | deals a different code for today, to everybody |
 | Practice | replay today's code, writing nothing |
+
+### Rolling the code
+
+The code is derived from the date, never stored, so "resetting" it means changing the seed.
+That is the `Salt` column: a counter, not a code, so there is still nothing in the database
+for anyone to read. It goes on **every row for that day** and the **max across the day
+wins** — which is what makes one person's roll reach everybody, and stops a row created
+later with no salt from pulling the day back to the old code. **A salt of 0 or empty
+deliberately yields the original code**, so adding the column changed nothing already in
+play.
+
+Rolling also **clears that day's results**, and that is not optional: a new code standing
+next to the old code's scores is a leaderboard nobody can check, and anyone who had already
+played would be locked out of the code they now face. `Opens` is left alone — a visit
+happened whether or not the code changed.
+
+A rolled salt is treated exactly like a new day, so a game in progress is re-dealt rather
+than left showing a board built from a code that no longer exists.
 
 Every destructive button takes **two clicks**, and the second one is labelled with the row
 count it is about to zero (`Zero 3 rows?`). The arm times out after six seconds so a

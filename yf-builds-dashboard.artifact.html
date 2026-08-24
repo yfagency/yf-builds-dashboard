@@ -618,6 +618,11 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   color: var(--muted); white-space: nowrap;
 }
 .lb td { color: var(--ink-2); }
+/* Numbers sit centred under their own label, and the padding has to be symmetric to make
+   that true - the table's default right padding is 0, so a centred cell with 8px on one
+   side only would sit visibly off-centre. Who stays left-aligned: it is a name, not a
+   measurement. */
+.lb th.n, .lb td.n { text-align: center; padding-left: 4px; padding-right: 4px; }
 .lb td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 /* The placement number carries its own placement. First is accent and large; each step
@@ -4184,6 +4189,12 @@ function renderDev() {
           '<input type="date" id="grDay" value="' + jstDay() + '">' +
           '<button class="btn danger" id="grDayBtn">Reset day</button></div>' +
 
+        '<div class="gr"><span class="what">Roll today&#39;s code' +
+          "<small>Deals a different code for today, to everybody. Also clears today&#39;s " +
+          "results - a new code with the old scores still standing would leave points " +
+          "attached to a puzzle nobody can check. Opens are left alone.</small></span>" +
+          '<button class="btn danger" id="grRoll">Roll the code</button></div>' +
+
         '<div class="gr"><span class="what">Practice today' +
           "<small>Replay today's code as many times as you like. Nothing is written and the " +
           "leaderboard does not move. Clears on reload.</small></span>" +
@@ -4204,6 +4215,16 @@ function renderDev() {
    six seconds so a click left half-finished cannot be completed by accident later. */
 var RESET_ARMED = null;
 
+/* Re-read and repaint after a write. PZ is dropped outright rather than only when finished:
+   a roll changes the code under a game in progress too, and holding a board built from the
+   old code would be worse than dealing a fresh one. */
+function refreshPlay() {
+  return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
+    .catch(function () {})
+    .then(loadPlay)
+    .then(function () { PZ = null; renderPlayBox(); });
+}
+
 function blankRows(list) {
   var done = 0;
   var step = function (i) {
@@ -4216,17 +4237,42 @@ function blankRows(list) {
     }).then(function () { done++; }).then(function () { return step(i + 1); });
   };
   return step(0).then(function (n) {
-    return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
-      .catch(function () {})
-      .then(loadPlay)
-      .then(function () {
-        // A reset means today can be played again, so drop any finished game in memory -
-        // otherwise renderPlayBox would keep showing the result it is holding.
-        if (PZ && PZ.done) PZ = null;
-        renderPlayBox();
-        return n;
-      });
+    return refreshPlay().then(function () { return n; });
   });
+}
+
+/* Rolling the code. The salt goes on every row for the day, so whoever reads the day sees
+   the same maximum; and the day's results are cleared in the same pass, because a new code
+   standing next to the old code's scores is a leaderboard that cannot be checked - and
+   anyone who had already played would be locked out of the code they now face.
+
+   Opens are NOT cleared. A visit happened whether or not the code changed. */
+function rollCode(day) {
+  var next = saltFor(day) + 1;
+  var rows = (PLAY_ROWS || []).filter(function (r) { return r.day === day; });
+  var props = { "Played": "__NO__", "Score": 0, "Guesses": 0, "Took": 0, "Salt": next };
+
+  if (!rows.length) {
+    // Nothing on file for that day, so there is nowhere to put the salt. Create one row of
+    // your own to carry it - everyone else reads the day's max, so one row is enough.
+    return mcp.callTool(SERVER, T_CREATE, {
+      parent: { type: "data_source_id", data_source_id: PLAY_DS.replace("collection://", "") },
+      pages: [{ properties: {
+        "Entry": myIni() + " " + day, "Person": myIni(),
+        "date:Day:start": day, "date:Day:is_datetime": 0,
+        "Opens": 0, "Played": "__NO__", "Score": 0, "Guesses": 0, "Took": 0, "Salt": next
+      } }]
+    }).then(refreshPlay).then(function () { return next; });
+  }
+
+  var step = function (i) {
+    if (i >= rows.length) return Promise.resolve();
+    var id = pageIdFrom(rows[i].url);
+    if (!id) return step(i + 1);
+    return mcp.callTool(SERVER, T_UPDATE, { page_id: id, command: "update_properties", properties: props })
+      .then(function () { return step(i + 1); });
+  };
+  return step(0).then(refreshPlay).then(function () { return next; });
 }
 
 function wireGameReset() {
@@ -4292,6 +4338,36 @@ function wireGameReset() {
       });
     });
   });
+
+  // Same two-click contract as the resets, because it is just as irreversible: once the
+  // salt moves, the code the day had is not recoverable.
+  var roll = el("grRoll");
+  if (roll) {
+    var rollLabel = roll.textContent;
+    roll.addEventListener("click", function () {
+      var day = jstDay();
+      if (RESET_ARMED !== "roll") {
+        RESET_ARMED = "roll";
+        roll.textContent = "New code for everyone?";
+        roll.className = "btn danger armed";
+        say("Click again to confirm. Today&#39;s results are cleared with it, and the old code is gone.", "bad");
+        setTimeout(function () {
+          if (RESET_ARMED !== "roll") return;
+          RESET_ARMED = null; roll.textContent = rollLabel; roll.className = "btn danger"; say("");
+        }, 6000);
+        return;
+      }
+      RESET_ARMED = null;
+      roll.disabled = true; roll.textContent = "Rolling"; roll.className = "btn danger";
+      rollCode(day).then(function (n) {
+        roll.disabled = false; roll.textContent = rollLabel;
+        say("New code dealt for " + day + " (roll " + n + "). Today&#39;s results cleared.", "good");
+      }, function (e) {
+        roll.disabled = false; roll.textContent = rollLabel;
+        say("Failed: " + esc(explain(e).head || "unknown"), "bad");
+      });
+    });
+  }
 
   var pr = el("grPractice");
   var paintPractice = function () {
@@ -5307,7 +5383,7 @@ function greeting() {
    ================================================================ */
 var PLAY_DS = "collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88";
 var Q_PLAY = 'SELECT url, "Person", "date:Day:start" AS day, "Opens", "Played", "Score", ' +
-  '"Guesses", "Took" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
+  '"Guesses", "Took", "Salt" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
 
 var PLAY_ROWS = null;    // null until read; [] is a real empty leaderboard
 var PLAY_COUNTED = false; // this page load has already counted its open
@@ -5456,8 +5532,22 @@ var CODE_LEN = 4;
    The three verdicts below only have one clear meaning each while no digit repeats: with a
    repeated digit, "in the code but not in this slot" stops being answerable per position
    without inventing a tie-breaking rule the player cannot see. */
-function codeFor(day) {
-  var rnd = mulberry32(hashStr("yf-bridge-code-" + day));
+/* The salt is how a day's code gets rolled. It is not stored as a code - it is a counter
+   that changes the seed, so no code ever sits in a database for somebody to read.
+
+   It lives on the day's rows and the MAX across them wins, which is what makes one person
+   rolling it reach everybody: a row created later with no salt cannot pull the day back to
+   the old code. A salt of 0 or empty deliberately produces the original code, so adding
+   this column changed nothing that was already in play. */
+function saltFor(day) {
+  var m = 0;
+  (PLAY_ROWS || []).forEach(function (r) {
+    if (r.day === day) m = Math.max(m, +r["Salt"] || 0);
+  });
+  return m;
+}
+function codeFor(day, salt) {
+  var rnd = mulberry32(hashStr("yf-bridge-code-" + day + (salt ? "#" + salt : "")));
   var pool = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], out = [];
   while (out.length < CODE_LEN) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
   return out;
@@ -5527,8 +5617,10 @@ function renderPlayBox() {
 
   if (GB_BOARD) { renderBoardView(stat); return; }
 
-  var day = jstDay(), r = rowFor(myIni(), day);
-  var finishedHere = PZ && PZ.day === day && PZ.done;
+  var day = jstDay(), r = rowFor(myIni(), day), salt = saltFor(day);
+  // A rolled salt is as good as a new day: the code in front of the player is not the code
+  // any more, so a finished game stops counting as finished.
+  var finishedHere = PZ && PZ.day === day && PZ.salt === salt && PZ.done;
 
   if (PLAY_FREE) {
     // Practice ignores the registry entirely. A finished practice run still shows its
@@ -5544,8 +5636,8 @@ function renderPlayBox() {
     if (finishedHere) { showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true, stat); return; }
   }
 
-  if (!PZ || PZ.day !== day) {
-    PZ = { day: day, code: codeFor(day), entry: [null, null, null, null],
+  if (!PZ || PZ.day !== day || PZ.salt !== salt) {
+    PZ = { day: day, salt: salt, code: codeFor(day, salt), entry: [null, null, null, null],
            lamps: null, hist: [], done: false, started: Date.now() };
   }
   renderGame(stat);
@@ -5573,8 +5665,11 @@ function lbHtml() {
       '<td class="n">' + s.guesses + "</td>" +
       '<td class="n">' + s.days + "</td></tr>";
   }).join("");
-  return '<table class="lb"><tr><th></th><th>Streak</th><th>Who</th><th>Pts</th>' +
-    "<th>Guesses</th><th>Days</th></tr>" + body + "</table>";
+  // The numeric headers carry the same class as their cells so one rule centres both. A
+  // centred column under a left-aligned label reads as a mistake.
+  return '<table class="lb"><tr><th></th><th class="n">Streak</th><th>Who</th>' +
+    '<th class="n">Pts</th><th class="n">Guesses</th><th class="n">Days</th></tr>' +
+    body + "</table>";
 }
 
 function renderBoardView(stat) {
