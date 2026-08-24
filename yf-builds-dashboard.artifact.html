@@ -606,6 +606,25 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .lb tr.me td { color: var(--accent); }
 .lb tr.me td.nm { font-weight: 600; }
 
+/* ---- game data resets, #/dev only ----
+   Destructive and irreversible, so they are drawn as such: outlined in the crit colour
+   rather than filled, and they take two clicks with a row count in between. */
+.gr {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 11px 0; border-top: 1px solid var(--rule-soft);
+}
+.gr .what { flex: 1 1 160px; min-width: 0; font-size: 13.5px; color: var(--ink); }
+.gr .what small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+.gr select, .gr input[type="date"] {
+  flex: none; font-family: var(--sans); font-size: 13px; padding: 6px 9px;
+  background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px;
+}
+.gr .btn { flex: none; }
+.gr .btn.danger { border-color: var(--crit); color: var(--crit); }
+.gr .btn.danger:hover { background: var(--crit-soft); border-color: var(--crit); }
+.gr .btn.armed { background: var(--crit); border-color: var(--crit); color: var(--ink); }
+
 /* The diagonal is YF's mark, and this file's own documentation warns twice that it is
    U+2571 and not a backslash. Typing "joy" flips every one of them the wrong way round
    for a moment. That is the whole feature: the studio's footnote, told as a joke.
@@ -4109,9 +4128,157 @@ function renderDev() {
         '<div class="sheet-actions"><button class="btn primary" id="dlSave">Write entry</button></div>' +
         '<p class="formmsg" id="dlMsg"></p></section>';
 
+      // --- game data ---
+      var people = Object.keys(PEOPLE).map(function (id) {
+        return '<option value="' + PEOPLE[id].ini + '">' + esc(PEOPLE[id].name) + "</option>";
+      }).join("");
+      var rowCount = (PLAY_ROWS || []).length;
+      html += '<section class="devpanel wide"><h2>Game data</h2>' +
+        '<p class="sub">Bridge Play holds one row per person per JST day. ' +
+        '<b>Notion has no delete</b>, so a reset writes zeros over a row rather than removing it - ' +
+        'the row stays in the database, and the previous numbers are gone for good. ' +
+        'The leaderboard sums, so zeroed rows read as a clean slate. ' +
+        (PLAY_ROWS === null ? "Rows not read yet." : rowCount + " row" + (rowCount === 1 ? "" : "s") + " on file.") + "</p>" +
+
+        '<div class="gr"><span class="what">Everyone, all time' +
+          "<small>Every row for every person. The whole leaderboard back to nothing.</small></span>" +
+          '<button class="btn danger" id="grAll">Reset all</button></div>' +
+
+        '<div class="gr"><span class="what">One person, all time' +
+          "<small>Every day they have on file.</small></span>" +
+          '<select id="grPerson">' + people + "</select>" +
+          '<button class="btn danger" id="grPersonBtn">Reset person</button></div>' +
+
+        '<div class="gr"><span class="what">One day' +
+          "<small>A single JST day, for one person or for everybody.</small></span>" +
+          '<select id="grDayWho"><option value="*">Everyone</option>' + people + "</select>" +
+          '<input type="date" id="grDay" value="' + jstDay() + '">' +
+          '<button class="btn danger" id="grDayBtn">Reset day</button></div>' +
+
+        '<div class="gr"><span class="what">Practice today' +
+          "<small>Replay today's code as many times as you like. Nothing is written and the " +
+          "leaderboard does not move. Clears on reload.</small></span>" +
+          '<button class="btn" id="grPractice">Turn practice on</button></div>' +
+
+        '<p class="formmsg" id="grMsg"></p></section>';
+
       body.innerHTML = '<div class="devgrid">' + html + "</div>";
       wireDevForm();
+      wireGameReset();
     });
+}
+
+/* ---- resetting game data ----
+   Two clicks for every destructive button, and the second click is told how many rows it
+   is about to zero. There is no undo of any kind: Notion's connector has no delete, so a
+   reset overwrites the numbers and the old ones are simply gone. The arm times out after
+   six seconds so a click left half-finished cannot be completed by accident later. */
+var RESET_ARMED = null;
+
+function blankRows(list) {
+  var done = 0;
+  var step = function (i) {
+    if (i >= list.length) return Promise.resolve(done);
+    var id = pageIdFrom(list[i].url);
+    if (!id) return step(i + 1);
+    return mcp.callTool(SERVER, T_UPDATE, {
+      page_id: id, command: "update_properties",
+      properties: { "Opens": 0, "Played": "__NO__", "Score": 0, "Guesses": 0, "Took": 0 }
+    }).then(function () { done++; }).then(function () { return step(i + 1); });
+  };
+  return step(0).then(function (n) {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
+      .catch(function () {})
+      .then(loadPlay)
+      .then(function () {
+        // A reset means today can be played again, so drop any finished game in memory -
+        // otherwise openPuzzle would keep showing the result it is holding.
+        if (PZ && PZ.done) PZ = null;
+        renderPlayBox();
+        return n;
+      });
+  });
+}
+
+function wireGameReset() {
+  var msg = el("grMsg");
+  if (!msg) return;
+  var say = function (t, cls) {
+    msg.className = "formmsg" + (cls ? " " + cls : "");
+    msg.innerHTML = t;
+  };
+
+  // #/dev can be opened before the play rows have been read, in which case every button
+  // would truthfully but uselessly report that nothing matches. Fetch them and say so.
+  if (PLAY_ROWS === null) {
+    say('<span class="spin"></span>Reading Bridge Play');
+    loadPlay().then(function (r) {
+      say(r.length + " row" + (r.length === 1 ? "" : "s") + " on file.");
+    });
+  }
+
+  var targets = function (mode) {
+    var rows = PLAY_ROWS || [];
+    if (mode === "all") return rows.slice();
+    if (mode === "person") {
+      var who = el("grPerson").value;
+      return rows.filter(function (r) { return r["Person"] === who; });
+    }
+    var w = el("grDayWho").value, d = el("grDay").value;
+    return rows.filter(function (r) {
+      return r.day === d && (w === "*" || r["Person"] === w);
+    });
+  };
+
+  [["grAll", "all"], ["grPersonBtn", "person"], ["grDayBtn", "day"]].forEach(function (pair) {
+    var btn = el(pair[0]), mode = pair[1], label = btn.textContent;
+    var disarm = function () {
+      if (RESET_ARMED !== mode) return;
+      RESET_ARMED = null;
+      btn.textContent = label;
+      btn.className = "btn danger";
+      say("");
+    };
+    btn.addEventListener("click", function () {
+      var list = targets(mode);
+      if (RESET_ARMED !== mode) {
+        if (!list.length) { say("Nothing on file matches that.", "bad"); return; }
+        RESET_ARMED = mode;
+        btn.textContent = "Zero " + list.length + " row" + (list.length === 1 ? "" : "s") + "?";
+        btn.className = "btn danger armed";
+        say("Click again to confirm. <b>There is no undo</b> - this writes zeros over what is there.", "bad");
+        setTimeout(disarm, 6000);
+        return;
+      }
+      RESET_ARMED = null;
+      btn.disabled = true;
+      btn.textContent = "Working";
+      btn.className = "btn danger";
+      blankRows(list).then(function (n) {
+        btn.disabled = false; btn.textContent = label;
+        say("Zeroed " + n + " row" + (n === 1 ? "" : "s") + ".", "good");
+      }, function (e) {
+        btn.disabled = false; btn.textContent = label;
+        say("Failed: " + esc(explain(e).head || "unknown"), "bad");
+      });
+    });
+  });
+
+  var pr = el("grPractice");
+  var paintPractice = function () {
+    pr.textContent = PLAY_FREE ? "Turn practice off" : "Turn practice on";
+    pr.className = "btn" + (PLAY_FREE ? " primary" : "");
+  };
+  paintPractice();
+  pr.addEventListener("click", function () {
+    PLAY_FREE = !PLAY_FREE;
+    PZ = null;              // deal a fresh board either way
+    paintPractice();
+    renderPlayBox();
+    say(PLAY_FREE
+      ? "Practice on. Today's code replays as often as you like and <b>nothing is written</b>."
+      : "Practice off. The next crack is recorded again.", PLAY_FREE ? "good" : "");
+  });
 }
 
 function wireDevForm() {
@@ -5117,6 +5284,16 @@ var PLAY_ROWS = null;    // null until read; [] is a real empty leaderboard
 var PLAY_COUNTED = false; // this page load has already counted its open
 var PZ = null;            // live game state while the sheet is open
 
+/* Practice mode, switched on from #/dev. Replays today's code and writes NOTHING, which is
+   the only way to retry without a second score landing on the leaderboard. Deliberately
+   in-memory: a reload clears it, so it cannot be left on by accident for a week. */
+var PLAY_FREE = false;
+
+/* Serialises the two writers so countOpen cannot create a row that savePlay then creates
+   again a moment later. It does not help across tabs, which is why rowFor and standings
+   tolerate duplicates as well - two layers, because neither alone is enough. */
+var PLAY_READY = Promise.resolve();
+
 function myIni() { return PEOPLE[WHO] ? PEOPLE[WHO].ini : null; }
 function playable() { return !!(mcp && SERVER && myIni()); }
 
@@ -5127,10 +5304,20 @@ function loadPlay() {
     .then(function (r) { PLAY_ROWS = r; return r; })
     .catch(function () { PLAY_ROWS = PLAY_ROWS || []; return PLAY_ROWS; });
 }
+/* Duplicates for one person and one day are possible and have actually happened: countOpen
+   and savePlay each create a row when the re-read has not landed, and two tabs can race
+   past any in-page guard. Notion has no unique constraint and no delete, so the READER has
+   to be the thing that copes.
+
+   A row that recorded a result wins, so a blank twin can never hide a finished game and
+   let the day be played twice. */
 function rowFor(ini, day) {
-  return (PLAY_ROWS || []).filter(function (r) {
+  var all = (PLAY_ROWS || []).filter(function (r) {
     return r["Person"] === ini && r.day === day;
-  })[0] || null;
+  });
+  if (!all.length) return null;
+  for (var i = 0; i < all.length; i++) if (isYes(all[i]["Played"])) return all[i];
+  return all[0];
 }
 function isYes(v) { return v === "__YES__" || v === true; }
 
@@ -5142,12 +5329,23 @@ function standings() {
   Object.keys(PEOPLE).forEach(function (id) {
     by[PEOPLE[id].ini] = { ini: PEOPLE[id].ini, name: PEOPLE[id].name, pts: 0, days: 0, opens: 0, played: {} };
   });
+  /* Collapse duplicate rows per person-day BEFORE aggregating, taking the max of each
+     number rather than the sum. Summing straight over the rows double-counted whenever a
+     day had two - which is how ZF's opens read 5 on a day with four visits. */
+  var perDay = {};
   (PLAY_ROWS || []).forEach(function (r) {
-    var s = by[r["Person"]];
+    var k = r["Person"] + "|" + r.day, d = perDay[k];
+    if (!d) { d = perDay[k] = { ini: r["Person"], day: r.day, opens: 0, score: 0, played: false }; }
+    d.opens = Math.max(d.opens, +r["Opens"] || 0);
+    d.score = Math.max(d.score, +r["Score"] || 0);
+    d.played = d.played || isYes(r["Played"]);
+  });
+  Object.keys(perDay).forEach(function (k) {
+    var d = perDay[k], s = by[d.ini];
     if (!s) return;                        // a row for somebody off the builders team
-    s.pts += (+r["Score"] || 0);
-    s.opens += (+r["Opens"] || 0);
-    if (isYes(r["Played"])) { s.days++; s.played[r.day] = true; }
+    s.pts += d.score;
+    s.opens += d.opens;
+    if (d.played) { s.days++; s.played[d.day] = true; }
   });
   var today = jstDay(), yest = dayShift(today, -1);
   Object.keys(by).forEach(function (k) {
@@ -5172,6 +5370,11 @@ function myStanding() {
 function countOpen() {
   if (PLAY_COUNTED || !playable()) return Promise.resolve();
   PLAY_COUNTED = true;
+  PLAY_READY = PLAY_READY.then(countOpenNow, countOpenNow);
+  return PLAY_READY;
+}
+function countOpenNow() {
+  if (!playable()) return Promise.resolve();
   var ini = myIni(), day = jstDay(), r = rowFor(ini, day);
   var after = function () {
     return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
@@ -5268,8 +5471,9 @@ function renderPlayBox() {
       '<span class="u">day' + (s.streak === 1 ? "" : "s") + '</span></span>' +
     '<p class="pts"><b>' + s.pts + '</b> pts &middot; ' + rankBit + '</p>' +
     '<p class="hi">' + esc(greeting()) + "</p>" +
-    '<button class="playbtn' + (done ? " done" : "") + '" id="playBtn">' +
-      (done ? "Played &middot; see the board" : "Play today's puzzle") + "</button>";
+    '<button class="playbtn' + (done && !PLAY_FREE ? " done" : "") + '" id="playBtn">' +
+      (PLAY_FREE ? "Practice today's code"
+        : done ? "Played &middot; see the board" : "Crack today's code") + "</button>";
 
   el("playBtn").addEventListener("click", openPuzzle);
 }
@@ -5297,16 +5501,22 @@ function openPuzzle() {
   var day = jstDay(), r = rowFor(myIni(), day);
   openSheet("playScrim");
 
-  if (r && isYes(r["Played"])) {
-    showResult(+r["Score"] || 0, +r["Guesses"] || 0, true);
-    return;
-  }
-  // Cracked in this session but the registry does not say so - either the write failed or
-  // the re-read has not landed. Trust what happened in front of the player rather than
-  // handing them a dead board back.
-  if (PZ && PZ.day === day && PZ.done) {
-    showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true);
-    return;
+  // Practice mode skips both once-a-day gates, and a finished practice game is thrown away
+  // so the next open deals a fresh board rather than the old result.
+  if (PLAY_FREE) {
+    if (PZ && PZ.done) PZ = null;
+  } else {
+    if (r && isYes(r["Played"])) {
+      showResult(+r["Score"] || 0, +r["Guesses"] || 0, true);
+      return;
+    }
+    // Cracked in this session but the registry does not say so - either the write failed or
+    // the re-read has not landed. Trust what happened in front of the player rather than
+    // handing them a dead board back.
+    if (PZ && PZ.day === day && PZ.done) {
+      showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true);
+      return;
+    }
   }
   if (!PZ || PZ.day !== day) {
     PZ = { day: day, code: codeFor(day), entry: [null, null, null, null],
@@ -5429,7 +5639,7 @@ function submitGuess() {
     var score = scoreFor(guesses);
     // Kept on PZ so reopening can show the result even if the write never lands.
     PZ.done = true; PZ.score = score; PZ.guesses = guesses;
-    savePlay(score, guesses, took);
+    if (!PLAY_FREE) savePlay(score, guesses, took);
     showResult(score, guesses, false);
     return;
   }
@@ -5438,10 +5648,12 @@ function submitGuess() {
 }
 
 function showResult(score, guesses, already) {
-  el("pzTitle").textContent = already ? "Cracked it already" : "Cracked it";
-  el("pzHint").textContent = already
-    ? "One code a day. The next one lands at midnight JST."
-    : "One code a day. Come back tomorrow.";
+  el("pzTitle").textContent = PLAY_FREE ? "Practice run" : (already ? "Cracked it already" : "Cracked it");
+  el("pzHint").textContent = PLAY_FREE
+    ? "Practice mode: nothing was written and the leaderboard has not moved."
+    : (already
+      ? "One code a day. The next one lands at midnight JST."
+      : "One code a day. Come back tomorrow.");
   el("pzBody").innerHTML =
     '<p class="final"><b>' + score + " pts</b> &middot; " + guesses +
       " guess" + (guesses === 1 ? "" : "es") + "</p>" +
@@ -5452,6 +5664,13 @@ function showResult(score, guesses, already) {
 /* Writing the result. A viewer without Notion write access simply does not get recorded -
    the game is not worth a red banner over. */
 function savePlay(score, guesses, took) {
+  if (!playable()) return;
+  // Behind whatever countOpen is doing, so the row it is creating is visible to rowFor by
+  // the time this looks for one.
+  PLAY_READY = PLAY_READY.then(function () { return savePlayNow(score, guesses, took); },
+                               function () { return savePlayNow(score, guesses, took); });
+}
+function savePlayNow(score, guesses, took) {
   if (!playable()) return;
   var ini = myIni(), day = jstDay(), r = rowFor(ini, day);
   var props = { "Played": "__YES__", "Score": score, "Guesses": guesses, "Took": took };
@@ -5603,6 +5822,12 @@ watchBuilds = function () {
   var r = _watchBuildsPlay();
   renderPlayBox();
   loadPlay().then(renderPlayBox).then(countOpen);
+  /* And re-run the dev checks if that is the view we opened on. applyRoute runs at boot,
+     BEFORE boot() has resolved the mcp capability, so opening a #/dev bookmark directly
+     rendered "No connector" and left it there forever - nothing asked again. Third bug of
+     this exact shape in three days: anything that reads Notion needs a hook here, not just
+     a call at boot. */
+  if (routeName() === "dev" && devAllowed()) renderDev();
   return r;
 };
 

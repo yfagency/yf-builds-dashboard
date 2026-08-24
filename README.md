@@ -212,6 +212,41 @@ ranking on opens rewards reloading the page. If that changes, change it delibera
 A viewer with no Notion write access simply is not recorded. The game is not worth an error
 banner over.
 
+### Duplicate rows are expected, and the reader copes
+
+Two rows for one person-day happen: `countOpen` and `savePlay` each create one when the
+re-read hasn't landed, and two tabs race past any in-page guard. **Notion has no unique
+constraint and no delete**, so there is no way to prevent or clean this at the source.
+
+Two layers handle it. Writes are serialised through `PLAY_READY` so one page cannot do it
+to itself, and the reader tolerates what slips through: `rowFor` prefers a row that
+recorded a result over a blank twin, and `standings` collapses per person-day taking the
+**max** of each number before summing across days. Summing straight over the rows
+double-counted — that is why ZF's opens once read 5 on a day with four visits.
+
+### Resetting, on #/dev
+
+ZF only. Four controls under **Game data**:
+
+| Control | Scope |
+| --- | --- |
+| Reset all | every row, every person |
+| Reset person | one person, all days |
+| Reset day | one JST day, one person or everyone |
+| Practice | replay today's code, writing nothing |
+
+Every destructive button takes **two clicks**, and the second one is labelled with the row
+count it is about to zero (`Zero 3 rows?`). The arm times out after six seconds so a
+half-finished click cannot be completed by accident later.
+
+**A reset writes zeros; it does not delete.** The rows stay in Notion and the previous
+numbers are gone for good — there is no undo of any kind. The leaderboard sums, so zeroed
+rows read as a clean slate.
+
+**Practice mode is in-memory on purpose.** It replays today's code as often as you like and
+skips the save entirely, which is the only way to retry without a second score reaching the
+leaderboard. A reload clears it, so it cannot be left on by accident for a week.
+
 ## Before you publish - every time, both sessions
 
 An artifact publish does **not** go through git. Two Claude sessions publish this one
