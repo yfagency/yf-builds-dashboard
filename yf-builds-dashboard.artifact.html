@@ -321,7 +321,38 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 .quiet { color: var(--muted); font-size: 13px; }
 .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--rule); border-top-color: var(--accent); border-radius: 50%; animation: sp .8s linear infinite; vertical-align: -2px; margin-right: 8px; }
 @keyframes sp { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spin { animation: none; } * { transition: none !important; } }
+
+/* ---- skeletons ----
+   For the two places that were genuinely blank on the first paint, before the connector
+   has resolved anything: the game box, a 340px hole in the top right of the masthead, and
+   the briefing band.
+
+   Shapes, not spinners. A skeleton in the shape of what is coming tells you what you are
+   waiting for, which a spinner in the middle of an empty column does not, and it keeps the
+   layout still: the swap measures 3px, which is font metrics in the header line and not
+   worth chasing further. Everything else on the page already had a "Loading the
+   registry..." line and is left alone. */
+.sk {
+  background: var(--surface-2); border-radius: 4px;
+  position: relative; overflow: hidden;
+}
+.sk::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(243, 240, 233, .055), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer { to { transform: translateX(100%); } }
+.skbar { display: inline-block; height: 10px; vertical-align: -1px; }
+.skline { display: block; height: 11px; margin: 0 auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+  /* The shape still reads as a placeholder standing still, so drop the sweep rather than
+     the skeleton. */
+  .sk::after { animation: none; }
+  * { transition: none !important; }
+}
 
 /* modal */
 .scrim {
@@ -534,6 +565,13 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .gamebox .lb { font-size: 12.5px; margin-top: 2px; }
 .gamebox .lb th, .gamebox .lb td { padding: 7px 8px 7px 0; }
 .gamebox .lb th { font-size: 9.5px; letter-spacing: .06em; }
+
+/* Skeleton pieces sized to the real thing they stand in for, so the box does not resize
+   when the board arrives. The capsule is the same 62x84 as a live one. */
+.gamebox .skcap { width: 62px; height: 84px; border-radius: 12px; }
+/* 35px, not 33: a real .btn here is 7px padding either side, a 1px border and a 12.5px
+   line box. Measured against the live board until the swap stopped moving the page. */
+.gb-acts .skbtn { flex: 1 1 auto; height: 35px; border-radius: 8px; }
 @media (max-width: 900px) {
   .home-mast { gap: 26px; }
   .gamebox { flex: 1 1 100%; max-width: 380px; }
@@ -1657,7 +1695,21 @@ img, svg { max-width: 100%; }
             <span class="stamp" id="bandStamp">Today's briefing</span>
             <a href="#/briefing">All fifteen stories &rarr;</a>
           </div>
-          <div class="bandrow" id="bandRow"></div>
+          <!-- Three skeleton cells, in the markup rather than added by script, so they are
+               on screen from the first paint. renderDigest() replaces them with the real
+               leads, and the failure branch in startBrief() hides the whole block - without
+               that, a briefing that never loads would leave this shimmering forever. -->
+          <div class="bandrow" id="bandRow">
+            <div class="bandcell"><span class="sk skbar" style="width:42px"></span>
+              <span class="sk skline" style="width:88%;margin:9px 0 0"></span>
+              <span class="sk skbar" style="width:54px;margin-top:8px"></span></div>
+            <div class="bandcell"><span class="sk skbar" style="width:38px"></span>
+              <span class="sk skline" style="width:80%;margin:9px 0 0"></span>
+              <span class="sk skbar" style="width:62px;margin-top:8px"></span></div>
+            <div class="bandcell"><span class="sk skbar" style="width:46px"></span>
+              <span class="sk skline" style="width:92%;margin:9px 0 0"></span>
+              <span class="sk skbar" style="width:48px;margin-top:8px"></span></div>
+          </div>
         </div>
       </section>
 
@@ -3286,6 +3338,10 @@ function startBrief() {
       var e = explain(err);
       el("briefBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
       el("stBrief").innerHTML = '<span class="quiet">archive unavailable</span>';
+      // Take the home band down with it. Its skeleton is in the markup, so leaving this
+      // out would shimmer at the team forever on any day the archive cannot be read.
+      var bandHost = document.querySelector('[data-block="briefing"]');
+      if (bandHost) bandHost.hidden = true;
     }
   }, { cache: { staleTime: 60000 }, refetchInterval: 300000 });
 }
@@ -5593,17 +5649,36 @@ function myStat() {
     (anyScores ? " &middot; " + mine.rank + "/" + mine.of : "");
 }
 
+/* The board, in outline, for the gap between the first paint and the connector resolving.
+   Same 62x84 capsules and the same button row as the live thing, so the swap moves the page
+   by 3px rather than by a whole box - and it goes up on the FIRST paint for anyone whose
+   name we already know, because WHO comes out of localStorage synchronously while mcp does
+   not. */
+function gbSkeleton() {
+  var caps = "";
+  for (var i = 0; i < CODE_LEN; i++) {
+    caps += '<div class="cap"><div class="lamp"></div><div class="sk skcap"></div></div>';
+  }
+  return '<div class="gb-top"><span class="gb-title">Today&#39;s code</span>' +
+      '<span class="gb-stat"><span class="sk skbar" style="width:74px"></span></span></div>' +
+    '<div class="code">' + caps + "</div>" +
+    '<div class="legend"><span><i class="green"></i>in place</span>' +
+      '<span><i class="amber"></i>elsewhere</span>' +
+      '<span><i class="red"></i>not in it</span></div>' +
+    '<div class="gb-acts"><span class="sk skbtn"></span><span class="sk skbtn"></span></div>' +
+    '<p class="verdict"><span class="sk skline" style="width:120px"></span></p>';
+}
+
 function renderPlayBox() {
   var box = el("playBox");
   if (!box) return;
-  if (!playable()) { box.hidden = true; return; }
-  box.hidden = false;
 
-  if (PLAY_ROWS === null) {
-    box.innerHTML = gbTop("Today&#39;s code", "") +
-      '<p class="verdict"><span class="spin"></span>Reading scores</p>';
-    return;
-  }
+  /* Not signed in is not the same as not loaded yet. With no name there is genuinely
+     nothing to show and the box stays gone; with a name but no connector, the board is
+     coming, so stand in for it rather than leaving a hole in the masthead. */
+  if (!myIni()) { box.hidden = true; return; }
+  box.hidden = false;
+  if (!mcp || !SERVER || PLAY_ROWS === null) { box.innerHTML = gbSkeleton(); return; }
 
   var stat = myStat();
 

@@ -170,6 +170,26 @@ nobody needed.
 The box has four states and works out which one it is in from `PZ` and the rows, so any
 caller can just re-render it: loading, playing, finished, leaderboard.
 
+**Loading state.** Two places were genuinely blank on the first paint, before the connector
+resolved anything: the game box — a 340px hole in the top right of the masthead — and the
+briefing band. Both now show a **skeleton** (`.sk`, with a shimmer sweep) in the shape of
+what is coming, so you know what you are waiting for and the layout stays still: the swap
+measures 3px.
+
+Everything else already had a loading line (`Loading the registry…`, `reading the tasks…`)
+and was left alone, and `#v-home` is not `hidden` in the markup, so the masthead and the
+plate artwork paint before any script runs.
+
+Two things worth knowing if you touch this. The game skeleton goes up for anyone whose name
+we already know, because `WHO` comes out of `localStorage` synchronously while `mcp` does
+not — **no name still means no box**, since there is genuinely nothing to say to a viewer
+who has not signed in. And the band's skeleton lives in the markup rather than being added
+by script, so `startBrief`'s failure branch has to hide the block: without that, a day when
+the archive cannot be read would shimmer at the team forever.
+
+The shimmer is dropped under `prefers-reduced-motion`; the shapes stay, because a still
+skeleton still reads as a placeholder.
+
 **A background reload will not disturb you mid-guess.** `countOpen` and `savePlay` both
 re-read and re-render; if a game is on screen and unfinished, `renderPlayBox` updates only
 the stat line and leaves the inputs alone. Rebuilding them would throw away focus and a
