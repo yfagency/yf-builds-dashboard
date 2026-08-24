@@ -63,13 +63,6 @@ jobs:
         with:
           node-version: "22"
 
-      # YF works bilingually and several builds set Japanese type. Without CJK fonts the
-      # runner renders tofu boxes and the thumbnail is worse than no thumbnail.
-      - name: Install CJK fonts
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
-
       # Is there anything to do? Runs with no dependencies installed - the script imports
       # puppeteer and sharp lazily for exactly this. Most 2-hourly ticks stop here.
       - name: Plan
@@ -79,6 +72,15 @@ jobs:
           PLAN_ONLY: "1"
           FORCE: ${{ github.event.inputs.force || github.event.client_payload.force || '' }}
         run: node tools/render-thumbnails.mjs
+
+      # YF works bilingually and several builds set Japanese type. Without CJK fonts the
+      # runner renders tofu boxes and the thumbnail is worse than no thumbnail. Installed
+      # after the plan gate so a quiet tick does not pay for an apt-get it will not use.
+      - name: Install CJK fonts
+        if: steps.plan.outputs.work == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
 
       # puppeteer brings its own Chrome rather than trusting whatever the runner image
       # happens to ship this month. sharp does the 640x400 JPEG.
