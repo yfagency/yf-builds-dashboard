@@ -162,8 +162,21 @@ JPEG, so a no-op run leaves a clean `git diff`.
 
 ## The daily code
 
-Top right of the home masthead. Four capsules, each with a lamp above it. Guess the
-four-digit code; after each guess the lamps read:
+**Played in place, in the right-hand column of the home masthead** — no modal. The masthead
+is a two-column flex row on home: wordmark and tagline left, the game in a fixed 340px
+column right, stacking below 900px. A dialog for a ten-second daily habit was a click
+nobody needed.
+
+The box has four states and works out which one it is in from `PZ` and the rows, so any
+caller can just re-render it: loading, playing, finished, leaderboard.
+
+**A background reload will not disturb you mid-guess.** `countOpen` and `savePlay` both
+re-read and re-render; if a game is on screen and unfinished, `renderPlayBox` updates only
+the stat line and leaves the inputs alone. Rebuilding them would throw away focus and a
+half-typed code.
+
+Four capsules, each with a lamp above it. Guess the four-digit code; after each guess the
+lamps read:
 
 | Lamp | Meaning |
 | --- | --- |
@@ -206,8 +219,16 @@ per score. The `db` capability would have been the natural fit and is **not on t
 account's roster** (only `artifact`, `downloads`, `mcp`, `self`), so Notion it is.
 
 **The ranked number is points, and the streak is capped at one a day by construction.**
-`Opens` is recorded and displayed because ZF asked for it, but nothing is ranked on it:
-ranking on opens rewards reloading the page. If that changes, change it deliberately.
+
+The leaderboard columns are **Pts, Streak, Days, Guesses** — initials rather than names,
+because 340px does not hold four full names and six columns, and this studio reads
+ZF/PS/BB/JK everywhere else anyway. `Guesses` counts only days that were actually
+finished.
+
+`Opens` — how many times each person loaded Bridge that day — is **still recorded** and is
+still the thing `countOpen` writes, but it was taken off the leaderboard on 2026-08-24 and
+replaced by `Guesses`. It was never ranked on: ranking on opens rewards reloading the page.
+The column is still in Notion if anyone wants it later.
 
 A viewer with no Notion write access simply is not recorded. The game is not worth an error
 banner over.

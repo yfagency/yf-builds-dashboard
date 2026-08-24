@@ -485,47 +485,58 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .home-mast .tagline { max-width: 46ch; font-size: 15.5px; }
 
-/* ---- the play box, top right of the home masthead ----
-   This slot held a JST clock for one day. Replaced 2026-08-23 (ZF) by the daily puzzle,
-   which earns it better: a reason to come back beats something to glance at, and core
-   rule 5 is about delight rather than readouts.
+/* ---- the masthead is two columns on home ----
+   Wordmark and tagline on the left, the game on the right. It used to be one column with
+   a 214px widget absolutely positioned over the top-right; the game is played in place
+   now, so it needs real width and real layout. Wraps to one column at 900px, where a
+   clamp()ed 76px h1 leaves nothing beside it. */
+.home-mast {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 44px; flex-wrap: wrap;
+}
+.mast-left { position: relative; z-index: 1; flex: 1 1 400px; min-width: 0; }
 
-   Absolutely positioned so it costs the masthead no layout at all. Below 900px there is
-   no room to the right of a clamp()ed 76px h1, so it drops into the flow and switches
-   the rule from its right edge to its left. */
-.playbox {
-  position: absolute; top: 0; right: 0; z-index: 2; width: 214px;
-  text-align: right; border-right: 2px solid var(--accent); padding-right: 14px;
+/* ---- the game, inline in the masthead ----
+   This slot has now held a JST clock, a build-thumbnail quiz, and this. Moved out of a
+   modal on 2026-08-24 (ZF): the header had the room, and a dialog for a ten-second daily
+   habit is a click nobody needs.
+
+   The accent rail on the left edge is the same device the home page's lead strip uses, so
+   the game reads as part of the ladder rather than a widget stuck on the side. */
+.gamebox {
+  position: relative; z-index: 1; flex: 0 0 340px; align-self: flex-start;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 15px 17px 17px;
 }
-.playbox .streak {
-  display: block; font-family: var(--mono); font-variant-numeric: tabular-nums;
-  font-size: 27px; line-height: 1; letter-spacing: -.02em; color: var(--ink);
+.gb-top {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 15px;
 }
-.playbox .streak.zero { color: var(--muted); }
-.playbox .streak .u {
+.gb-title {
   font-family: var(--mono); font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
-  color: var(--muted); margin-left: 7px;
+  color: var(--accent);
 }
-.playbox .pts { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin: 6px 0 0; }
-.playbox .pts b { color: var(--ink-2); font-weight: 500; }
-.playbox .hi { font-size: 12.5px; color: var(--ink-2); margin: 7px 0 0; }
-.playbox .playbtn {
-  margin-top: 10px; cursor: pointer; width: 100%;
-  font-family: var(--sans); font-size: 12.5px; font-weight: 600;
-  padding: 7px 12px; border-radius: 8px;
-  background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
+.gb-stat { font-family: var(--mono); font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.gb-stat b { color: var(--ink-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+.gb-acts { display: flex; gap: 7px; margin-top: 15px; }
+.gb-acts .btn { flex: 1 1 auto; justify-content: center; padding: 7px 10px; font-size: 12.5px; }
+.gamebox .verdict {
+  font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+  margin: 12px 0 0; min-height: 15px; text-align: center;
 }
-.playbox .playbtn:hover { filter: brightness(1.08); }
-/* Played today: still a button, because the results and the leaderboard live behind it. */
-.playbox .playbtn.done { background: var(--surface); color: var(--ink-2); border-color: var(--rule); }
-.playbox .playbtn.done:hover { border-color: var(--muted); filter: none; }
+.gamebox .final { font-size: 14.5px; color: var(--ink); margin: 0; text-align: center; }
+.gamebox .final b { color: var(--accent); font-weight: 600; }
+/* The log is scrollable rather than growing, so the masthead does not get taller with
+   every guess and shove the rest of the page down mid-game. */
+.gamebox .hist { margin: 14px 0 0; max-height: 116px; overflow-y: auto; }
+.gamebox .hrow { font-size: 12px; padding: 4px 0; }
+.gamebox .lb { font-size: 12.5px; margin-top: 2px; }
+.gamebox .lb th, .gamebox .lb td { padding: 7px 8px 7px 0; }
+.gamebox .lb th { font-size: 9.5px; letter-spacing: .06em; }
 @media (max-width: 900px) {
-  .playbox {
-    position: static; width: auto; text-align: left; margin: 0 0 18px;
-    padding: 0 0 0 12px; border-right: 0; border-left: 2px solid var(--accent);
-  }
-  .playbox .streak { font-size: 22px; }
-  .playbox .playbtn { width: auto; }
+  .home-mast { gap: 26px; }
+  .gamebox { flex: 1 1 100%; max-width: 380px; }
 }
 
 /* ---- the code game ----
@@ -553,9 +564,15 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .cap input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 .cap input:disabled { color: var(--ink-2); background: var(--surface); opacity: 1; }
+/* Sized for the masthead box: 4 x 62 + 3 x 10 = 278, inside 304px of usable width. The
+   340px column is the constraint, not the other way round. */
+.gamebox .code { gap: 10px; }
+.gamebox .cap input { width: 62px; height: 84px; font-size: 34px; border-radius: 12px; }
+.gamebox .legend { gap: 12px; font-size: 9.5px; margin-top: 16px; }
+
 @media (max-width: 460px) {
   .code { gap: 8px; }
-  .cap input { width: 56px; height: 78px; font-size: 30px; }
+  .cap input, .gamebox .cap input { width: 56px; height: 78px; font-size: 30px; }
 }
 
 .pz .legend {
@@ -1572,13 +1589,15 @@ img, svg { max-width: 100%; }
   <section id="v-home" class="view">
     <header class="home-mast">
       <div class="grain" aria-hidden="true"></div>
-      <p class="eyebrow">Yoroshiku Fantastic <span class="slash">&#9585;</span> Internal operating surface</p>
-      <h1>YF <span class="slash">&#9585;</span> Bridge</h1>
-      <p class="tagline">Where the studio's own tools live. Everything here reads from YF OS through your Notion connection, so what you see is what the team sees.</p>
+      <div class="mast-left">
+        <p class="eyebrow">Yoroshiku Fantastic <span class="slash">&#9585;</span> Internal operating surface</p>
+        <h1>YF <span class="slash">&#9585;</span> Bridge</h1>
+        <p class="tagline">Where the studio's own tools live. Everything here reads from YF OS through your Notion connection, so what you see is what the team sees.</p>
+      </div>
 
-      <!-- Hidden until we know who is looking: a streak belongs to a person, and there is
-           nothing to say to a viewer who has not signed in. -->
-      <div class="playbox" id="playBox" hidden></div>
+      <!-- The game, played in place. Hidden until we know who is looking: a streak belongs
+           to a person, and there is nothing to say to a viewer who has not signed in. -->
+      <div class="gamebox" id="playBox" hidden></div>
     </header>
 
     <!-- ZF only, gated in gateDev(). Tidiness rather than security - the real boundary is
@@ -1846,17 +1865,6 @@ img, svg { max-width: 100%; }
       <span class="palhint" id="palHint">ESC</span>
     </div>
     <div class="pallist" id="palList"></div>
-  </div>
-</div>
-
-<div class="scrim" id="playScrim">
-  <div class="sheet">
-    <h2 id="pzTitle">Today's puzzle</h2>
-    <p class="quiet" id="pzHint">Which build is this? Five crops, sixty seconds, once a day.</p>
-    <div class="pz" id="pzBody"></div>
-    <div class="sheet-actions">
-      <button class="btn" id="playClose">Close</button>
-    </div>
   </div>
 </div>
 
@@ -4192,7 +4200,7 @@ function blankRows(list) {
       .then(loadPlay)
       .then(function () {
         // A reset means today can be played again, so drop any finished game in memory -
-        // otherwise openPuzzle would keep showing the result it is holding.
+        // otherwise renderPlayBox would keep showing the result it is holding.
         if (PZ && PZ.done) PZ = null;
         renderPlayBox();
         return n;
@@ -5327,7 +5335,8 @@ function isYes(v) { return v === "__YES__" || v === true; }
 function standings() {
   var by = {};
   Object.keys(PEOPLE).forEach(function (id) {
-    by[PEOPLE[id].ini] = { ini: PEOPLE[id].ini, name: PEOPLE[id].name, pts: 0, days: 0, opens: 0, played: {} };
+    by[PEOPLE[id].ini] = { ini: PEOPLE[id].ini, name: PEOPLE[id].name,
+                           pts: 0, days: 0, guesses: 0, opens: 0, played: {} };
   });
   /* Collapse duplicate rows per person-day BEFORE aggregating, taking the max of each
      number rather than the sum. Summing straight over the rows double-counted whenever a
@@ -5335,9 +5344,10 @@ function standings() {
   var perDay = {};
   (PLAY_ROWS || []).forEach(function (r) {
     var k = r["Person"] + "|" + r.day, d = perDay[k];
-    if (!d) { d = perDay[k] = { ini: r["Person"], day: r.day, opens: 0, score: 0, played: false }; }
+    if (!d) { d = perDay[k] = { ini: r["Person"], day: r.day, opens: 0, score: 0, guesses: 0, played: false }; }
     d.opens = Math.max(d.opens, +r["Opens"] || 0);
     d.score = Math.max(d.score, +r["Score"] || 0);
+    d.guesses = Math.max(d.guesses, +r["Guesses"] || 0);
     d.played = d.played || isYes(r["Played"]);
   });
   Object.keys(perDay).forEach(function (k) {
@@ -5345,7 +5355,9 @@ function standings() {
     if (!s) return;                        // a row for somebody off the builders team
     s.pts += d.score;
     s.opens += d.opens;
-    if (d.played) { s.days++; s.played[d.day] = true; }
+    // Guesses only count from a day that was actually finished. An abandoned day has a
+    // zero here anyway, but being explicit keeps the column honest if that ever changes.
+    if (d.played) { s.days++; s.guesses += d.guesses; s.played[d.day] = true; }
   });
   var today = jstDay(), yest = dayShift(today, -1);
   Object.keys(by).forEach(function (k) {
@@ -5445,84 +5457,100 @@ function judge(guess, code) {
    thinking game should not punish thinking. */
 function scoreFor(guesses) { return Math.max(20, 150 - 10 * guesses); }
 
+/* ================================================================
+   THE GAME, RENDERED IN PLACE.
+
+   Moved out of a modal and into the masthead on 2026-08-24 (ZF):
+   the header had the room, and a dialog for a ten-second daily
+   habit is a click nobody needs. One box, four states - loading,
+   playing, finished, leaderboard - and no scrim anywhere.
+   ================================================================ */
+var GB_BOARD = false;   // leaderboard showing instead of the code
+
+function gbTop(title, stat) {
+  return '<div class="gb-top"><span class="gb-title">' + title + "</span>" +
+    '<span class="gb-stat" id="gbStat">' + stat + "</span></div>";
+}
+
+function myStat() {
+  var mine = myStanding();
+  if (!mine) return "";
+  var s = mine.s;
+  var anyScores = standings().some(function (x) { return x.pts > 0; });
+  return "<b>" + s.streak + "</b> day" + (s.streak === 1 ? "" : "s") +
+    " &middot; <b>" + s.pts + "</b> pts" +
+    (anyScores ? " &middot; " + mine.rank + "/" + mine.of : "");
+}
+
 function renderPlayBox() {
   var box = el("playBox");
   if (!box) return;
   if (!playable()) { box.hidden = true; return; }
   box.hidden = false;
 
-  var mine = myStanding();
-  if (!mine || PLAY_ROWS === null) {
-    box.innerHTML = '<span class="streak zero">&middot;&middot;</span>' +
-      '<p class="pts"><span class="spin"></span>Reading scores</p>';
+  if (PLAY_ROWS === null) {
+    box.innerHTML = gbTop("Today&#39;s code", "") +
+      '<p class="verdict"><span class="spin"></span>Reading scores</p>';
     return;
   }
-  var s = mine.s, day = jstDay();
-  var r = rowFor(myIni(), day);
-  var done = r && isYes(r["Played"]);
 
-  // With nobody on the board yet, every rank is a tie broken alphabetically, so "4 of 4"
-  // would read as last place when it means nothing has happened.
-  var anyScores = standings().some(function (x) { return x.pts > 0; });
-  var rankBit = anyScores ? mine.rank + " of " + mine.of : "nobody has played yet";
+  var stat = myStat();
 
-  box.innerHTML =
-    '<span class="streak' + (s.streak ? "" : " zero") + '">' + s.streak +
-      '<span class="u">day' + (s.streak === 1 ? "" : "s") + '</span></span>' +
-    '<p class="pts"><b>' + s.pts + '</b> pts &middot; ' + rankBit + '</p>' +
-    '<p class="hi">' + esc(greeting()) + "</p>" +
-    '<button class="playbtn' + (done && !PLAY_FREE ? " done" : "") + '" id="playBtn">' +
-      (PLAY_FREE ? "Practice today's code"
-        : done ? "Played &middot; see the board" : "Crack today's code") + "</button>";
+  /* A game already on screen only gets its numbers refreshed. countOpen and savePlay both
+     re-read in the background, and rebuilding the inputs from under somebody mid-guess
+     would throw away their focus and their half-typed code. */
+  if (!GB_BOARD && PZ && !PZ.done && el("gbStat") && el("gbOpts")) {
+    el("gbStat").innerHTML = stat;
+    return;
+  }
 
-  el("playBtn").addEventListener("click", openPuzzle);
+  if (GB_BOARD) { renderBoardView(stat); return; }
+
+  var day = jstDay(), r = rowFor(myIni(), day);
+  var finishedHere = PZ && PZ.day === day && PZ.done;
+
+  if (PLAY_FREE) {
+    // Practice ignores the registry entirely. A finished practice run still shows its
+    // result; the dev toggle is what clears PZ for a fresh one.
+    if (finishedHere) { showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, false, stat); return; }
+  } else {
+    if (r && isYes(r["Played"])) {
+      showResult(+r["Score"] || 0, +r["Guesses"] || 0, true, stat);
+      return;
+    }
+    // Cracked in this session but the registry does not say so - a failed write, or a
+    // re-read that has not landed. Trust what happened in front of the player.
+    if (finishedHere) { showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true, stat); return; }
+  }
+
+  if (!PZ || PZ.day !== day) {
+    PZ = { day: day, code: codeFor(day), entry: [null, null, null, null],
+           lamps: null, hist: [], done: false, started: Date.now() };
+  }
+  renderGame(stat);
 }
 
+/* Initials rather than names: 340px does not hold four full names and six columns, and
+   this studio reads ZF/PS/BB/JK everywhere else anyway. */
 function lbHtml() {
   var all = standings(), ini = myIni();
   var body = all.map(function (s, i) {
-    return '<tr' + (s.ini === ini ? ' class="me"' : "") + '>' +
+    return '<tr' + (s.ini === ini ? ' class="me"' : "") + ">" +
       '<td class="rk">' + (i + 1) + "</td>" +
-      '<td class="nm">' + esc(s.name) + "</td>" +
+      '<td class="nm">' + esc(s.ini) + "</td>" +
       '<td class="n">' + s.pts + "</td>" +
       '<td class="n">' + s.streak + "</td>" +
       '<td class="n">' + s.days + "</td>" +
-      '<td class="n">' + s.opens + "</td></tr>";
+      '<td class="n">' + s.guesses + "</td></tr>";
   }).join("");
-  return '<table class="lb"><tr><th></th><th>Who</th><th>Points</th><th>Streak</th>' +
-    "<th>Played</th><th>Opens</th></tr>" + body + "</table>";
+  return '<table class="lb"><tr><th></th><th>Who</th><th>Pts</th><th>Streak</th>' +
+    "<th>Days</th><th>Guesses</th></tr>" + body + "</table>";
 }
 
-/* ---- the board ----
-   PZ survives closing the sheet, so a half-solved code is still half-solved when you come
-   back to it in the same sitting. It does not survive a reload: the code is derivable from
-   the day, but the guesses you have already spent are not worth a round trip to store. */
-function openPuzzle() {
-  var day = jstDay(), r = rowFor(myIni(), day);
-  openSheet("playScrim");
-
-  // Practice mode skips both once-a-day gates, and a finished practice game is thrown away
-  // so the next open deals a fresh board rather than the old result.
-  if (PLAY_FREE) {
-    if (PZ && PZ.done) PZ = null;
-  } else {
-    if (r && isYes(r["Played"])) {
-      showResult(+r["Score"] || 0, +r["Guesses"] || 0, true);
-      return;
-    }
-    // Cracked in this session but the registry does not say so - either the write failed or
-    // the re-read has not landed. Trust what happened in front of the player rather than
-    // handing them a dead board back.
-    if (PZ && PZ.day === day && PZ.done) {
-      showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true);
-      return;
-    }
-  }
-  if (!PZ || PZ.day !== day) {
-    PZ = { day: day, code: codeFor(day), entry: [null, null, null, null],
-           lamps: null, hist: [], done: false, board: false, started: Date.now() };
-  }
-  renderGame();
+function renderBoardView(stat) {
+  el("playBox").innerHTML = gbTop("Leaderboard", stat) + lbHtml() +
+    '<div class="gb-acts"><button class="btn" id="gbBack">Back to the code</button></div>';
+  el("gbBack").addEventListener("click", function () { GB_BOARD = false; renderPlayBox(); });
 }
 
 function entryFull() { return PZ.entry.every(function (d) { return d !== null; }); }
@@ -5541,11 +5569,11 @@ function lampsHtml() {
 }
 
 function histHtml() {
-  if (!PZ.hist.length) return "";
-  // Newest first: the guess you just made is the one you are reasoning from.
+  if (!PZ || !PZ.hist.length) return "";
+  // Newest first: the guess just made is the one being reasoned from.
   return '<div class="hist">' + PZ.hist.slice().reverse().map(function (h, k) {
     var n = PZ.hist.length - k;
-    return '<div class="hrow"><span class="n">' + n + '</span>' +
+    return '<div class="hrow"><span class="n">' + n + "</span>" +
       '<span class="g">' + h.digits.join("") + "</span>" +
       '<span class="dots">' + h.marks.map(function (m) {
         return '<i class="' + m + '"></i>';
@@ -5553,35 +5581,27 @@ function histHtml() {
   }).join("") + "</div>";
 }
 
-function renderGame() {
-  el("pzTitle").textContent = "Today's code";
-  el("pzHint").textContent = PZ.board
-    ? "Standings for the week. The code is the same for everybody."
-    : "Four digits, no repeats. The lamps read your last guess only.";
-
-  if (PZ.board) {
-    el("pzBody").innerHTML = lbHtml() +
-      '<div class="acts"><button class="btn" id="pzBack">Back to the code</button></div>';
-    el("pzBack").addEventListener("click", function () { PZ.board = false; renderGame(); });
-    return;
-  }
-
-  el("pzBody").innerHTML =
-    '<div class="code">' + lampsHtml() + "</div>" +
-    '<div class="legend"><span><i class="green"></i>right spot</span>' +
-      '<span><i class="amber"></i>wrong spot</span>' +
-      '<span><i class="red"></i>not in the code</span></div>' +
-    '<p class="verdict" id="pzVerdict">' + (PZ.hist.length
-      ? PZ.hist.length + " guess" + (PZ.hist.length === 1 ? "" : "es") + " so far."
-      : "") + "</p>" +
-    '<div class="acts">' +
-      '<button class="btn primary" id="pzGuess"' + (entryFull() ? "" : " disabled") + ">Guess</button>" +
-      '<button class="btn" id="pzBoard">Show leaderboard</button></div>' +
+function renderGame(stat) {
+  el("playBox").innerHTML =
+    gbTop("Today&#39;s code", stat) +
+    '<div class="code" id="gbOpts">' + lampsHtml() + "</div>" +
+    '<div class="legend"><span><i class="green"></i>in place</span>' +
+      '<span><i class="amber"></i>elsewhere</span>' +
+      '<span><i class="red"></i>not in it</span></div>' +
+    '<div class="gb-acts">' +
+      '<button class="btn primary" id="gbGuess"' + (entryFull() ? "" : " disabled") + ">Guess</button>" +
+      '<button class="btn" id="gbBoard">Leaderboard</button></div>' +
+    '<p class="verdict" id="gbVerdict">' + (PZ.hist.length
+      ? PZ.hist.length + " guess" + (PZ.hist.length === 1 ? "" : "es") + " so far"
+      : "Four digits, no repeats") + "</p>" +
     histHtml();
 
   wireGame();
-  var first = el("pzBody").querySelector('.cap input[data-i="' + firstEmpty() + '"]');
-  if (first) first.focus();
+  // Focus only once a guess has been made. Grabbing focus on arrival would scroll a small
+  // viewport up to the masthead and pop a keyboard on a phone, for a game nobody asked to
+  // start yet.
+  var first = el("playBox").querySelector('.cap input[data-i="' + firstEmpty() + '"]');
+  if (first && PZ.hist.length) first.focus();
 }
 
 function firstEmpty() {
@@ -5590,9 +5610,9 @@ function firstEmpty() {
 }
 
 function wireGame() {
-  var inputs = [].slice.call(el("pzBody").querySelectorAll(".cap input"));
+  var inputs = [].slice.call(el("playBox").querySelectorAll(".cap input"));
   var sync = function () {
-    var g = el("pzGuess");
+    var g = el("gbGuess");
     if (g) g.disabled = !entryFull();
   };
   inputs.forEach(function (inp) {
@@ -5621,8 +5641,8 @@ function wireGame() {
       if (e.key === "ArrowRight" && i < CODE_LEN - 1) { e.preventDefault(); inputs[i + 1].focus(); }
     });
   });
-  el("pzGuess").addEventListener("click", submitGuess);
-  el("pzBoard").addEventListener("click", function () { PZ.board = true; renderGame(); });
+  el("gbGuess").addEventListener("click", submitGuess);
+  el("gbBoard").addEventListener("click", function () { GB_BOARD = true; renderPlayBox(); });
 }
 
 function submitGuess() {
@@ -5632,34 +5652,29 @@ function submitGuess() {
   PZ.lamps = marks;
   PZ.hist.push({ digits: digits, marks: marks });
 
-  var cracked = marks.every(function (m) { return m === "green"; });
-  if (cracked) {
+  if (marks.every(function (m) { return m === "green"; })) {
     var guesses = PZ.hist.length;
     var took = Math.round((Date.now() - PZ.started) / 1000);
     var score = scoreFor(guesses);
-    // Kept on PZ so reopening can show the result even if the write never lands.
+    // Kept on PZ so a re-render can show the result even if the write never lands.
     PZ.done = true; PZ.score = score; PZ.guesses = guesses;
     if (!PLAY_FREE) savePlay(score, guesses, took);
-    showResult(score, guesses, false);
+    showResult(score, guesses, false, myStat());
     return;
   }
   PZ.entry = [null, null, null, null];
-  renderGame();
+  renderGame(myStat());
 }
 
-function showResult(score, guesses, already) {
-  el("pzTitle").textContent = PLAY_FREE ? "Practice run" : (already ? "Cracked it already" : "Cracked it");
-  el("pzHint").textContent = PLAY_FREE
-    ? "Practice mode: nothing was written and the leaderboard has not moved."
-    : (already
-      ? "One code a day. The next one lands at midnight JST."
-      : "One code a day. Come back tomorrow.");
-  el("pzBody").innerHTML =
+function showResult(score, guesses, already, stat) {
+  el("playBox").innerHTML =
+    gbTop(PLAY_FREE ? "Practice run" : (already ? "Cracked already" : "Cracked it"), stat) +
     '<p class="final"><b>' + score + " pts</b> &middot; " + guesses +
       " guess" + (guesses === 1 ? "" : "es") + "</p>" +
-    '<p class="verdict">Ranked on points. Fewer guesses is worth more, and the streak ' +
-      "counts days you played, one a day, so it cannot be farmed by reloading.</p>" +
-    lbHtml();
+    '<p class="verdict">' + (PLAY_FREE
+      ? "Nothing written. The leaderboard has not moved."
+      : "One code a day. The next lands at midnight JST.") + "</p>" +
+    lbHtml() + histHtml();
 }
 /* Writing the result. A viewer without Notion write access simply does not get recorded -
    the game is not worth a red banner over. */
@@ -5678,13 +5693,10 @@ function savePlayNow(score, guesses, took) {
     return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
       .catch(function () {})
       .then(loadPlay)
-      .then(function () {
-        renderPlayBox();
-        var b = el("pzBody");
-        // Only repaint the board if the results view is still the thing on screen - not if
-        // the player has already closed it or gone back to the code.
-        if (b && b.querySelector(".lb")) showResult(score, guesses, false);
-      });
+      // The box works its own state out from PZ and the rows, so one re-render puts the
+      // freshly written score on the leaderboard without this needing to know which of
+      // the four views happens to be on screen.
+      .then(renderPlayBox);
   };
   if (r) {
     var id = pageIdFrom(r.url);
@@ -5702,13 +5714,6 @@ function savePlayNow(score, guesses, took) {
     parent: { type: "data_source_id", data_source_id: PLAY_DS.replace("collection://", "") },
     pages: [{ properties: props }]
   }).then(after, function () {});
-}
-
-/* Closing keeps PZ. There is no timer to stop and no reason to throw away four guesses
-   because somebody wanted to look at the registry mid-solve. Reopening resumes; the day
-   check in openPuzzle discards it once the code has rolled over. */
-function closePuzzle() {
-  closeSheet("playScrim");
 }
 
 /* Undiscoverable by design. It spreads by one person showing another, which is the only
@@ -5830,11 +5835,6 @@ watchBuilds = function () {
   if (routeName() === "dev" && devAllowed()) renderDev();
   return r;
 };
-
-el("playClose").addEventListener("click", closePuzzle);
-el("playScrim").addEventListener("click", function (e) {
-  if (e.target === el("playScrim")) closePuzzle();
-});
 
 renderChip();
 gateDev();
