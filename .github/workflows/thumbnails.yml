@@ -15,20 +15,33 @@ name: Thumbnails
 # gets the repo correct and then says so loudly — see the republish-due issue at the end.
 
 on:
+  # Every two hours, on the :10, rather than once nightly.
+  #
+  # The schedule is the ONLY path most of the team has. Both workflow_dispatch and
+  # repository_dispatch require write access to THIS repo, and the org's default repository
+  # permission is `read` - JK and PS have push=false here, so a manual trigger returns 403
+  # for them. An earlier version of this file and of the yf-builds-publish skill told them to
+  # fire a dispatch after publishing; that was wrong and is corrected. Rather than hand two
+  # people a button nobody else can press, the automatic path runs often enough not to need
+  # one: publish a build and its thumbnail is rendered within two hours, with no command run
+  # by anybody.
+  #
+  # This is affordable because of the plan gate below. A tick with nothing to do is one
+  # dependency-free node run - a repo listing and 15 HEAD-ish probes, a few seconds - and
+  # skips the ~40s renderer install entirely. Only a tick with real work pays for Chrome.
   schedule:
-    # 22:10 UTC = 07:10 JST, forty minutes after the 06:30 JST GitHub-to-Notion sync, so a
-    # build registered overnight is tiled by the time anyone opens the dashboard.
-    - cron: "10 22 * * *"
+    - cron: "10 */2 * * *"
   workflow_dispatch:
     inputs:
       force:
-        description: 'Re-render existing thumbnails: "all", or a comma-separated slug list. Empty = only builds with no image.'
+        description: 'Re-render existing thumbnails: "all", or a comma-separated slug list. Empty = only builds with no image. NOTE: requires write access to this repo - ZF and BB only.'
         required: false
         default: ""
-  # Lets the yf-builds-publish skill fire this the moment a build goes live, so a builder
-  # does not wait for the nightly run:
+  # Kept for ZF, BB and automation holding a token with push access - notably the
+  # yf-builds-github-notion-sync task, which fires it when it registers a new build:
   #   gh api -X POST repos/yfagency/yf-builds-dashboard/dispatches \
   #     -f event_type=build-published
+  # Do not put this in team-facing docs. See the note on the schedule above.
   repository_dispatch:
     types: [build-published]
 
@@ -57,13 +70,25 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-noto-cjk fonts-noto-color-emoji
 
+      # Is there anything to do? Runs with no dependencies installed - the script imports
+      # puppeteer and sharp lazily for exactly this. Most 2-hourly ticks stop here.
+      - name: Plan
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PLAN_ONLY: "1"
+          FORCE: ${{ github.event.inputs.force || github.event.client_payload.force || '' }}
+        run: node tools/render-thumbnails.mjs
+
       # puppeteer brings its own Chrome rather than trusting whatever the runner image
       # happens to ship this month. sharp does the 640x400 JPEG.
       - name: Install renderer
+        if: steps.plan.outputs.work == 'true'
         run: npm install --no-save --no-fund --no-audit puppeteer@23 sharp@0.33
 
       - name: Render and inject
         id: render
+        if: steps.plan.outputs.work == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
           FORCE: ${{ github.event.inputs.force || github.event.client_payload.force || '' }}
@@ -74,11 +99,13 @@ jobs:
       # rendered thumbnail, or whose brackets are unbalanced — all of which this job could
       # in principle cause.
       - name: Validate the artifact page
+        if: steps.plan.outputs.work == 'true'
         shell: pwsh
         run: ./tools/check-artifact.ps1
 
       - name: Commit
         id: commit
+        if: steps.plan.outputs.work == 'true'
         run: |
           git config user.name  "yf-builds-thumbnails[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -136,8 +163,11 @@ jobs:
 
       # Red X on the run is the notification. A live build that will not render is the one
       # case here that genuinely needs a person to look at it.
+      # The plan guard is load-bearing, not belt-and-braces: on a skipped render step
+      # `outputs.missing_count` is the empty string, and '' != '0' is TRUE - so without it
+      # every quiet 2-hourly tick would fail the run and cry wolf twelve times a day.
       - name: Fail if a live build still has no thumbnail
-        if: steps.render.outputs.missing_count != '0'
+        if: steps.plan.outputs.work == 'true' && steps.render.outputs.missing_count != '0'
         run: |
           echo "::error::No thumbnail for: ${{ steps.render.outputs.missing }}"
           echo "These builds are live but did not render. Re-run with force set to the slug," \

@@ -71,10 +71,20 @@ because the artifact CSP blocks every external host — a remote `<img>` cannot 
 neither can an `<iframe>` of the build itself, so a live preview is impossible by
 construction. `thumbs/` holds the rendered JPEGs.
 
-**Nobody has to ask for a thumbnail.** The `Thumbnails` workflow
-(`.github/workflows/thumbnails.yml`) runs nightly at 07:10 JST, finds every live build,
-renders the ones with no image, bakes the set into the page and commits. A builder does
-nothing; they do not even need write access here.
+**Nobody has to ask for a thumbnail, and nobody has to run anything.** The `Thumbnails`
+workflow (`.github/workflows/thumbnails.yml`) checks every two hours, finds every live
+build, renders the ones with no image, bakes the set into the page and commits.
+
+**The schedule is the only path most of the team has, which is why it is frequent.** Both
+`workflow_dispatch` and `repository_dispatch` require write access to *this* repo, and the
+org's default repository permission is `read` — JK and PS have `push=false` here, so a
+manual trigger 403s for them. Handing two people a button nobody else can press is not a
+fix, so the automatic path runs often enough that the button is not needed: publish a build
+and its thumbnail lands within two hours, with no command run by anyone.
+
+That is affordable because of the plan gate. A tick with nothing to do is one
+dependency-free `node` run — a repo listing and fifteen probes, a few seconds — and skips
+the ~40s renderer install entirely. Only a tick with real work pays for Chrome.
 
 It discovers builds rather than reading a list: every repo in the org whose description
 starts with `[YF Build]`, minus the ones whose Pages URL does not answer 200. That second
@@ -92,29 +102,31 @@ both published by PS, neither of whom could have fixed it. Moving the list from 
 PowerShell array into a text file made the manual step easier, not unnecessary. Deriving
 it removes the step.
 
-To render a build immediately instead of waiting for the nightly run — any org member can
-do this, from anywhere:
-
-```bash
-gh workflow run Thumbnails --repo yfagency/yf-builds-dashboard
-```
-
-To re-render an existing tile, say after changing a build's design, pass `force` with the
-slug (or `all`):
+**ZF and BB only** — to re-render an existing tile, say after changing a build's design:
 
 ```bash
 gh workflow run Thumbnails --repo yfagency/yf-builds-dashboard -f force=work-mosaic
 ```
 
+`force=all` re-renders everything. Do not put either command in team-facing docs.
+
 Default runs render **only** builds with no image on disk. Animated and WebGL builds do not
-capture byte-identically twice, so re-rendering everything nightly would churn a 600KB diff
-and bury the one change that mattered.
+capture byte-identically twice, so re-rendering everything on every tick would churn a 600KB
+diff and bury the one change that mattered.
 
 **Republishing the artifact is still ZF's, and always will be.** The CSP forces the images
 to be data URIs inside the page, and only ZF's account can republish it. So the workflow
 gets the repo right and then opens a single `republish-due` issue assigned to ZF, updating
 it rather than opening a new one each run. A green run with no issue means there is nothing
 to do.
+
+So the honest end-to-end answer, for anyone asking whether a builder can do all of this
+alone: they can publish the repo, get the registry row, and get the thumbnail rendered
+without help — the last of those within two hours and with no command. **They cannot make
+it visible.** The tile appears on Bridge when ZF republishes, and no amount of automation
+here changes that. One further thing only ZF can do is add a new person to the `yfagency`
+org, which publishing requires at all:
+`gh api -X PUT orgs/yfagency/memberships/{github-username} -f role=member`.
 
 ### Rendering locally
 

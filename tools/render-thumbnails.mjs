@@ -33,8 +33,13 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import puppeteer from "puppeteer";
-import sharp from "sharp";
+
+// puppeteer and sharp are imported LAZILY, further down, only when something actually needs
+// rendering. That is what lets PLAN_ONLY=1 run with no dependencies installed at all: the
+// workflow runs a plan pass first and skips a ~40s npm install on the runs - most of them -
+// where every build already has an image. Without this the schedule could not be frequent
+// enough to make a manual trigger unnecessary.
+let sharp;
 
 const ORG = "yfagency";
 const HTML = "yf-builds-dashboard.artifact.html";
@@ -160,7 +165,7 @@ async function render(browser, slug) {
 // Inject from DISK, not from what rendered this run. A run where some captures failed used
 // to replace the whole THUMBS map with only its successes, silently deleting working
 // thumbnails — six of fourteen renders failed on 2026-08-21 and wiped five good images.
-function inject(order) {
+function inject(order, { dryRun = false } = {}) {
   const entries = [];
   const missing = [];
   for (const slug of order) {
@@ -174,7 +179,7 @@ function inject(order) {
   const pattern = /var THUMBS = \{[\s\S]*?\};/;
   if (!pattern.test(before)) throw new Error(`Could not find the THUMBS block in ${HTML}`);
   const after = before.replace(pattern, () => `var THUMBS = {${entries.join(",\n")}};`);
-  if (after !== before) writeFileSync(HTML, after, "utf8");
+  if (after !== before && !dryRun) writeFileSync(HTML, after, "utf8");
 
   return { count: entries.length, missing, changed: after !== before };
 }
@@ -209,9 +214,29 @@ const toRender = forceAll
   ? order
   : order.filter((s) => !onDisk.has(s) || forceList.includes(s));
 
+// PLAN pass: say what a real run would do, write nothing, and import nothing heavy. The
+// workflow runs this on every scheduled tick and only installs the renderer when it says
+// there is work. That is what makes a 2-hourly schedule cheap enough to be the primary
+// path, so nobody needs a manual trigger they may not have permission to pull.
+if (process.env.PLAN_ONLY) {
+  const plan = inject(order, { dryRun: true });
+  const work = toRender.length > 0 || plan.changed;
+  console.log(`\nplan: render [${toRender.join(", ") || "nothing"}], page ${plan.changed ? "would change" : "already current"}`);
+  if (process.env.GITHUB_OUTPUT) {
+    writeFileSync(
+      process.env.GITHUB_OUTPUT,
+      [`work=${work ? "true" : "false"}`, `needed=${toRender.join(" ")}`, ""].join("\n"),
+      { flag: "a" }
+    );
+  }
+  process.exit(0);
+}
+
 if (toRender.length) {
   mkdirSync(SHOT_DIR, { recursive: true });
   console.log(`\nrendering ${toRender.length}: ${toRender.join(", ")}`);
+  const { default: puppeteer } = await import("puppeteer");
+  sharp = (await import("sharp")).default;
   const browser = await puppeteer.launch({
     headless: true,
     args: [
