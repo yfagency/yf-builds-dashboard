@@ -160,23 +160,44 @@ running the PowerShell script:
 The capture is deterministic: re-rendering an unchanged build produces a byte-identical
 JPEG, so a no-op run leaves a clean `git diff`.
 
-## The daily puzzle
+## The daily code
 
-Top right of the home masthead. One round is a heavily zoomed crop of a build thumbnail
-and four names; five rounds, sixty seconds, once per **JST** day. Points are 20 a round
-plus up to 40 for time left, so 140 is a perfect game.
+Top right of the home masthead. Four capsules, each with a lamp above it. Guess the
+four-digit code; after each guess the lamps read:
 
-The puzzle is generated from the date — `mulberry32` seeded by a hash of the JST day — so
-everyone gets the same five rounds without anything being stored, which is what makes a
-leaderboard mean something. It rolls over at Tokyo midnight, not at each viewer's own.
+| Lamp | Meaning |
+| --- | --- |
+| green | right digit, right slot |
+| amber | that digit is in the code, but not in this slot |
+| red | that digit is not in the code at all |
 
-The rounds are built from `THUMBS`, the data URIs already in the page, so a round costs no
-bytes and no network. It also means the round count is `min(5, builds with a thumbnail)` —
-which is why the result line takes the actual count rather than hardcoding five.
+**The lamps show the last guess only** — that is the design, not a limitation. A quiet guess
+log sits underneath, newest first, because without it the game is played on a scrap of
+paper next to the keyboard.
+
+**The four digits never repeat, and that is load-bearing.** The three verdicts each have
+exactly one meaning while no digit repeats; with a repeated digit, "in the code but not in
+this slot" stops being answerable per position without inventing a tie-break the player
+cannot see.
+
+Unlimited guesses, no clock — the game ends when you crack it. Cracking it first go is 140
+points, every further guess costs 10, floor of 20. Nothing is scored on time: a thinking
+game should not punish thinking.
+
+The code is generated from the date — `mulberry32` seeded by a hash of the JST day — so
+everyone gets the same code without it being stored anywhere, which is what makes a
+leaderboard mean something and also means there is no code sitting in a database for
+somebody to read. It rolls over at Tokyo midnight, not at each viewer's own.
+
+Progress survives closing the sheet but not a reload. The code is derivable from the day;
+the guesses already spent are not worth a round trip to store.
+
+*This slot held a JST clock, then a guess-the-build-thumbnail game, before this. Both are
+gone.*
 
 **Scores live in Notion**, `collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88` (KB → Bridge
-Play), one row per person per day: `Opens`, `Played`, `Score`, `Correct`, `Seconds`. Read
-and written with the viewer's own connector like every other write in this page.
+Play), one row per person per day: `Opens`, `Played`, `Score`, `Guesses`, `Took`. Read and
+written with the viewer's own connector like every other write in this page.
 
 Three stores were considered and two rejected. `localStorage` cannot work — a leaderboard
 the others cannot see is not a leaderboard. The `artifact` capability cannot either: writes

@@ -528,37 +528,70 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   .playbox .playbtn { width: auto; }
 }
 
-/* ---- the puzzle ----
-   The crop is a background-position window onto a thumbnail already in the page, so a
-   round costs no bytes and no network. Same 16:10 as a build card, so the fragment reads
-   as a piece of the thing it came from. */
-.pz .shot {
-  width: 100%; aspect-ratio: 16 / 10; border-radius: var(--radius);
-  border: 1px solid var(--rule); background-color: #000; background-repeat: no-repeat;
+/* ---- the code game ----
+   Four capsules, each with a lamp above it. The lamp reads the LAST guess only, which is
+   the whole design: the board is a live readout, not a log. */
+.code { display: flex; gap: 12px; justify-content: center; margin: 2px 0 0; }
+.cap { flex: 0 0 auto; }
+/* The lamp sits above its capsule rather than inside it so the digit keeps the whole face
+   and the light reads as an indicator over the slot, not as decoration on it. */
+.cap .lamp {
+  width: 13px; height: 13px; border-radius: 50%; margin: 0 auto 10px;
+  background: var(--surface-2); border: 1px solid var(--rule);
+  transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease;
 }
-.pz .bar { height: 3px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin: 13px 0; }
-.pz .bar i { display: block; height: 100%; background: var(--accent); }
-.pz .bar.low i { background: var(--crit); }
-.pz .meta {
-  display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
-  font-family: var(--mono); font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 9px;
+.cap .lamp.red   { background: var(--crit); border-color: var(--crit); box-shadow: 0 0 13px rgba(232, 92, 79, .6); }
+.cap .lamp.amber { background: var(--warn); border-color: var(--warn); box-shadow: 0 0 13px rgba(217, 130, 43, .6); }
+.cap .lamp.green { background: var(--ok);   border-color: var(--ok);   box-shadow: 0 0 15px rgba(95, 201, 127, .65); }
+/* Beats the global input[type="text"] rule on source order, same specificity. */
+.cap input {
+  display: block; width: 66px; height: 90px; padding: 0; text-align: center;
+  font-family: var(--mono); font-size: 37px; font-weight: 500; letter-spacing: 0;
+  color: var(--ink); background: var(--surface-2); caret-color: var(--accent);
+  border: 1px solid var(--rule); border-radius: 14px;
+  transition: border-color .15s ease, background-color .15s ease;
 }
-.pz .meta .clock { font-variant-numeric: tabular-nums; color: var(--ink-2); letter-spacing: .04em; }
-.pz .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 13px; }
-.pz .opt {
-  cursor: pointer; text-align: left; font-family: var(--sans); font-size: 13px; font-weight: 500;
-  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--rule);
-  background: var(--surface-2); color: var(--ink);
+.cap input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.cap input:disabled { color: var(--ink-2); background: var(--surface); opacity: 1; }
+@media (max-width: 460px) {
+  .code { gap: 8px; }
+  .cap input { width: 56px; height: 78px; font-size: 30px; }
 }
-.pz .opt:hover { border-color: var(--accent); }
-.pz .opt.right { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
-.pz .opt.wrong { border-color: var(--crit); background: var(--crit-soft); color: var(--crit); }
-.pz .opt:disabled { cursor: default; }
-.pz .verdict { font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 11px 0 0; min-height: 16px; }
+
+.pz .legend {
+  display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); margin: 20px 0 0;
+}
+.pz .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pz .legend i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.pz .legend i.red { background: var(--crit); }
+.pz .legend i.amber { background: var(--warn); }
+.pz .legend i.green { background: var(--ok); }
+
+.pz .acts { display: flex; gap: 8px; justify-content: center; margin: 18px 0 0; flex-wrap: wrap; }
+.pz .verdict {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  margin: 14px 0 0; min-height: 16px; text-align: center;
+}
 .pz .final { font-size: 15px; color: var(--ink); margin: 0 0 4px; }
 .pz .final b { color: var(--accent); font-weight: 600; }
-@media (max-width: 560px) { .pz .opts { grid-template-columns: 1fr; } }
+
+/* The guess log. The lamps deliberately show only the last guess, so without this the
+   game is played on a scrap of paper next to the keyboard. Kept quiet and mono so the
+   capsules stay the thing you look at. */
+.hist { margin: 18px 0 0; border-top: 1px solid var(--rule-soft); padding-top: 10px; }
+.hrow {
+  display: flex; align-items: center; gap: 12px; padding: 5px 0;
+  font-family: var(--mono); font-size: 13px; color: var(--ink-2);
+}
+.hrow .n { color: var(--muted); font-size: 11px; width: 18px; flex: none; }
+.hrow .g { letter-spacing: .3em; }
+.hrow .dots { display: flex; gap: 5px; margin-left: auto; }
+.hrow .dots i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.hrow .dots i.red { background: var(--crit); }
+.hrow .dots i.amber { background: var(--warn); }
+.hrow .dots i.green { background: var(--ok); }
 
 /* leaderboard - a table, because four people and five columns is a table */
 .lb { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
@@ -5078,7 +5111,7 @@ function greeting() {
    ================================================================ */
 var PLAY_DS = "collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88";
 var Q_PLAY = 'SELECT url, "Person", "date:Day:start" AS day, "Opens", "Played", "Score", ' +
-  '"Correct", "Seconds" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
+  '"Guesses", "Took" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
 
 var PLAY_ROWS = null;    // null until read; [] is a real empty leaderboard
 var PLAY_COUNTED = false; // this page load has already counted its open
@@ -5158,15 +5191,15 @@ function countOpen() {
     pages: [{ properties: {
       "Entry": ini + " " + day, "Person": ini,
       "date:Day:start": day, "date:Day:is_datetime": 0,
-      "Opens": 1, "Played": "__NO__", "Score": 0, "Correct": 0, "Seconds": 0
+      "Opens": 1, "Played": "__NO__", "Score": 0, "Guesses": 0, "Took": 0
     } }]
   }).then(after, function () {});
 }
 
-/* ---- the puzzle itself, generated from the day ----
-   mulberry32 off a hash of the JST date, so every person gets the SAME five rounds on the
-   same day without anything being stored anywhere. A leaderboard over different puzzles
-   would not mean anything. */
+/* ---- the code, generated from the day ----
+   mulberry32 off a hash of the JST date, so every person gets the SAME code on the same
+   day without it being stored anywhere. A leaderboard over different codes would not mean
+   anything, and a code that lives in a database is a code somebody can read. */
 function hashStr(s) {
   var h = 2166136261;
   for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
@@ -5181,36 +5214,33 @@ function mulberry32(a) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-var PZ_ROUNDS = 5, PZ_SECONDS = 60;
+var CODE_LEN = 4;
 
-function puzzleFor(day) {
-  var pool = (BUILDS_ROWS || []).filter(function (b) { return !!thumbFor(b) && b.name; });
-  if (pool.length < 4) return null;
-  var rnd = mulberry32(hashStr("yf-bridge-" + day));
-  var pick = function (n) { return Math.floor(rnd() * n); };
+/* Four DISTINCT digits, and the distinctness is load-bearing rather than a simplification.
+   The three verdicts below only have one clear meaning each while no digit repeats: with a
+   repeated digit, "in the code but not in this slot" stops being answerable per position
+   without inventing a tie-breaking rule the player cannot see. */
+function codeFor(day) {
+  var rnd = mulberry32(hashStr("yf-bridge-code-" + day));
+  var pool = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], out = [];
+  while (out.length < CODE_LEN) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+  return out;
+}
 
-  // Sample without replacement so the same build cannot be the answer twice in one day.
-  var bag = pool.slice(), order = [];
-  while (bag.length && order.length < PZ_ROUNDS) order.push(bag.splice(pick(bag.length), 1)[0]);
-
-  return order.map(function (ans) {
-    var others = pool.filter(function (b) { return b !== ans; });
-    var opts = [ans];
-    while (opts.length < 4 && others.length) opts.push(others.splice(pick(others.length), 1)[0]);
-    // Shuffle the options so the answer is not always first.
-    for (var i = opts.length - 1; i > 0; i--) {
-      var j = pick(i + 1), t = opts[i]; opts[i] = opts[j]; opts[j] = t;
-    }
-    return {
-      answer: ans, opts: opts, img: thumbFor(ans),
-      // 300% zoom, and the window is kept off the extremes so a crop is never all
-      // background. 12-88% of each axis.
-      zoom: 260 + Math.floor(rnd() * 120),
-      px: 12 + Math.floor(rnd() * 76),
-      py: 12 + Math.floor(rnd() * 76)
-    };
+/* green - right digit, right slot
+   amber - that digit is in the code, but not in this slot
+   red   - that digit is not in the code at all */
+function judge(guess, code) {
+  return guess.map(function (d, i) {
+    if (d === code[i]) return "green";
+    return code.indexOf(d) >= 0 ? "amber" : "red";
   });
 }
+
+/* Cracking it first go is 140; every further guess costs 10, with a floor of 20 so a long
+   grind still beats not playing. Nothing is scored on time - the spec has no clock, and a
+   thinking game should not punish thinking. */
+function scoreFor(guesses) { return Math.max(20, 150 - 10 * guesses); }
 
 function renderPlayBox() {
   var box = el("playBox");
@@ -5259,122 +5289,172 @@ function lbHtml() {
     "<th>Played</th><th>Opens</th></tr>" + body + "</table>";
 }
 
+/* ---- the board ----
+   PZ survives closing the sheet, so a half-solved code is still half-solved when you come
+   back to it in the same sitting. It does not survive a reload: the code is derivable from
+   the day, but the guesses you have already spent are not worth a round trip to store. */
 function openPuzzle() {
   var day = jstDay(), r = rowFor(myIni(), day);
   openSheet("playScrim");
-  if (r && isYes(r["Played"])) { showResult(+r["Score"] || 0, +r["Correct"] || 0, +r["Seconds"] || 0, true); return; }
 
-  var rounds = puzzleFor(day);
-  if (!rounds) {
-    el("pzTitle").textContent = "Not yet";
-    el("pzHint").textContent = "The puzzle is built from the build thumbnails, and they have not loaded.";
-    el("pzBody").innerHTML = '<p class="quiet">Give the registry a moment and try again.</p>';
+  if (r && isYes(r["Played"])) {
+    showResult(+r["Score"] || 0, +r["Guesses"] || 0, true);
     return;
   }
-  el("pzTitle").textContent = "Today's puzzle";
-  el("pzHint").textContent = "Which build is this? Five crops, sixty seconds.";
-  PZ = { rounds: rounds, i: 0, correct: 0, started: Date.now(), locked: false, timer: null };
-  PZ.timer = setInterval(pzTick, 250);
-  renderRound();
-}
-
-function pzLeft() {
-  return Math.max(0, PZ_SECONDS - (Date.now() - PZ.started) / 1000);
-}
-function pzTick() {
-  if (!PZ) return;
-  var left = pzLeft(), bar = el("pzBar"), c = el("pzClock");
-  if (bar) {
-    bar.style.width = (left / PZ_SECONDS * 100).toFixed(1) + "%";
-    bar.parentNode.className = "bar" + (left < 12 ? " low" : "");
+  // Cracked in this session but the registry does not say so - either the write failed or
+  // the re-read has not landed. Trust what happened in front of the player rather than
+  // handing them a dead board back.
+  if (PZ && PZ.day === day && PZ.done) {
+    showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true);
+    return;
   }
-  if (c) c.textContent = Math.ceil(left) + "s";
-  if (left <= 0) finishPuzzle();
+  if (!PZ || PZ.day !== day) {
+    PZ = { day: day, code: codeFor(day), entry: [null, null, null, null],
+           lamps: null, hist: [], done: false, board: false, started: Date.now() };
+  }
+  renderGame();
 }
 
-function renderRound() {
-  var r = PZ.rounds[PZ.i];
-  var left = pzLeft();
+function entryFull() { return PZ.entry.every(function (d) { return d !== null; }); }
+
+function lampsHtml() {
+  var out = "";
+  for (var i = 0; i < CODE_LEN; i++) {
+    var lit = PZ.lamps ? " " + PZ.lamps[i] : "";
+    var v = PZ.entry[i] === null ? "" : String(PZ.entry[i]);
+    out += '<div class="cap"><div class="lamp' + lit + '"></div>' +
+      '<input type="text" inputmode="numeric" autocomplete="off" maxlength="1" ' +
+      'data-i="' + i + '" value="' + v + '" aria-label="Digit ' + (i + 1) + '"' +
+      (PZ.done ? " disabled" : "") + "></div>";
+  }
+  return out;
+}
+
+function histHtml() {
+  if (!PZ.hist.length) return "";
+  // Newest first: the guess you just made is the one you are reasoning from.
+  return '<div class="hist">' + PZ.hist.slice().reverse().map(function (h, k) {
+    var n = PZ.hist.length - k;
+    return '<div class="hrow"><span class="n">' + n + '</span>' +
+      '<span class="g">' + h.digits.join("") + "</span>" +
+      '<span class="dots">' + h.marks.map(function (m) {
+        return '<i class="' + m + '"></i>';
+      }).join("") + "</span></div>";
+  }).join("") + "</div>";
+}
+
+function renderGame() {
+  el("pzTitle").textContent = "Today's code";
+  el("pzHint").textContent = PZ.board
+    ? "Standings for the week. The code is the same for everybody."
+    : "Four digits, no repeats. The lamps read your last guess only.";
+
+  if (PZ.board) {
+    el("pzBody").innerHTML = lbHtml() +
+      '<div class="acts"><button class="btn" id="pzBack">Back to the code</button></div>';
+    el("pzBack").addEventListener("click", function () { PZ.board = false; renderGame(); });
+    return;
+  }
+
   el("pzBody").innerHTML =
-    '<div class="meta"><span>Round ' + (PZ.i + 1) + " of " + PZ.rounds.length + "</span>" +
-      '<span class="clock" id="pzClock">' + Math.ceil(left) + "s</span></div>" +
-    '<div class="shot" id="pzShot"></div>' +
-    '<div class="bar"><i id="pzBar" style="width:' + (left / PZ_SECONDS * 100).toFixed(1) + '%"></i></div>' +
-    '<div class="opts" id="pzOpts">' +
-      r.opts.map(function (b, k) {
-        return '<button class="opt" data-k="' + k + '">' + esc(b.name) + "</button>";
-      }).join("") + "</div>" +
-    '<p class="verdict" id="pzVerdict"></p>';
+    '<div class="code">' + lampsHtml() + "</div>" +
+    '<div class="legend"><span><i class="green"></i>right spot</span>' +
+      '<span><i class="amber"></i>wrong spot</span>' +
+      '<span><i class="red"></i>not in the code</span></div>' +
+    '<p class="verdict" id="pzVerdict">' + (PZ.hist.length
+      ? PZ.hist.length + " guess" + (PZ.hist.length === 1 ? "" : "es") + " so far."
+      : "") + "</p>" +
+    '<div class="acts">' +
+      '<button class="btn primary" id="pzGuess"' + (entryFull() ? "" : " disabled") + ">Guess</button>" +
+      '<button class="btn" id="pzBoard">Show leaderboard</button></div>' +
+    histHtml();
 
-  var shot = el("pzShot");
-  shot.style.backgroundImage = 'url("' + r.img + '")';
-  shot.style.backgroundSize = r.zoom + "% auto";
-  shot.style.backgroundPosition = r.px + "% " + r.py + "%";
+  wireGame();
+  var first = el("pzBody").querySelector('.cap input[data-i="' + firstEmpty() + '"]');
+  if (first) first.focus();
+}
 
-  PZ.locked = false;
-  [].slice.call(el("pzOpts").querySelectorAll(".opt")).forEach(function (btn) {
-    btn.addEventListener("click", function () { answer(+btn.getAttribute("data-k")); });
+function firstEmpty() {
+  for (var i = 0; i < CODE_LEN; i++) if (PZ.entry[i] === null) return i;
+  return CODE_LEN - 1;
+}
+
+function wireGame() {
+  var inputs = [].slice.call(el("pzBody").querySelectorAll(".cap input"));
+  var sync = function () {
+    var g = el("pzGuess");
+    if (g) g.disabled = !entryFull();
+  };
+  inputs.forEach(function (inp) {
+    var i = +inp.getAttribute("data-i");
+    inp.addEventListener("focus", function () { inp.select(); });
+    inp.addEventListener("input", function () {
+      // Keep only the last digit typed, so typing over a filled slot replaces it rather
+      // than being rejected by maxlength.
+      var v = inp.value.replace(/[^0-9]/g, "").slice(-1);
+      inp.value = v;
+      PZ.entry[i] = v === "" ? null : +v;
+      sync();
+      if (v !== "" && i < CODE_LEN - 1) inputs[i + 1].focus();
+    });
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); submitGuess(); return; }
+      if (e.key === "Backspace" && inp.value === "" && i > 0) {
+        e.preventDefault();
+        inputs[i - 1].focus();
+        PZ.entry[i - 1] = null;
+        inputs[i - 1].value = "";
+        sync();
+        return;
+      }
+      if (e.key === "ArrowLeft" && i > 0) { e.preventDefault(); inputs[i - 1].focus(); }
+      if (e.key === "ArrowRight" && i < CODE_LEN - 1) { e.preventDefault(); inputs[i + 1].focus(); }
+    });
   });
+  el("pzGuess").addEventListener("click", submitGuess);
+  el("pzBoard").addEventListener("click", function () { PZ.board = true; renderGame(); });
 }
 
-function answer(k) {
-  if (!PZ || PZ.locked) return;
-  PZ.locked = true;
-  var r = PZ.rounds[PZ.i];
-  var right = r.opts[k] === r.answer;
-  if (right) PZ.correct++;
+function submitGuess() {
+  if (!PZ || PZ.done || !entryFull()) return;
+  var digits = PZ.entry.slice();
+  var marks = judge(digits, PZ.code);
+  PZ.lamps = marks;
+  PZ.hist.push({ digits: digits, marks: marks });
 
-  var btns = [].slice.call(el("pzOpts").querySelectorAll(".opt"));
-  btns.forEach(function (b) {
-    var idx = +b.getAttribute("data-k");
-    b.disabled = true;
-    if (r.opts[idx] === r.answer) b.className = "opt right";
-    else if (idx === k) b.className = "opt wrong";
-  });
-  el("pzVerdict").textContent = right ? "Yes." : "It was " + r.answer.name + ".";
-
-  setTimeout(function () {
-    if (!PZ) return;
-    PZ.i++;
-    if (PZ.i >= PZ.rounds.length) finishPuzzle();
-    else renderRound();
-  }, right ? 550 : 1100);
+  var cracked = marks.every(function (m) { return m === "green"; });
+  if (cracked) {
+    var guesses = PZ.hist.length;
+    var took = Math.round((Date.now() - PZ.started) / 1000);
+    var score = scoreFor(guesses);
+    // Kept on PZ so reopening can show the result even if the write never lands.
+    PZ.done = true; PZ.score = score; PZ.guesses = guesses;
+    savePlay(score, guesses, took);
+    showResult(score, guesses, false);
+    return;
+  }
+  PZ.entry = [null, null, null, null];
+  renderGame();
 }
 
-function finishPuzzle() {
-  if (!PZ) return;
-  var seconds = Math.min(PZ_SECONDS, Math.round((Date.now() - PZ.started) / 1000));
-  var correct = PZ.correct, outOf = PZ.rounds.length;
-  // 20 a round, plus up to 40 for whatever time is left. Max 140.
-  var score = correct * 20 + Math.round(40 * (Math.max(0, PZ_SECONDS - seconds) / PZ_SECONDS));
-  clearInterval(PZ.timer);
-  PZ = null;
-  savePlay(score, correct, seconds, outOf);
-  showResult(score, correct, seconds, false, outOf);
-}
-
-/* outOf is the round count this game actually had. The pool is every build carrying a
-   thumbnail, so a thin registry yields fewer than PZ_ROUNDS and a hardcoded "of 5" would
-   be a lie. The already-played path has no record of it and falls back to the nominal. */
-function showResult(score, correct, seconds, already, outOf) {
-  outOf = outOf || PZ_ROUNDS;
-  el("pzTitle").textContent = already ? "Played today" : "Done";
+function showResult(score, guesses, already) {
+  el("pzTitle").textContent = already ? "Cracked it already" : "Cracked it";
   el("pzHint").textContent = already
-    ? "One a day. The next one lands at midnight JST."
-    : "Come back tomorrow for a new set.";
+    ? "One code a day. The next one lands at midnight JST."
+    : "One code a day. Come back tomorrow.";
   el("pzBody").innerHTML =
-    '<p class="final"><b>' + score + " pts</b> &middot; " + correct + " of " + outOf +
-      " right in " + seconds + "s</p>" +
-    '<p class="verdict">Ranked on points. The streak counts days you played, one a day, ' +
-      "so it cannot be farmed by reloading.</p>" + lbHtml();
+    '<p class="final"><b>' + score + " pts</b> &middot; " + guesses +
+      " guess" + (guesses === 1 ? "" : "es") + "</p>" +
+    '<p class="verdict">Ranked on points. Fewer guesses is worth more, and the streak ' +
+      "counts days you played, one a day, so it cannot be farmed by reloading.</p>" +
+    lbHtml();
 }
-
 /* Writing the result. A viewer without Notion write access simply does not get recorded -
    the game is not worth a red banner over. */
-function savePlay(score, correct, seconds, outOf) {
+function savePlay(score, guesses, took) {
   if (!playable()) return;
   var ini = myIni(), day = jstDay(), r = rowFor(ini, day);
-  var props = { "Played": "__YES__", "Score": score, "Correct": correct, "Seconds": seconds };
+  var props = { "Played": "__YES__", "Score": score, "Guesses": guesses, "Took": took };
   var after = function () {
     return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
       .catch(function () {})
@@ -5382,9 +5462,9 @@ function savePlay(score, correct, seconds, outOf) {
       .then(function () {
         renderPlayBox();
         var b = el("pzBody");
-        // Only repaint the board if the results view is still the thing on screen. Pass
-        // outOf through or the repaint silently rewrites the line as "of 5".
-        if (b && b.querySelector(".lb")) showResult(score, correct, seconds, false, outOf);
+        // Only repaint the board if the results view is still the thing on screen - not if
+        // the player has already closed it or gone back to the code.
+        if (b && b.querySelector(".lb")) showResult(score, guesses, false);
       });
   };
   if (r) {
@@ -5405,8 +5485,10 @@ function savePlay(score, correct, seconds, outOf) {
   }).then(after, function () {});
 }
 
+/* Closing keeps PZ. There is no timer to stop and no reason to throw away four guesses
+   because somebody wanted to look at the registry mid-solve. Reopening resumes; the day
+   check in openPuzzle discards it once the code has rolled over. */
 function closePuzzle() {
-  if (PZ) { clearInterval(PZ.timer); PZ = null; }
   closeSheet("playScrim");
 }
 
