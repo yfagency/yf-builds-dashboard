@@ -485,6 +485,70 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .home-mast .tagline { max-width: 46ch; font-size: 15.5px; }
 
+/* ---- the clock, top right of the home masthead ----
+   Core rule 5 is "embody Radical Joy - boldness + warmth, serious work + genuine
+   delight", and this is the only element on the page that answers to it. It earns the
+   space twice over, which is the point of the rule rather than an excuse for it: JST is
+   the reference timezone for every cron, digest and sync in this studio, and a run
+   reading the wrong one has already caused real bugs.
+
+   Absolutely positioned so it costs the masthead no layout at all. Below 900px there is
+   no room to the right of a clamp()ed 76px h1, so it drops into the flow and switches
+   the rule from its right edge to its left. */
+.joyclock {
+  position: absolute; top: 2px; right: 0; z-index: 2;
+  text-align: right; border-right: 2px solid var(--accent); padding-right: 13px;
+}
+.joyclock .t {
+  display: block; font-family: var(--mono); font-variant-numeric: tabular-nums;
+  font-size: 27px; line-height: 1; letter-spacing: -.02em; color: var(--ink);
+}
+.joyclock .t .z {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .13em;
+  color: var(--muted); margin-left: 7px;
+}
+.joyclock .hi { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; }
+.joyclock .st { font-family: var(--mono); font-size: 11px; color: var(--accent); margin: 3px 0 0; }
+@media (max-width: 900px) {
+  .joyclock {
+    position: static; text-align: left; padding: 0 0 0 12px; margin: 0 0 18px;
+    border-right: 0; border-left: 2px solid var(--accent);
+  }
+  .joyclock .t { font-size: 22px; }
+}
+
+/* The diagonal is YF's mark, and this file's own documentation warns twice that it is
+   U+2571 and not a backslash. Typing "joy" flips every one of them the wrong way round
+   for a moment. That is the whole feature: the studio's footnote, told as a joke.
+   inline-block because a transform does nothing to an inline element. */
+.slash { display: inline-block; transition: transform .45s ease, color .45s ease; }
+body.joy .slash { transform: scaleX(-1); color: var(--ok); }
+
+/* ---- ZF's own check strip ----
+   The full set lives on #/dev. This is the headline, on the page ZF actually opens,
+   because a check you have to navigate to is a check you forget. Same materials as the
+   lead strip so it reads as part of the ladder rather than an alert bolted on top. */
+.zfstrip {
+  display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  border: 1px solid var(--rule); border-left: 2px solid var(--warn);
+  border-radius: var(--radius); background: var(--surface);
+  padding: 11px 15px; margin: 0 0 22px;
+}
+.zfstrip.clean { border-left-color: var(--ok); }
+.zfstrip .tag {
+  flex: none; font-family: var(--mono); font-size: 10px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--muted);
+}
+.zfstrip .msg { flex: 1 1 260px; font-size: 13.5px; color: var(--ink-2); }
+.zfstrip .msg b { color: var(--ink); font-weight: 600; }
+.zfstrip .msg .bad { color: var(--crit); font-weight: 600; }
+.zfstrip a {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.zfstrip a:hover { border-bottom-color: var(--accent); }
+
 .plates { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .plate {
   display: flex; flex-direction: column; text-decoration: none; color: inherit;
@@ -1403,7 +1467,19 @@ img, svg { max-width: 100%; }
       <p class="eyebrow">Yoroshiku Fantastic <span class="slash">&#9585;</span> Internal operating surface</p>
       <h1>YF <span class="slash">&#9585;</span> Bridge</h1>
       <p class="tagline">Where the studio's own tools live. Everything here reads from YF OS through your Notion connection, so what you see is what the team sees.</p>
+
+      <!-- Decorative, and marked so: a screen reader gets nothing useful from a clock
+           that reannounces itself every twenty seconds. -->
+      <div class="joyclock" id="joyClock" aria-hidden="true">
+        <span class="t"><span id="jcTime">--:--</span><span class="z">JST</span></span>
+        <p class="hi" id="jcHi"></p>
+        <p class="st" id="jcSt"></p>
+      </div>
     </header>
+
+    <!-- ZF only, gated in gateDev(). Tidiness rather than security - the real boundary is
+         the viewer's own Notion connector, and anyone can read this file. -->
+    <div class="zfstrip" id="zfStrip" hidden></div>
 
     <!-- Blocks are ordered by declared weight at render time, not by the order they
          appear here. See the VISUAL PRIORITY LADDER note in the stylesheet, and
@@ -4884,8 +4960,170 @@ loadPins();
 renderLeadPins();
 renderReel();
 
+/* ================================================================
+   RADICAL JOY, and ZF's headline check. Added 2026-08-23.
+   ================================================================ */
+
+/* The lines quote the studio's own rules back at the hour they apply to - close a loop,
+   ship something small, radical joy. Kept dry on purpose: the whole team sees this many
+   times a week and a joke does not survive that, whereas a true observation does. */
+var JOY_HOURS = [
+  [0,  "Tokyo is asleep. You are not."],
+  [5,  "The city is still deciding."],
+  [7,  "Early. The good kind."],
+  [9,  "Deep work weather."],
+  [12, "Lunch is a strategy."],
+  [13, "Peak studio."],
+  [15, "The 3pm slump is real. Ship something small."],
+  [17, "Golden hour. Close a loop."],
+  [19, "Radical joy hours."],
+  [22, "Late. Worth it?"]
+];
+var JOY_WEEKEND = [
+  [0,  "Tokyo is asleep. So is Bridge."],
+  [7,  "It is the weekend. This can wait."],
+  [11, "Weekend. Whatever this is, it is voluntary."],
+  [17, "Saturday light. Go outside."],
+  [21, "Weekend, and still here. Boldness, or bad habits?"]
+];
+
+/* Fixed +09:00. Japan has never run daylight saving, so a flat offset is exact and needs
+   no timezone database - and this is the one place in the studio where getting JST wrong
+   has a track record. */
+function jstNow() {
+  var n = new Date();
+  return new Date(n.getTime() + (9 * 60 + n.getTimezoneOffset()) * 60000);
+}
+function joyLine(d) {
+  var wd = d.getDay();
+  var tbl = (wd === 0 || wd === 6) ? JOY_WEEKEND : JOY_HOURS;
+  var h = d.getHours(), out = tbl[0][1];
+  for (var i = 0; i < tbl.length; i++) { if (h >= tbl[i][0]) out = tbl[i][1]; }
+  return out;
+}
+function joyGreeting(d) {
+  var h = d.getHours();
+  var part = h < 5 ? "Still up" : h < 11 ? "Morning" : h < 17 ? "Afternoon" : h < 22 ? "Evening" : "Late one";
+  var p = PEOPLE[WHO];
+  var first = p ? String(p.name).split(" ")[0] : "";
+  return first ? part + ", " + first + "." : part + ".";
+}
+function tickJoy() {
+  var t = el("jcTime");
+  if (!t) return;
+  var d = jstNow();
+  var p = function (v) { return (v < 10 ? "0" : "") + v; };
+  t.textContent = p(d.getHours()) + ":" + p(d.getMinutes());
+  var hi = el("jcHi"); if (hi) hi.textContent = joyGreeting(d);
+  var st = el("jcSt"); if (st) st.textContent = joyLine(d);
+}
+
+/* Undiscoverable by design. It spreads by one person showing another, which is the only
+   distribution method an easter egg should have. */
+var JOY_BUF = "";
+function wireJoy() {
+  document.addEventListener("keydown", function (e) {
+    var tag = ((e.target && e.target.tagName) || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = (e.key || "").toLowerCase();
+    if (k.length !== 1) return;
+    JOY_BUF = (JOY_BUF + k).slice(-3);
+    if (JOY_BUF !== "joy") return;
+    JOY_BUF = "";
+    document.body.classList.add("joy");
+    setTimeout(function () { document.body.classList.remove("joy"); }, 1500);
+  });
+}
+
+/* ---- ZF's headline check ----
+   Deliberately a SUBSET of #/dev and not a mirror of it: the two findings that either
+   cost money or make the page lie. If this and #/dev ever disagree, #/dev is right.
+
+   It issues the same two queries renderDev() issues, byte for byte, so the mcp cache
+   serves both - opening #/dev costs nothing extra once home has loaded, and the other
+   way round. */
+function renderZfStrip() {
+  var box = el("zfStrip");
+  if (!box) return;
+  if (!devAllowed() || !mcp || !SERVER) { box.hidden = true; return; }
+  box.hidden = false;
+  box.className = "zfstrip";
+  box.innerHTML = '<span class="tag">Yours only</span>' +
+    '<span class="msg"><span class="spin"></span>Checking what nobody else is going to.</span>';
+
+  var opts = { cache: { staleTime: 30000 } };
+  var q = function (ds, sql) {
+    return mcp.callTool(SERVER, T_QUERY, sqlInput(ds, sql), opts).then(rows)
+      .catch(function (e) { return { __err: explain(e) }; });
+  };
+
+  Promise.all([q(PROJ_DS, Q_INV), q(TASKS_DS, Q_DONE)]).then(function (r) {
+    var inv = r[0], done = r[1], bad = [];
+
+    if (!inv.__err && inv.length) {
+      var stale = inv.filter(function (p) { return (+p.d || 0) > 60; }).length;
+      var oldest = +inv[0].d || 0;
+      if (stale) {
+        bad.push('<span class="bad">' + stale + " project" + (stale === 1 ? "" : "s") +
+          "</span> ready to invoice, untouched 60d+, oldest <b>" + oldest + " days</b>");
+      }
+    }
+    if (!done.__err && done.length) {
+      var nd = done[0].newest ? daysSince(done[0].newest) : null;
+      if (nd === null || nd > 60) {
+        bad.push("<b>Completed On</b> is dead, so anything asking what got finished reads empty");
+      }
+    }
+
+    if (!bad.length) {
+      box.className = "zfstrip clean";
+      box.innerHTML = '<span class="tag">Yours only</span>' +
+        '<span class="msg">Nothing owed, and nothing on this page lying to you.</span>' +
+        '<a href="#/dev">Full checks</a>';
+      return;
+    }
+    box.innerHTML = '<span class="tag">Yours only</span><span class="msg">' +
+      bad.join(". ") + '.</span><a href="#/dev">Full checks</a>';
+  });
+}
+
+/* gateDev runs at boot, on every identity change and on the shared-link path, so
+   decorating it covers all three. */
+var _gateDevJoy = gateDev;
+gateDev = function () {
+  _gateDevJoy();
+  renderZfStrip();
+};
+
+/* And again once the connector is actually up.
+   gateDev's own boot call happens BEFORE boot() has resolved window.claude.use("mcp"),
+   so at that moment `mcp` is still null, the strip correctly hides itself - and without
+   this second hook nothing would ever ask again. It stayed blank for ZF forever. Caught
+   in the local preview; it would not have been visible in any amount of code reading.
+
+   watchBuilds is the established "connector has resolved" hook in this file - see the
+   startBrief decoration above it. */
+var _watchBuildsZf = watchBuilds;
+watchBuilds = function () {
+  var r = _watchBuildsZf();
+  renderZfStrip();
+  return r;
+};
+
+var _setWhoJoy = setWho;
+setWho = function (id, name) {
+  _setWhoJoy(id, name);
+  tickJoy();
+};
+
 renderChip();
 gateDev();
+tickJoy();
+// Twenty seconds, not one: the display is minute-resolution, so a per-second timer would
+// do nothing but wake the tab up.
+setInterval(tickJoy, 20000);
+wireJoy();
 orderHome();
 applyWhoParam();
 applyRoute(routeName() || "home");
