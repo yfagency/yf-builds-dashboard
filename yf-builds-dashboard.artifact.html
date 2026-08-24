@@ -485,37 +485,93 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .home-mast .tagline { max-width: 46ch; font-size: 15.5px; }
 
-/* ---- the clock, top right of the home masthead ----
-   Core rule 5 is "embody Radical Joy - boldness + warmth, serious work + genuine
-   delight", and this is the only element on the page that answers to it. It earns the
-   space twice over, which is the point of the rule rather than an excuse for it: JST is
-   the reference timezone for every cron, digest and sync in this studio, and a run
-   reading the wrong one has already caused real bugs.
+/* ---- the play box, top right of the home masthead ----
+   This slot held a JST clock for one day. Replaced 2026-08-23 (ZF) by the daily puzzle,
+   which earns it better: a reason to come back beats something to glance at, and core
+   rule 5 is about delight rather than readouts.
 
    Absolutely positioned so it costs the masthead no layout at all. Below 900px there is
    no room to the right of a clamp()ed 76px h1, so it drops into the flow and switches
    the rule from its right edge to its left. */
-.joyclock {
-  position: absolute; top: 2px; right: 0; z-index: 2;
-  text-align: right; border-right: 2px solid var(--accent); padding-right: 13px;
+.playbox {
+  position: absolute; top: 0; right: 0; z-index: 2; width: 214px;
+  text-align: right; border-right: 2px solid var(--accent); padding-right: 14px;
 }
-.joyclock .t {
+.playbox .streak {
   display: block; font-family: var(--mono); font-variant-numeric: tabular-nums;
   font-size: 27px; line-height: 1; letter-spacing: -.02em; color: var(--ink);
 }
-.joyclock .t .z {
-  font-family: var(--mono); font-size: 10px; letter-spacing: .13em;
+.playbox .streak.zero { color: var(--muted); }
+.playbox .streak .u {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
   color: var(--muted); margin-left: 7px;
 }
-.joyclock .hi { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; }
-.joyclock .st { font-family: var(--mono); font-size: 11px; color: var(--accent); margin: 3px 0 0; }
-@media (max-width: 900px) {
-  .joyclock {
-    position: static; text-align: left; padding: 0 0 0 12px; margin: 0 0 18px;
-    border-right: 0; border-left: 2px solid var(--accent);
-  }
-  .joyclock .t { font-size: 22px; }
+.playbox .pts { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin: 6px 0 0; }
+.playbox .pts b { color: var(--ink-2); font-weight: 500; }
+.playbox .hi { font-size: 12.5px; color: var(--ink-2); margin: 7px 0 0; }
+.playbox .playbtn {
+  margin-top: 10px; cursor: pointer; width: 100%;
+  font-family: var(--sans); font-size: 12.5px; font-weight: 600;
+  padding: 7px 12px; border-radius: 8px;
+  background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent);
 }
+.playbox .playbtn:hover { filter: brightness(1.08); }
+/* Played today: still a button, because the results and the leaderboard live behind it. */
+.playbox .playbtn.done { background: var(--surface); color: var(--ink-2); border-color: var(--rule); }
+.playbox .playbtn.done:hover { border-color: var(--muted); filter: none; }
+@media (max-width: 900px) {
+  .playbox {
+    position: static; width: auto; text-align: left; margin: 0 0 18px;
+    padding: 0 0 0 12px; border-right: 0; border-left: 2px solid var(--accent);
+  }
+  .playbox .streak { font-size: 22px; }
+  .playbox .playbtn { width: auto; }
+}
+
+/* ---- the puzzle ----
+   The crop is a background-position window onto a thumbnail already in the page, so a
+   round costs no bytes and no network. Same 16:10 as a build card, so the fragment reads
+   as a piece of the thing it came from. */
+.pz .shot {
+  width: 100%; aspect-ratio: 16 / 10; border-radius: var(--radius);
+  border: 1px solid var(--rule); background-color: #000; background-repeat: no-repeat;
+}
+.pz .bar { height: 3px; background: var(--surface-2); border-radius: 2px; overflow: hidden; margin: 13px 0; }
+.pz .bar i { display: block; height: 100%; background: var(--accent); }
+.pz .bar.low i { background: var(--crit); }
+.pz .meta {
+  display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 9px;
+}
+.pz .meta .clock { font-variant-numeric: tabular-nums; color: var(--ink-2); letter-spacing: .04em; }
+.pz .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 13px; }
+.pz .opt {
+  cursor: pointer; text-align: left; font-family: var(--sans); font-size: 13px; font-weight: 500;
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--rule);
+  background: var(--surface-2); color: var(--ink);
+}
+.pz .opt:hover { border-color: var(--accent); }
+.pz .opt.right { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+.pz .opt.wrong { border-color: var(--crit); background: var(--crit-soft); color: var(--crit); }
+.pz .opt:disabled { cursor: default; }
+.pz .verdict { font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 11px 0 0; min-height: 16px; }
+.pz .final { font-size: 15px; color: var(--ink); margin: 0 0 4px; }
+.pz .final b { color: var(--accent); font-weight: 600; }
+@media (max-width: 560px) { .pz .opts { grid-template-columns: 1fr; } }
+
+/* leaderboard - a table, because four people and five columns is a table */
+.lb { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 6px; }
+.lb th, .lb td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule-soft); }
+.lb th {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+.lb td { color: var(--ink-2); }
+.lb td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.lb td.rk { font-family: var(--mono); color: var(--muted); width: 24px; }
+.lb tr.me td { color: var(--accent); }
+.lb tr.me td.nm { font-weight: 600; }
 
 /* The diagonal is YF's mark, and this file's own documentation warns twice that it is
    U+2571 and not a backslash. Typing "joy" flips every one of them the wrong way round
@@ -1468,13 +1524,9 @@ img, svg { max-width: 100%; }
       <h1>YF <span class="slash">&#9585;</span> Bridge</h1>
       <p class="tagline">Where the studio's own tools live. Everything here reads from YF OS through your Notion connection, so what you see is what the team sees.</p>
 
-      <!-- Decorative, and marked so: a screen reader gets nothing useful from a clock
-           that reannounces itself every twenty seconds. -->
-      <div class="joyclock" id="joyClock" aria-hidden="true">
-        <span class="t"><span id="jcTime">--:--</span><span class="z">JST</span></span>
-        <p class="hi" id="jcHi"></p>
-        <p class="st" id="jcSt"></p>
-      </div>
+      <!-- Hidden until we know who is looking: a streak belongs to a person, and there is
+           nothing to say to a viewer who has not signed in. -->
+      <div class="playbox" id="playBox" hidden></div>
     </header>
 
     <!-- ZF only, gated in gateDev(). Tidiness rather than security - the real boundary is
@@ -1742,6 +1794,17 @@ img, svg { max-width: 100%; }
       <span class="palhint" id="palHint">ESC</span>
     </div>
     <div class="pallist" id="palList"></div>
+  </div>
+</div>
+
+<div class="scrim" id="playScrim">
+  <div class="sheet">
+    <h2 id="pzTitle">Today's puzzle</h2>
+    <p class="quiet" id="pzHint">Which build is this? Five crops, sixty seconds, once a day.</p>
+    <div class="pz" id="pzBody"></div>
+    <div class="sheet-actions">
+      <button class="btn" id="playClose">Close</button>
+    </div>
   </div>
 </div>
 
@@ -4964,58 +5027,387 @@ renderReel();
    RADICAL JOY, and ZF's headline check. Added 2026-08-23.
    ================================================================ */
 
-/* The lines quote the studio's own rules back at the hour they apply to - close a loop,
-   ship something small, radical joy. Kept dry on purpose: the whole team sees this many
-   times a week and a joke does not survive that, whereas a true observation does. */
-var JOY_HOURS = [
-  [0,  "Tokyo is asleep. You are not."],
-  [5,  "The city is still deciding."],
-  [7,  "Early. The good kind."],
-  [9,  "Deep work weather."],
-  [12, "Lunch is a strategy."],
-  [13, "Peak studio."],
-  [15, "The 3pm slump is real. Ship something small."],
-  [17, "Golden hour. Close a loop."],
-  [19, "Radical joy hours."],
-  [22, "Late. Worth it?"]
-];
-var JOY_WEEKEND = [
-  [0,  "Tokyo is asleep. So is Bridge."],
-  [7,  "It is the weekend. This can wait."],
-  [11, "Weekend. Whatever this is, it is voluntary."],
-  [17, "Saturday light. Go outside."],
-  [21, "Weekend, and still here. Boldness, or bad habits?"]
-];
-
-/* Fixed +09:00. Japan has never run daylight saving, so a flat offset is exact and needs
-   no timezone database - and this is the one place in the studio where getting JST wrong
-   has a track record. */
+/* ---- the day ----
+   Fixed +09:00. Japan has never run daylight saving, so a flat offset is exact and needs
+   no timezone database. Everything about the game is keyed to the JST calendar day, which
+   is what makes "once a day" mean the same thing to everyone in the studio and rolls the
+   puzzle over at Tokyo midnight rather than at each viewer's own. */
 function jstNow() {
   var n = new Date();
   return new Date(n.getTime() + (9 * 60 + n.getTimezoneOffset()) * 60000);
 }
-function joyLine(d) {
-  var wd = d.getDay();
-  var tbl = (wd === 0 || wd === 6) ? JOY_WEEKEND : JOY_HOURS;
-  var h = d.getHours(), out = tbl[0][1];
-  for (var i = 0; i < tbl.length; i++) { if (h >= tbl[i][0]) out = tbl[i][1]; }
-  return out;
+function jstDay() {
+  var d = jstNow();
+  var p = function (v) { return (v < 10 ? "0" : "") + v; };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
 }
-function joyGreeting(d) {
-  var h = d.getHours();
+function dayShift(iso, n) {
+  var t = ymd(iso);
+  if (!t) return null;
+  var d = new Date(Date.UTC(t.y, t.m - 1, t.d + n));
+  var p = function (v) { return (v < 10 ? "0" : "") + v; };
+  return d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" + p(d.getUTCDate());
+}
+function greeting() {
+  var h = jstNow().getHours();
   var part = h < 5 ? "Still up" : h < 11 ? "Morning" : h < 17 ? "Afternoon" : h < 22 ? "Evening" : "Late one";
   var p = PEOPLE[WHO];
   var first = p ? String(p.name).split(" ")[0] : "";
   return first ? part + ", " + first + "." : part + ".";
 }
-function tickJoy() {
-  var t = el("jcTime");
-  if (!t) return;
-  var d = jstNow();
-  var p = function (v) { return (v < 10 ? "0" : "") + v; };
-  t.textContent = p(d.getHours()) + ":" + p(d.getMinutes());
-  var hi = el("jcHi"); if (hi) hi.textContent = joyGreeting(d);
-  var st = el("jcSt"); if (st) st.textContent = joyLine(d);
+
+/* ================================================================
+   THE DAILY PUZZLE. Added 2026-08-23, replacing the JST clock.
+
+   One round is a heavily zoomed crop of a build thumbnail and four
+   names. Five rounds, sixty seconds, once per JST day.
+
+   Why this puzzle and not a word game: the thumbnails are already in
+   the page as data URIs, so a round costs no bytes and no network,
+   and the reward for playing is that people look at the studio's own
+   back catalogue. A generic puzzle would have been the same work and
+   taught nobody anything.
+
+   WHERE THE SCORES LIVE. Notion, at PLAY_DS, one row per person per
+   day, read and written with the viewer's own connector like every
+   other write in this page. It is not localStorage because a
+   leaderboard the others cannot see is not a leaderboard, and it is
+   not the `artifact` capability because writing there needs
+   owner-or-editor - PS and JK would be rejected - and it would
+   republish the whole page per score.
+   ================================================================ */
+var PLAY_DS = "collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88";
+var Q_PLAY = 'SELECT url, "Person", "date:Day:start" AS day, "Opens", "Played", "Score", ' +
+  '"Correct", "Seconds" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
+
+var PLAY_ROWS = null;    // null until read; [] is a real empty leaderboard
+var PLAY_COUNTED = false; // this page load has already counted its open
+var PZ = null;            // live game state while the sheet is open
+
+function myIni() { return PEOPLE[WHO] ? PEOPLE[WHO].ini : null; }
+function playable() { return !!(mcp && SERVER && myIni()); }
+
+function loadPlay() {
+  if (!playable()) return Promise.resolve([]);
+  return mcp.callTool(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY), { cache: { staleTime: 20000 } })
+    .then(rows)
+    .then(function (r) { PLAY_ROWS = r; return r; })
+    .catch(function () { PLAY_ROWS = PLAY_ROWS || []; return PLAY_ROWS; });
+}
+function rowFor(ini, day) {
+  return (PLAY_ROWS || []).filter(function (r) {
+    return r["Person"] === ini && r.day === day;
+  })[0] || null;
+}
+function isYes(v) { return v === "__YES__" || v === true; }
+
+/* Aggregate per person. The ranked number is POINTS, and the streak is capped at one a
+   day by construction - that is deliberate. Opens is shown because ZF asked for it, but
+   ranking on it would reward reloading the page, which is not a thing to reward. */
+function standings() {
+  var by = {};
+  Object.keys(PEOPLE).forEach(function (id) {
+    by[PEOPLE[id].ini] = { ini: PEOPLE[id].ini, name: PEOPLE[id].name, pts: 0, days: 0, opens: 0, played: {} };
+  });
+  (PLAY_ROWS || []).forEach(function (r) {
+    var s = by[r["Person"]];
+    if (!s) return;                        // a row for somebody off the builders team
+    s.pts += (+r["Score"] || 0);
+    s.opens += (+r["Opens"] || 0);
+    if (isYes(r["Played"])) { s.days++; s.played[r.day] = true; }
+  });
+  var today = jstDay(), yest = dayShift(today, -1);
+  Object.keys(by).forEach(function (k) {
+    var s = by[k], cur = s.played[today] ? today : (s.played[yest] ? yest : null);
+    var n = 0;
+    while (cur && s.played[cur]) { n++; cur = dayShift(cur, -1); }
+    s.streak = n;
+  });
+  return Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) {
+    return b.pts - a.pts || b.streak - a.streak || a.name.localeCompare(b.name);
+  });
+}
+function myStanding() {
+  var all = standings(), ini = myIni();
+  for (var i = 0; i < all.length; i++) if (all[i].ini === ini) return { s: all[i], rank: i + 1, of: all.length };
+  return null;
+}
+
+/* Count the open. Read-modify-write on a number, so two tabs opened at the same instant
+   can lose a count - which for a game statistic is an acceptable trade against the
+   complexity of anything that would not. */
+function countOpen() {
+  if (PLAY_COUNTED || !playable()) return Promise.resolve();
+  PLAY_COUNTED = true;
+  var ini = myIni(), day = jstDay(), r = rowFor(ini, day);
+  var after = function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
+      .catch(function () {})
+      .then(loadPlay).then(renderPlayBox);
+  };
+  if (r) {
+    var id = pageIdFrom(r.url);
+    if (!id) return Promise.resolve();
+    return mcp.callTool(SERVER, T_UPDATE, {
+      page_id: id, command: "update_properties",
+      properties: { "Opens": (+r["Opens"] || 0) + 1 }
+    }).then(after, function () {});
+  }
+  return mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: PLAY_DS.replace("collection://", "") },
+    pages: [{ properties: {
+      "Entry": ini + " " + day, "Person": ini,
+      "date:Day:start": day, "date:Day:is_datetime": 0,
+      "Opens": 1, "Played": "__NO__", "Score": 0, "Correct": 0, "Seconds": 0
+    } }]
+  }).then(after, function () {});
+}
+
+/* ---- the puzzle itself, generated from the day ----
+   mulberry32 off a hash of the JST date, so every person gets the SAME five rounds on the
+   same day without anything being stored anywhere. A leaderboard over different puzzles
+   would not mean anything. */
+function hashStr(s) {
+  var h = 2166136261;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return h >>> 0;
+}
+function mulberry32(a) {
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+var PZ_ROUNDS = 5, PZ_SECONDS = 60;
+
+function puzzleFor(day) {
+  var pool = (BUILDS_ROWS || []).filter(function (b) { return !!thumbFor(b) && b.name; });
+  if (pool.length < 4) return null;
+  var rnd = mulberry32(hashStr("yf-bridge-" + day));
+  var pick = function (n) { return Math.floor(rnd() * n); };
+
+  // Sample without replacement so the same build cannot be the answer twice in one day.
+  var bag = pool.slice(), order = [];
+  while (bag.length && order.length < PZ_ROUNDS) order.push(bag.splice(pick(bag.length), 1)[0]);
+
+  return order.map(function (ans) {
+    var others = pool.filter(function (b) { return b !== ans; });
+    var opts = [ans];
+    while (opts.length < 4 && others.length) opts.push(others.splice(pick(others.length), 1)[0]);
+    // Shuffle the options so the answer is not always first.
+    for (var i = opts.length - 1; i > 0; i--) {
+      var j = pick(i + 1), t = opts[i]; opts[i] = opts[j]; opts[j] = t;
+    }
+    return {
+      answer: ans, opts: opts, img: thumbFor(ans),
+      // 300% zoom, and the window is kept off the extremes so a crop is never all
+      // background. 12-88% of each axis.
+      zoom: 260 + Math.floor(rnd() * 120),
+      px: 12 + Math.floor(rnd() * 76),
+      py: 12 + Math.floor(rnd() * 76)
+    };
+  });
+}
+
+function renderPlayBox() {
+  var box = el("playBox");
+  if (!box) return;
+  if (!playable()) { box.hidden = true; return; }
+  box.hidden = false;
+
+  var mine = myStanding();
+  if (!mine || PLAY_ROWS === null) {
+    box.innerHTML = '<span class="streak zero">&middot;&middot;</span>' +
+      '<p class="pts"><span class="spin"></span>Reading scores</p>';
+    return;
+  }
+  var s = mine.s, day = jstDay();
+  var r = rowFor(myIni(), day);
+  var done = r && isYes(r["Played"]);
+
+  // With nobody on the board yet, every rank is a tie broken alphabetically, so "4 of 4"
+  // would read as last place when it means nothing has happened.
+  var anyScores = standings().some(function (x) { return x.pts > 0; });
+  var rankBit = anyScores ? mine.rank + " of " + mine.of : "nobody has played yet";
+
+  box.innerHTML =
+    '<span class="streak' + (s.streak ? "" : " zero") + '">' + s.streak +
+      '<span class="u">day' + (s.streak === 1 ? "" : "s") + '</span></span>' +
+    '<p class="pts"><b>' + s.pts + '</b> pts &middot; ' + rankBit + '</p>' +
+    '<p class="hi">' + esc(greeting()) + "</p>" +
+    '<button class="playbtn' + (done ? " done" : "") + '" id="playBtn">' +
+      (done ? "Played &middot; see the board" : "Play today's puzzle") + "</button>";
+
+  el("playBtn").addEventListener("click", openPuzzle);
+}
+
+function lbHtml() {
+  var all = standings(), ini = myIni();
+  var body = all.map(function (s, i) {
+    return '<tr' + (s.ini === ini ? ' class="me"' : "") + '>' +
+      '<td class="rk">' + (i + 1) + "</td>" +
+      '<td class="nm">' + esc(s.name) + "</td>" +
+      '<td class="n">' + s.pts + "</td>" +
+      '<td class="n">' + s.streak + "</td>" +
+      '<td class="n">' + s.days + "</td>" +
+      '<td class="n">' + s.opens + "</td></tr>";
+  }).join("");
+  return '<table class="lb"><tr><th></th><th>Who</th><th>Points</th><th>Streak</th>' +
+    "<th>Played</th><th>Opens</th></tr>" + body + "</table>";
+}
+
+function openPuzzle() {
+  var day = jstDay(), r = rowFor(myIni(), day);
+  openSheet("playScrim");
+  if (r && isYes(r["Played"])) { showResult(+r["Score"] || 0, +r["Correct"] || 0, +r["Seconds"] || 0, true); return; }
+
+  var rounds = puzzleFor(day);
+  if (!rounds) {
+    el("pzTitle").textContent = "Not yet";
+    el("pzHint").textContent = "The puzzle is built from the build thumbnails, and they have not loaded.";
+    el("pzBody").innerHTML = '<p class="quiet">Give the registry a moment and try again.</p>';
+    return;
+  }
+  el("pzTitle").textContent = "Today's puzzle";
+  el("pzHint").textContent = "Which build is this? Five crops, sixty seconds.";
+  PZ = { rounds: rounds, i: 0, correct: 0, started: Date.now(), locked: false, timer: null };
+  PZ.timer = setInterval(pzTick, 250);
+  renderRound();
+}
+
+function pzLeft() {
+  return Math.max(0, PZ_SECONDS - (Date.now() - PZ.started) / 1000);
+}
+function pzTick() {
+  if (!PZ) return;
+  var left = pzLeft(), bar = el("pzBar"), c = el("pzClock");
+  if (bar) {
+    bar.style.width = (left / PZ_SECONDS * 100).toFixed(1) + "%";
+    bar.parentNode.className = "bar" + (left < 12 ? " low" : "");
+  }
+  if (c) c.textContent = Math.ceil(left) + "s";
+  if (left <= 0) finishPuzzle();
+}
+
+function renderRound() {
+  var r = PZ.rounds[PZ.i];
+  var left = pzLeft();
+  el("pzBody").innerHTML =
+    '<div class="meta"><span>Round ' + (PZ.i + 1) + " of " + PZ.rounds.length + "</span>" +
+      '<span class="clock" id="pzClock">' + Math.ceil(left) + "s</span></div>" +
+    '<div class="shot" id="pzShot"></div>' +
+    '<div class="bar"><i id="pzBar" style="width:' + (left / PZ_SECONDS * 100).toFixed(1) + '%"></i></div>' +
+    '<div class="opts" id="pzOpts">' +
+      r.opts.map(function (b, k) {
+        return '<button class="opt" data-k="' + k + '">' + esc(b.name) + "</button>";
+      }).join("") + "</div>" +
+    '<p class="verdict" id="pzVerdict"></p>';
+
+  var shot = el("pzShot");
+  shot.style.backgroundImage = 'url("' + r.img + '")';
+  shot.style.backgroundSize = r.zoom + "% auto";
+  shot.style.backgroundPosition = r.px + "% " + r.py + "%";
+
+  PZ.locked = false;
+  [].slice.call(el("pzOpts").querySelectorAll(".opt")).forEach(function (btn) {
+    btn.addEventListener("click", function () { answer(+btn.getAttribute("data-k")); });
+  });
+}
+
+function answer(k) {
+  if (!PZ || PZ.locked) return;
+  PZ.locked = true;
+  var r = PZ.rounds[PZ.i];
+  var right = r.opts[k] === r.answer;
+  if (right) PZ.correct++;
+
+  var btns = [].slice.call(el("pzOpts").querySelectorAll(".opt"));
+  btns.forEach(function (b) {
+    var idx = +b.getAttribute("data-k");
+    b.disabled = true;
+    if (r.opts[idx] === r.answer) b.className = "opt right";
+    else if (idx === k) b.className = "opt wrong";
+  });
+  el("pzVerdict").textContent = right ? "Yes." : "It was " + r.answer.name + ".";
+
+  setTimeout(function () {
+    if (!PZ) return;
+    PZ.i++;
+    if (PZ.i >= PZ.rounds.length) finishPuzzle();
+    else renderRound();
+  }, right ? 550 : 1100);
+}
+
+function finishPuzzle() {
+  if (!PZ) return;
+  var seconds = Math.min(PZ_SECONDS, Math.round((Date.now() - PZ.started) / 1000));
+  var correct = PZ.correct, outOf = PZ.rounds.length;
+  // 20 a round, plus up to 40 for whatever time is left. Max 140.
+  var score = correct * 20 + Math.round(40 * (Math.max(0, PZ_SECONDS - seconds) / PZ_SECONDS));
+  clearInterval(PZ.timer);
+  PZ = null;
+  savePlay(score, correct, seconds, outOf);
+  showResult(score, correct, seconds, false, outOf);
+}
+
+/* outOf is the round count this game actually had. The pool is every build carrying a
+   thumbnail, so a thin registry yields fewer than PZ_ROUNDS and a hardcoded "of 5" would
+   be a lie. The already-played path has no record of it and falls back to the nominal. */
+function showResult(score, correct, seconds, already, outOf) {
+  outOf = outOf || PZ_ROUNDS;
+  el("pzTitle").textContent = already ? "Played today" : "Done";
+  el("pzHint").textContent = already
+    ? "One a day. The next one lands at midnight JST."
+    : "Come back tomorrow for a new set.";
+  el("pzBody").innerHTML =
+    '<p class="final"><b>' + score + " pts</b> &middot; " + correct + " of " + outOf +
+      " right in " + seconds + "s</p>" +
+    '<p class="verdict">Ranked on points. The streak counts days you played, one a day, ' +
+      "so it cannot be farmed by reloading.</p>" + lbHtml();
+}
+
+/* Writing the result. A viewer without Notion write access simply does not get recorded -
+   the game is not worth a red banner over. */
+function savePlay(score, correct, seconds, outOf) {
+  if (!playable()) return;
+  var ini = myIni(), day = jstDay(), r = rowFor(ini, day);
+  var props = { "Played": "__YES__", "Score": score, "Correct": correct, "Seconds": seconds };
+  var after = function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
+      .catch(function () {})
+      .then(loadPlay)
+      .then(function () {
+        renderPlayBox();
+        var b = el("pzBody");
+        // Only repaint the board if the results view is still the thing on screen. Pass
+        // outOf through or the repaint silently rewrites the line as "of 5".
+        if (b && b.querySelector(".lb")) showResult(score, correct, seconds, false, outOf);
+      });
+  };
+  if (r) {
+    var id = pageIdFrom(r.url);
+    if (!id) return;
+    mcp.callTool(SERVER, T_UPDATE, { page_id: id, command: "update_properties", properties: props })
+      .then(after, function () {});
+    return;
+  }
+  props["Entry"] = ini + " " + day;
+  props["Person"] = ini;
+  props["date:Day:start"] = day;
+  props["date:Day:is_datetime"] = 0;
+  props["Opens"] = 1;
+  mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: PLAY_DS.replace("collection://", "") },
+    pages: [{ properties: props }]
+  }).then(after, function () {});
+}
+
+function closePuzzle() {
+  if (PZ) { clearInterval(PZ.timer); PZ = null; }
+  closeSheet("playScrim");
 }
 
 /* Undiscoverable by design. It spreads by one person showing another, which is the only
@@ -5111,18 +5503,35 @@ watchBuilds = function () {
   return r;
 };
 
-var _setWhoJoy = setWho;
+/* Changing who you are changes whose streak this is, so the box has to be rebuilt - and
+   the open has to be counted against the person who actually turned up. PLAY_COUNTED is
+   reset so switching from the team view to yourself still records your visit. */
+var _setWhoPlay = setWho;
 setWho = function (id, name) {
-  _setWhoJoy(id, name);
-  tickJoy();
+  _setWhoPlay(id, name);
+  PLAY_COUNTED = false;
+  renderPlayBox();
+  if (playable()) loadPlay().then(renderPlayBox).then(countOpen);
 };
+
+/* Same connector hook as the check strip, and for the same reason: at boot `mcp` is still
+   null, so anything that reads Notion has to be asked again once boot() has resolved it. */
+var _watchBuildsPlay = watchBuilds;
+watchBuilds = function () {
+  var r = _watchBuildsPlay();
+  renderPlayBox();
+  loadPlay().then(renderPlayBox).then(countOpen);
+  return r;
+};
+
+el("playClose").addEventListener("click", closePuzzle);
+el("playScrim").addEventListener("click", function (e) {
+  if (e.target === el("playScrim")) closePuzzle();
+});
 
 renderChip();
 gateDev();
-tickJoy();
-// Twenty seconds, not one: the display is minute-resolution, so a per-second timer would
-// do nothing but wake the tab up.
-setInterval(tickJoy, 20000);
+renderPlayBox();
 wireJoy();
 orderHome();
 applyWhoParam();

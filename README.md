@@ -160,6 +160,37 @@ running the PowerShell script:
 The capture is deterministic: re-rendering an unchanged build produces a byte-identical
 JPEG, so a no-op run leaves a clean `git diff`.
 
+## The daily puzzle
+
+Top right of the home masthead. One round is a heavily zoomed crop of a build thumbnail
+and four names; five rounds, sixty seconds, once per **JST** day. Points are 20 a round
+plus up to 40 for time left, so 140 is a perfect game.
+
+The puzzle is generated from the date — `mulberry32` seeded by a hash of the JST day — so
+everyone gets the same five rounds without anything being stored, which is what makes a
+leaderboard mean something. It rolls over at Tokyo midnight, not at each viewer's own.
+
+The rounds are built from `THUMBS`, the data URIs already in the page, so a round costs no
+bytes and no network. It also means the round count is `min(5, builds with a thumbnail)` —
+which is why the result line takes the actual count rather than hardcoding five.
+
+**Scores live in Notion**, `collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88` (KB → Bridge
+Play), one row per person per day: `Opens`, `Played`, `Score`, `Correct`, `Seconds`. Read
+and written with the viewer's own connector like every other write in this page.
+
+Three stores were considered and two rejected. `localStorage` cannot work — a leaderboard
+the others cannot see is not a leaderboard. The `artifact` capability cannot either: writes
+need owner-or-editor, so PS and JK would be rejected, and it would republish the whole page
+per score. The `db` capability would have been the natural fit and is **not on this
+account's roster** (only `artifact`, `downloads`, `mcp`, `self`), so Notion it is.
+
+**The ranked number is points, and the streak is capped at one a day by construction.**
+`Opens` is recorded and displayed because ZF asked for it, but nothing is ranked on it:
+ranking on opens rewards reloading the page. If that changes, change it deliberately.
+
+A viewer with no Notion write access simply is not recorded. The game is not worth an error
+banner over.
+
 ## Before you publish - every time, both sessions
 
 An artifact publish does **not** go through git. Two Claude sessions publish this one
