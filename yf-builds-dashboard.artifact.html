@@ -7802,6 +7802,17 @@ watchBuilds = function () {
   return r;
 };
 
+/* Arriving on the page has to draw it. Every other section decorates applyRoute for this;
+   the inbox was hooked only to watchBuilds, which fires when the REGISTRY changes - so
+   navigating to #/inbox left the static spinner from the markup sitting there forever and
+   nothing ever asked for the rows. It looked like an empty-queue bug and was not: with
+   rows in the table it hung in exactly the same way. */
+var _applyRouteIN = applyRoute;
+applyRoute = function (name) {
+  _applyRouteIN(name);
+  if (name === "inbox") renderInbox();
+};
+
 /* Switching person changes what "only mine" means, and the default is on. */
 var _setWhoInbox = setWho;
 setWho = function (id, name) {
