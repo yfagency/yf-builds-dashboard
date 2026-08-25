@@ -1331,7 +1331,13 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 .plateslot.fav .platectl { opacity: 1; }
 /* Chrome and colour for these buttons live in the shared pin rules further down, with the
    record pins - one definition, so the two can never drift apart again. */
+/* A pinned plate rests on a slightly brighter edge. That rule is three classes deep, so it
+   outranks the one-class-plus-pseudo `.plate:hover` no matter which order they appear in -
+   which silently killed the hover on exactly the cards you use most. The hover has to be
+   restated at the same depth. Any future resting-state rule on .plate needs the same
+   treatment, or it will take the hover with it. */
 .plateslot.fav > .plate { border-color: rgba(243, 240, 233, .19); }
+.plateslot.fav > .plate:hover { border-color: var(--accent); }
 
 /* ---- tier: strip (3-4) ---- */
 .tier-strip {
