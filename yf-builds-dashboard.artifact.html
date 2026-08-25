@@ -1421,17 +1421,21 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 /* The chip: who you are, on every view, top right. It exists because the
    opening gate is asked once and a one-time prompt is a bad place for the
    only copy of an important control. */
-.chip {
+/* .whochip, not .chip. It used to be .chip, which is also the tag class used on build
+   cards, project rows and Decisions entries - and because this rule is declared later it
+   won every one of them. Every tag in the app has been rendering as a 999px identity pill
+   with the wrong padding and the wrong font. One name, one component. */
+.whochip {
   display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
   background: var(--surface); border: 1px solid var(--rule); border-radius: 999px;
   padding: 3px 12px 3px 4px; color: var(--ink-2); font-family: var(--sans);
 }
-.chip:hover { border-color: var(--accent); color: var(--ink); }
-.chip .who {
+.whochip:hover { border-color: var(--accent); color: var(--ink); }
+.whochip .who {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
   white-space: nowrap;
 }
-.chip .caret { color: var(--muted); font-size: 9px; }
+.whochip .caret { color: var(--muted); font-size: 9px; }
 .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
 /* ---- the identity hue ----
@@ -1449,9 +1453,9 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 :root[data-me] #meframe { display: block; }
 
 /* The chip is where you go to fix it, so it is the one place the hue is at full strength. */
-:root[data-me] .chip { border-color: var(--me); color: var(--ink); }
-:root[data-me] .chip:hover { border-color: var(--me); filter: brightness(1.15); }
-:root[data-me] .chip .who { color: var(--me); }
+:root[data-me] .whochip { border-color: var(--me); color: var(--ink); }
+:root[data-me] .whochip:hover { border-color: var(--me); filter: brightness(1.15); }
+:root[data-me] .whochip .who { color: var(--me); }
 
 /* Every "this row is yours" marker in the app follows the same variable, so being signed
    in as the wrong person and your own work being highlighted can never disagree. The
@@ -1906,7 +1910,7 @@ img, svg { max-width: 100%; }
   }
   .navlinks::-webkit-scrollbar { display: none; }
   .navlinks a { padding: 6px 9px; white-space: nowrap; }
-  .chip { flex: none; }
+  .whochip { flex: none; }
 
   .home-mast { margin-bottom: 26px; }
   .home-mast .tagline, .sec-mast .tagline { font-size: 14px; }
@@ -2043,7 +2047,7 @@ img, svg { max-width: 100%; }
         <a href="#/builds" data-nav="builds">Builds</a>
         <a href="#/dev" data-nav="dev" id="navDev" hidden>Dev</a>
       </div>
-      <button class="chip" id="whoChip" title="Change who you are">
+      <button class="whochip" id="whoChip" title="Change who you are">
         <span id="chipAv"></span>
         <span class="who" id="chipWho">Sign in</span>
         <span class="caret">&#9660;</span>
