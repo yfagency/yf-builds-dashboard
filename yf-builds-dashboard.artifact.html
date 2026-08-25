@@ -680,6 +680,10 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .lb td.rk2 { font-size: 16px; font-weight: 500; color: var(--ink); }
 .lb td.rk3 { font-size: 13.5px; color: var(--ink-2); }
 
+/* The not-played-today dash sits back from the numbers beside it. */
+.lb td .none { color: var(--rule); }
+.lb tr.me td .none { color: var(--muted); }
+
 .lb tr.me td { color: var(--accent); }
 .lb tr.me td.nm { font-weight: 600; }
 /* Being first already reads as first - do not let the "this is you" accent overwrite the
@@ -5486,10 +5490,14 @@ function isYes(v) { return v === "__YES__" || v === true; }
    day by construction - that is deliberate. Opens is shown because ZF asked for it, but
    ranking on it would reward reloading the page, which is not a thing to reward. */
 function standings() {
+  var today = jstDay(), yest = dayShift(today, -1);
   var by = {};
   Object.keys(PEOPLE).forEach(function (id) {
+    // guesses is TODAY's, not a running total - see the note where it is set. null rather
+    // than 0 because "has not played today" and "cracked it first go" are different facts
+    // and 0 would be a lie about the second.
     by[PEOPLE[id].ini] = { ini: PEOPLE[id].ini, name: PEOPLE[id].name,
-                           pts: 0, days: 0, guesses: 0, opens: 0, played: {} };
+                           pts: 0, days: 0, guesses: null, opens: 0, played: {} };
   });
   /* Collapse duplicate rows per person-day BEFORE aggregating, taking the max of each
      number rather than the sum. Summing straight over the rows double-counted whenever a
@@ -5508,11 +5516,16 @@ function standings() {
     if (!s) return;                        // a row for somebody off the builders team
     s.pts += d.score;
     s.opens += d.opens;
-    // Guesses only count from a day that was actually finished. An abandoned day has a
-    // zero here anyway, but being explicit keeps the column honest if that ever changes.
-    if (d.played) { s.days++; s.guesses += d.guesses; s.played[d.day] = true; }
+    if (!d.played) return;
+    s.days++;
+    s.played[d.day] = true;
+    /* Guesses is TODAY's count, not a running total (ZF, 2026-08-25). A cumulative figure
+       said almost nothing on its own: points are already 150 minus 10 a guess, so a total
+       was very nearly points read backwards, and it grew with days played rather than with
+       how well anyone did. Today's number answers the question people actually have when
+       they open the board - how did everyone get on with this code. */
+    if (d.day === today) s.guesses = d.guesses;
   });
-  var today = jstDay(), yest = dayShift(today, -1);
   Object.keys(by).forEach(function (k) {
     var s = by[k], cur = s.played[today] ? today : (s.played[yest] ? yest : null);
     var n = 0;
@@ -5737,7 +5750,10 @@ function lbHtml() {
       '<td class="n">' + s.streak + "</td>" +
       '<td class="nm">' + esc(s.ini) + "</td>" +
       '<td class="n">' + s.pts + "</td>" +
-      '<td class="n">' + s.guesses + "</td>" +
+      // A dash, not a zero: they have not played today, which is not the same as cracking
+      // it in no guesses. It also makes the column obviously per-day next to its
+      // all-time neighbours.
+      '<td class="n">' + (s.guesses === null ? '<span class="none">&mdash;</span>' : s.guesses) + "</td>" +
       '<td class="n">' + s.days + "</td></tr>";
   }).join("");
   // The numeric headers carry the same class as their cells so one rule centres both. A

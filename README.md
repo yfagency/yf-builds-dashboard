@@ -250,8 +250,17 @@ The guess log is dropped in the finished state too. The game is over; the log's 
 
 Columns are **`#` · Streak · Who · Pts · Guesses · Days**, with initials rather than names
 because 340px does not hold four full names and six columns. **Column order and row order
-are separate decisions** — it leads with streak and still sorts on points. `Guesses` counts
-only days that were actually finished.
+are separate decisions** — it leads with streak and still sorts on points.
+
+**`Guesses` is today's count, not a running total**, and it is the one per-day column on an
+otherwise all-time board. A cumulative figure said almost nothing: points are already
+`150 − 10 × guesses`, so a total was very nearly points read backwards, and it grew with
+days played rather than with how well anyone did. Today's number answers the question people
+actually have when they open the board — how did everyone get on with *this* code.
+
+Somebody who has not played today shows a **dash, not a zero**: not playing and cracking it
+in no guesses are different facts, and the dash is also what makes the column read as
+per-day next to its neighbours.
 
 Every numeric column is centred, header and cells together — the `th` carries the same `.n`
 class as its cells so one rule does both, since a centred column under a left-aligned label
