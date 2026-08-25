@@ -652,6 +652,75 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .superson.me { border-left: 2px solid var(--accent); }
 .sucols { grid-template-columns: 1fr; gap: 10px; }
 
+/* ================================================================
+   INBOX
+   ================================================================ */
+.inform {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-left: 2px solid #EE6FA8; border-radius: var(--radius);
+  padding: 18px 20px 16px; margin-bottom: 20px;
+}
+.inform .pair { gap: 12px; }
+.inform textarea { width: 100%; resize: vertical; }
+
+.inlist {
+  display: grid; gap: 14px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(max(320px, (100% - 28px) / 3), 1fr));
+}
+/* Same fixed-height card as Decisions, for the same reason: a queue you can scan beats a
+   queue where one long request sets the height of a whole row. */
+.incard {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  border-left: 2px solid var(--rule); padding: 15px 18px 17px;
+  display: flex; flex-direction: column; height: 272px; overflow: hidden; position: relative;
+}
+/* The rail is the status, so where a request has got to is readable before you read a word
+   of it. New is the app's warn colour on purpose - an unanswered request is not neutral. */
+.incard.new     { border-left-color: var(--warn); }
+.incard.working { border-left-color: var(--accent); }
+.incard.done    { border-left-color: var(--ok); }
+.incard.no      { border-left-color: var(--rule); opacity: .6; }
+.intop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+.inkind, .instat {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px; border: 1px solid transparent;
+}
+.inkind { color: var(--ink-2); background: var(--surface-2); border-color: var(--rule); }
+.instat.new     { color: var(--warn);   background: var(--warn-soft); }
+.instat.working { color: var(--accent); background: var(--accent-soft); }
+.instat.done    { color: var(--ok);     background: var(--ok-soft); }
+.instat.no      { color: var(--muted);  background: var(--surface-2); }
+.inwhen { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--muted); margin-left: auto; }
+.incard h3 {
+  font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; line-height: 1.35; margin-bottom: 7px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.inask { font-size: 13.5px; color: var(--ink-2); margin: 0 0 9px; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
+/* The answer is the reason the page exists, so it gets the accent rail and is never the
+   thing that gets clipped first. */
+.inans {
+  border-left: 2px solid var(--ok); background: var(--ok-soft);
+  padding: 8px 11px; border-radius: 0 3px 3px 0; margin: 0 0 8px;
+  font-size: 13px; color: var(--ink-2); line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden;
+}
+.incard .foot2 {
+  margin-top: auto; padding-top: 10px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--muted);
+}
+.incard .foot2 a { color: #EE6FA8; text-decoration: none; border-bottom: 1px solid var(--rule); }
+.incard .foot2 a:hover { border-bottom-color: #EE6FA8; }
+.incard.open2 { height: auto; overflow: visible; }
+.incard.open2 h3, .incard.open2 .inask, .incard.open2 .inans {
+  display: block; -webkit-line-clamp: unset; line-clamp: unset;
+}
+.inmore {
+  background: none; border: 0; padding: 4px 0 0; margin: 0; cursor: pointer; align-self: flex-start;
+  font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--muted);
+}
+.inmore:hover { color: #EE6FA8; }
+
 /* ---- quick capture ---- */
 .qcap {
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
@@ -2081,6 +2150,7 @@ img, svg { max-width: 100%; }
         <a href="#/tasks" data-nav="tasks">Tasks</a>
         <a href="#/projects" data-nav="projects">Projects</a>
         <a href="#/decisions" data-nav="decisions">Decisions</a>
+        <a href="#/inbox" data-nav="inbox">Inbox</a>
         <a href="#/briefing" data-nav="briefing">Briefing</a>
         <a href="#/builds" data-nav="builds">Builds</a>
         <a href="#/dev" data-nav="dev" id="navDev" hidden>Dev</a>
@@ -2289,6 +2359,32 @@ img, svg { max-width: 100%; }
         </a>
       </section>
 
+      <section data-block="inbox-plate">
+        <a class="plate" href="#/inbox">
+          <!-- Inbox, drawn: an envelope with a reply already coming back out of it. The
+               return is the whole point - this is not a suggestion box, it is a queue that
+               answers. Pink, which is the one hue left that no section and no builder
+               wears. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="An envelope with an answer coming back out of it">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#EE6FA8" opacity=".08"/>
+            <rect x="52" y="66" width="140" height="92" rx="4" fill="var(--surface)" stroke="var(--rule)"/>
+            <path d="M52 72 L122 116 L192 72" fill="none" stroke="#EE6FA8" stroke-width="2"/>
+            <rect x="70" y="128" width="62" height="5" rx="2.5" fill="var(--ink)" opacity=".24"/>
+            <rect x="70" y="140" width="94" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="168" y="34" width="104" height="52" rx="4" fill="var(--surface)" stroke="#EE6FA8"/>
+            <rect x="182" y="48" width="44" height="5" rx="2.5" fill="#EE6FA8"/>
+            <rect x="182" y="62" width="72" height="4" rx="2" fill="var(--ink)" opacity=".22"/>
+            <path d="M196 96 L172 96 L172 78" fill="none" stroke="#EE6FA8" stroke-width="2" opacity=".55"/>
+          </svg>
+          <div class="body">
+            <h2>Inbox</h2>
+            <p class="what">Write to Claude from inside the app. It lands in a queue, gets worked, and the answer comes back here.</p>
+            <p class="stat" id="stInbox"><span class="quiet">reading the queue&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
       <section data-block="builds-plate">
         <a class="plate" href="#/builds">
           <!-- Builds, drawn: three builds stacked front-to-back, the newest one forward and
@@ -2357,6 +2453,63 @@ img, svg { max-width: 100%; }
     </header>
     <div id="devBody"><div class="panel"><span class="spin"></span>Running checks&hellip;</div></div>
     <p class="foot">Every check here is a live query through your own Notion connection &mdash; nothing is cached from a previous run and nothing is taken on trust from the registry. <b>A row in Scheduled Tasks has never been proof that anything runs</b>; the evidence panel exists because that distinction has caused real outages to go unnoticed.</p>
+  </section>
+
+  <!-- ============================= INBOX =============================
+       Write to Claude from inside the app. There is no model in this page - the artifact
+       runtime serves no completion capability, and the CSP blocks every external host, so
+       an in-page chatbot is not a thing that can exist here. What CAN exist is a queue: the
+       page writes a row, a scheduled Claude session works it and writes the answer back,
+       and the page shows it. Async by construction, and honest about it. -->
+  <section id="v-inbox" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Inbox</p>
+          <h1>Inbox</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="inRefresh" title="Re-read the queue now">Refresh</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="inform">
+      <div class="pair">
+        <div class="field" style="flex:2 1 260px">
+          <span class="label">What do you need</span>
+          <input type="text" id="inAsk" placeholder="One line, like a subject" autocomplete="off">
+        </div>
+        <div class="field">
+          <span class="label">Kind</span>
+          <select id="inKind">
+            <option>Question</option><option>Thumbnail</option><option>Fix</option>
+            <option>Build</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="label" id="inTargetLabel">About (optional)</span>
+          <input type="text" id="inTarget" placeholder="a repo, a build, a project code" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">The request</span>
+        <textarea id="inBody" rows="4" placeholder="Everything Claude needs to act without asking you a follow-up question."></textarea>
+      </div>
+      <div class="suacts">
+        <button class="btn primary" id="inSend">Send to Claude</button>
+        <p class="formmsg" id="inMsg"></p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="toggle"><input type="checkbox" id="inMine" checked> Only mine</label>
+      <label class="toggle"><input type="checkbox" id="inOpen"> Only unanswered</label>
+      <span class="quiet mono" id="inCount"></span>
+    </div>
+
+    <div id="inBody2"><div class="panel"><span class="spin"></span>Loading the queue&hellip;</div></div>
+    <p class="foot">Requests go to <b>Bridge Inbox</b> in the knowledge base and are picked up by a scheduled Claude session &mdash; so an answer arrives on the runner's cadence, not while you watch. <b>Nothing here talks to a model from your browser</b>: this page has no way to, and would have to carry an API key in public if it did.</p>
   </section>
 
   <!-- ============================= TASKS ============================= -->
@@ -4068,13 +4221,14 @@ var BLOCKS = [
   { block: "tasks-plate",     section: "tasks",     weight: 6 },
   { block: "projects-plate",  section: "projects",  weight: 6 },
   { block: "decisions-plate", section: "decisions", weight: 6 },
+  { block: "inbox-plate",     section: "inbox",     weight: 6 },
   { block: "builds-plate",    section: "builds",    weight: 5 },
   { block: "dev-plate",       section: "dev",       weight: 5 }
 ];
 /* Briefing keeps its band and gets no plate. The band already shows three real stories,
    which is more than a door to the same place could say - demoting it to a plate would
    trade live content for a picture. */
-var PAGES = { standup: 5, tasks: 6, projects: 7, decisions: 5, briefing: 3, builds: 7 };
+var PAGES = { standup: 5, tasks: 6, projects: 7, decisions: 5, inbox: 5, briefing: 3, builds: 7 };
 
 function tierFor(w) {
   return w >= 9 ? "lead" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
@@ -7432,6 +7586,228 @@ function saveDecision() {
 }
 
 VIEWS.decisions = "v-decisions";
+
+/* ================================================================
+   INBOX - writing to Claude from inside the app
+
+   There is no model in this page. The artifact runtime serves no
+   completion capability, and the CSP blocks every external host, so
+   a chatbot here is not something that was skipped - it is something
+   that cannot exist. A queue can: the page writes a row, a scheduled
+   Claude session works it and writes the answer back onto the same
+   row, and this page shows it. The honesty is the design.
+   ================================================================ */
+VIEWS.inbox = "v-inbox";
+
+var INBOX_DS = "collection://6a0bbfcf-337d-4c99-b1c7-b06b0d46e07b";
+var Q_INBOX = 'SELECT url, "Ask", "Body", "From", "Kind", "Status", "Target", "Answer", ' +
+  '"Ref", "date:Sent:start" AS sent, "date:Answered:start" AS answered FROM "' + INBOX_DS +
+  '" ORDER BY sent DESC LIMIT 200';
+
+var IN_ROWS = null;
+
+function loadInbox() {
+  if (!mcp || !SERVER) return Promise.resolve([]);
+  return mcp.callTool(SERVER, T_QUERY, sqlInput(INBOX_DS, Q_INBOX), { cache: { staleTime: 15000 } })
+    .then(rows)
+    .then(function (r) { IN_ROWS = r; return r; })
+    .catch(function () { IN_ROWS = IN_ROWS || []; return IN_ROWS; });
+}
+
+function inClass(st) {
+  return st === "Answered" ? "done" : st === "Working" ? "working" : st === "Wont do" ? "no" : "new";
+}
+
+function inFiltered() {
+  var mine = el("inMine") ? el("inMine").checked : false;
+  var openOnly = el("inOpen") ? el("inOpen").checked : false;
+  var ini = PEOPLE[WHO] ? PEOPLE[WHO].ini : null;
+  return (IN_ROWS || []).filter(function (r) {
+    // "Only mine" with nobody selected would hide everything, which reads as a broken page
+    // rather than as a filter. With no name it means nothing and is ignored.
+    if (mine && ini && r["From"] !== ini) return false;
+    if (openOnly && (r["Status"] === "Answered" || r["Status"] === "Wont do")) return false;
+    return true;
+  });
+}
+
+function renderInbox() {
+  var body = el("inBody2");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>The inbox is read from and ' +
+      "written to YF OS through your own Notion connection.</p></div>";
+    return;
+  }
+  if (IN_ROWS === null) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the queue&hellip;</div>';
+    loadInbox().then(renderInbox);
+    return;
+  }
+  var list = inFiltered();
+  var count = el("inCount");
+  if (count) count.textContent = list.length + " of " + (IN_ROWS || []).length;
+
+  if (!list.length) {
+    body.innerHTML = '<div class="panel"><h2>Nothing here</h2><p>' +
+      ((IN_ROWS || []).length ? "Nothing matches those two filters."
+        : "Nobody has written to Claude yet. The box above is how.") + "</p></div>";
+    return;
+  }
+
+  body.innerHTML = '<div class="inlist">' + list.map(function (r) {
+    var st = r["Status"] || "New", cls = inClass(st);
+    var who = r["From"] ? (PEOPLE_BY_INI[r["From"]] ? PEOPLE_BY_INI[r["From"]].name.split(" ")[0] : r["From"]) : "system";
+    return '<article class="incard ' + cls + '">' +
+      '<div class="intop">' +
+        '<span class="inkind">' + esc(r["Kind"] || "Other") + "</span>" +
+        '<span class="instat ' + cls + '">' + esc(st) + "</span>" +
+        '<span class="inwhen">' + esc(r.sent ? shortDate(r.sent) : "") + "</span>" +
+      "</div>" +
+      "<h3>" + esc(r["Ask"] || "(no subject)") + "</h3>" +
+      (r["Body"] ? '<p class="inask">' + esc(r["Body"]) + "</p>" : "") +
+      (r["Answer"] ? '<p class="inans">' + esc(r["Answer"]) + "</p>" : "") +
+      '<div class="foot2"><span>' + esc(who) + "</span>" +
+        (r["Target"] ? "<span>" + esc(r["Target"]) + "</span>" : "") +
+        (r["Ref"] ? '<a href="' + esc(r["Ref"]) + '" target="_blank" rel="noopener noreferrer">what changed</a>' : "") +
+        '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">open</a>' +
+      "</div>" +
+    "</article>";
+  }).join("") + "</div>";
+  inClamps();
+}
+
+/* Same measured clamp as Decisions - a Read more offered on a card with nothing hidden is
+   a click that does nothing, and the wrap depends on the real font. */
+function inClamps() {
+  var body = el("inBody2");
+  if (!body) return;
+  Array.prototype.forEach.call(body.querySelectorAll(".incard"), function (card) {
+    var old = card.querySelector(".inmore");
+    if (old) old.parentNode.removeChild(old);
+    if (card.classList.contains("open2")) return;
+    var over = false;
+    Array.prototype.forEach.call(card.querySelectorAll("h3, .inask, .inans"), function (n) {
+      if (n.scrollHeight > n.clientHeight + 1) over = true;
+    });
+    if (!over) return;
+    var b = document.createElement("button");
+    b.className = "inmore"; b.type = "button"; b.textContent = "Read more";
+    var last = card.querySelector(".inans") || card.querySelector(".inask");
+    if (last && last.nextSibling) { card.insertBefore(b, last.nextSibling); } else { card.appendChild(b); }
+  });
+}
+
+function sendAsk() {
+  var ask = el("inAsk").value.trim(), bodyTxt = el("inBody").value.trim();
+  var msg = el("inMsg"), btn = el("inSend");
+  var say = function (t, cls) { msg.className = "formmsg" + (cls ? " " + cls : ""); msg.textContent = t; };
+
+  if (!mcp || !SERVER) { say("No connector.", "bad"); return; }
+  if (!ask) { say("Give it a subject first.", "bad"); el("inAsk").focus(); return; }
+  /* A request with no body is a request the runner has to guess at, and a guess costs more
+     than the thirty seconds of typing it saves. */
+  if (!bodyTxt) { say("Say what you need - the runner cannot ask you a follow-up.", "bad"); el("inBody").focus(); return; }
+
+  var props = {
+    "Ask": ask, "Body": bodyTxt,
+    "Kind": el("inKind").value,
+    "Status": "New",
+    "Source": "Bridge",
+    "date:Sent:start": jstDay(),
+    "date:Sent:is_datetime": 0
+  };
+  if (PEOPLE[WHO]) props["From"] = PEOPLE[WHO].ini;
+  var target = el("inTarget").value.trim();
+  if (target) props["Target"] = target;
+
+  btn.disabled = true; btn.textContent = "Sending"; say("");
+  mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: INBOX_DS.replace("collection://", "") },
+    pages: [{ properties: props }]
+  }).then(function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(INBOX_DS, Q_INBOX)).catch(function () {});
+  }).then(loadInbox).then(function () {
+    btn.disabled = false; btn.textContent = "Send to Claude";
+    el("inAsk").value = ""; el("inBody").value = ""; el("inTarget").value = "";
+    say("Sent. It will be picked up on the runner's next pass.", "good");
+    renderInbox();
+    setTimeout(function () { if (msg.className.indexOf("good") >= 0) say(""); }, 6000);
+  }, function (e) {
+    btn.disabled = false; btn.textContent = "Send to Claude";
+    say("Could not send it: " + (explain(e).head || "unknown"), "bad");
+  });
+}
+
+/* Thumbnail is the one kind the runner can take from end to end without a person, so the
+   About field stops being optional for it - it needs to know which build. */
+function inKindChanged() {
+  var k = el("inKind").value, lab = el("inTargetLabel"), t = el("inTarget");
+  if (!lab || !t) return;
+  if (k === "Thumbnail") {
+    lab.textContent = "Which build";
+    t.placeholder = "the repo name, e.g. yf-style-guide";
+  } else {
+    lab.textContent = "About (optional)";
+    t.placeholder = "a repo, a build, a project code";
+  }
+}
+
+el("inSend").addEventListener("click", sendAsk);
+el("inAsk").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") { e.preventDefault(); el("inBody").focus(); }
+});
+el("inKind").addEventListener("change", inKindChanged);
+inKindChanged();
+["inMine", "inOpen"].forEach(function (id) {
+  var e = el(id);
+  if (e) e.addEventListener("change", renderInbox);
+});
+el("inRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(INBOX_DS, Q_INBOX)).catch(function () {})
+    .then(loadInbox).then(renderInbox);
+});
+el("inBody2").addEventListener("click", function (ev) {
+  var b = ev.target.closest ? ev.target.closest(".inmore") : null;
+  if (!b) return;
+  var card = b.closest(".incard");
+  if (!card) return;
+  card.classList.add("open2");
+  b.parentNode.removeChild(b);
+});
+try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(inClamps); } catch (e) {}
+
+/* The home plate counts what is still waiting, because that is the only number on this
+   page anybody acts on. */
+function paintInboxStat() {
+  var st = el("stInbox");
+  if (!st) return;
+  if (!mcp || !SERVER) { st.innerHTML = '<span class="quiet">connector needed</span>'; return; }
+  loadInbox().then(function () {
+    var open = (IN_ROWS || []).filter(function (r) {
+      return r["Status"] !== "Answered" && r["Status"] !== "Wont do";
+    }).length;
+    st.innerHTML = open
+      ? '<span class="flagged">' + open + "</span> waiting"
+      : "<b>nothing</b> waiting";
+  });
+}
+
+var _watchBuildsInbox = watchBuilds;
+watchBuilds = function () {
+  var r = _watchBuildsInbox();
+  if (routeName() === "inbox") renderInbox();
+  paintInboxStat();
+  return r;
+};
+
+/* Switching person changes what "only mine" means, and the default is on. */
+var _setWhoInbox = setWho;
+setWho = function (id, name) {
+  _setWhoInbox(id, name);
+  if (IN_ROWS !== null) renderInbox();
+};
 var _applyRouteDC = applyRoute;
 applyRoute = function (name) {
   _applyRouteDC(name);
