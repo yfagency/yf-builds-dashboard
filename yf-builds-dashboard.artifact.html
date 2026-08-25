@@ -1004,7 +1004,27 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 }
 .plate:hover { border-color: var(--accent); }
 /* The drawn plate is the section's portrait, so it bleeds to the card edges and carries
-   the same 16:10 as a build thumbnail - the two read as the same family of object. */
+   the same 16:10 as a build thumbnail - the two read as the same family of object.
+
+   EACH PORTRAIT HAS ITS OWN HUE, and that is a deliberate exception to the rule two
+   hundred lines up that section identity is carried typographically. All six were drawn
+   in the accent on the same grey, which made them one family rather than six doors - you
+   had to read the heading to tell which was which, and a picture you have to read is not
+   doing its job. The colour lives inside the drawing only: no heading, rule or eyebrow
+   anywhere else in the app takes a section colour, so the typographic rule still holds
+   for the page itself.
+
+     Daily      green + amber    the filed and unfiled rails, as the real cards use them
+     Tasks      accent + red     the Planning buckets, as the real rows mark them
+     Projects   blue
+     Decisions  violet
+     Builds     cyan
+     Dev        red              the one panel that can break something
+
+   Daily and Tasks keep the colours their own pages already use, because those two are
+   drawing real states rather than decorating. The other four are simply spread far enough
+   apart on the wheel to be told apart at a glance, and kept clear of the four person hues
+   so a section can never be mistaken for a builder. */
 .plate .art { aspect-ratio: 16 / 10; display: block; width: 100%; border-bottom: 1px solid var(--rule); }
 .plate .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .plate h2 { font-size: 21px; font-weight: 600; letter-spacing: -.03em; }
@@ -2141,6 +2161,7 @@ img, svg { max-width: 100%; }
                rather than an illustration of it. -->
           <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Two standup halves, the first filed and the second still open">
             <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#5FC97F" opacity=".07"/>
             <rect x="34" y="54" width="118" height="92" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
             <rect x="34" y="54" width="2" height="92" fill="var(--ok)"/>
             <rect x="48" y="70" width="52" height="5" rx="2.5" fill="var(--ok)"/>
@@ -2154,8 +2175,7 @@ img, svg { max-width: 100%; }
             <rect x="182" y="88" width="90" height="14" rx="2" fill="var(--ink)" opacity=".07"/>
             <rect x="182" y="108" width="90" height="14" rx="2" fill="var(--ink)" opacity=".07"/>
             <rect x="182" y="130" width="34" height="10" rx="2" fill="var(--warn)" opacity=".55"/>
-          </svg>
-          <div class="body">
+          </svg>          <div class="body">
             <h2>Daily</h2>
             <p class="what">Your Day In and Day Out, and everyone else's &mdash; the standup that used to live in Slack.</p>
             <p class="stat" id="stStand"><span class="quiet">reading the daily&hellip;</span></p>
@@ -2171,18 +2191,18 @@ img, svg { max-width: 100%; }
         <a class="plate" href="#/decisions">
           <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A timeline of decisions, the newest highlighted and an older one faded">
             <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#9B8CFF" opacity=".08"/>
             <rect x="69" y="40" width="1" height="120" fill="var(--ink)" opacity=".16"/>
-            <circle cx="69.5" cy="56" r="5" fill="var(--accent)"/>
-            <rect x="86" y="48" width="98" height="5" rx="2.5" fill="var(--accent)"/>
+            <circle cx="69.5" cy="56" r="5" fill="#9B8CFF"/>
+            <rect x="86" y="48" width="98" height="5" rx="2.5" fill="#9B8CFF"/>
             <rect x="86" y="60" width="152" height="4" rx="2" fill="var(--ink)" opacity=".26"/>
-            <circle cx="69.5" cy="100" r="5" fill="var(--surface-2)" stroke="var(--ink)" stroke-opacity=".34"/>
+            <circle cx="69.5" cy="100" r="5" fill="var(--surface-2)" stroke="#9B8CFF" stroke-opacity=".55"/>
             <rect x="86" y="92" width="76" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
             <rect x="86" y="104" width="130" height="4" rx="2" fill="var(--ink)" opacity=".18"/>
             <circle cx="69.5" cy="144" r="5" fill="var(--surface-2)" stroke="var(--ink)" stroke-opacity=".18"/>
             <rect x="86" y="136" width="62" height="5" rx="2.5" fill="var(--ink)" opacity=".16"/>
             <rect x="86" y="148" width="104" height="4" rx="2" fill="var(--ink)" opacity=".10"/>
-          </svg>
-          <div class="body">
+          </svg>          <div class="body">
             <h2>Decisions</h2>
             <p class="what">Why the studio does things the way it does &mdash; the choices, the lessons, and the ones that no longer apply.</p>
             <p class="stat">the log, searchable</p>
@@ -2194,19 +2214,19 @@ img, svg { max-width: 100%; }
         <!-- Dev, drawn: switches. This page is a panel of levers - resets, checks, the
              hidden code of the day - and nothing else in the app looks like that. -->
         <a class="plate" href="#/dev" id="devPlate">
-          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A panel of toggle switches">
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A panel of toggle switches, the first one on">
             <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#E85C4F" opacity=".08"/>
             <rect x="60" y="56" width="90" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
-            <rect x="216" y="50" width="44" height="18" rx="9" fill="var(--accent)" opacity=".28"/>
-            <circle cx="251" cy="59" r="7" fill="var(--accent)"/>
+            <rect x="216" y="50" width="44" height="18" rx="9" fill="#E85C4F" opacity=".30"/>
+            <circle cx="251" cy="59" r="7" fill="#E85C4F"/>
             <rect x="60" y="94" width="118" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
             <rect x="216" y="88" width="44" height="18" rx="9" fill="var(--ink)" opacity=".12"/>
             <circle cx="225" cy="97" r="7" fill="var(--ink)" opacity=".34"/>
             <rect x="60" y="132" width="74" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
             <rect x="216" y="126" width="44" height="18" rx="9" fill="var(--ink)" opacity=".12"/>
             <circle cx="225" cy="135" r="7" fill="var(--ink)" opacity=".34"/>
-          </svg>
-          <div class="body">
+          </svg>          <div class="body">
             <h2>Dev</h2>
             <p class="what">ZF only. What the automations did last night, what they are supposed to do, and the levers for the game.</p>
             <p class="stat">checks and levers</p>
@@ -2222,6 +2242,7 @@ img, svg { max-width: 100%; }
                the two read as a pair sitting next to each other. -->
           <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Four task rows, the first marked overdue and the second marked for today">
             <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="var(--accent)" opacity=".07"/>
             <rect x="52" y="50" width="11" height="11" rx="2" fill="var(--crit)"/>
             <rect x="75" y="53" width="128" height="6" rx="2" fill="var(--ink)" opacity=".30"/>
             <rect x="52" y="86" width="11" height="11" rx="2" fill="var(--accent)"/>
@@ -2230,8 +2251,7 @@ img, svg { max-width: 100%; }
             <rect x="75" y="125" width="104" height="6" rx="2" fill="var(--ink)" opacity=".16"/>
             <rect x="52" y="158" width="11" height="11" rx="2" fill="var(--ink)" opacity=".22"/>
             <rect x="75" y="161" width="140" height="6" rx="2" fill="var(--ink)" opacity=".16"/>
-          </svg>
-          <div class="body">
+          </svg>          <div class="body">
             <h2>Tasks</h2>
             <p class="what">Everything not yet delivered, grouped overdue first &mdash; yours, or the whole builders team.</p>
             <p class="stat" id="stTasks"><span class="quiet">reading the tasks&hellip;</span></p>
@@ -2244,17 +2264,20 @@ img, svg { max-width: 100%; }
           <!-- Projects, drawn: one record pulled forward out of a stack of many, because
                that is the model - 431 projects in the database, one open at a time. The
                accent marks the open one; the others are just depth behind it. -->
-          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="One project record pulled forward from a stack">
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="An open project record showing its code, client, status and deadline">
             <rect width="320" height="200" fill="var(--surface-2)"/>
-            <rect x="70" y="34" width="180" height="14" rx="2" fill="var(--ink)" opacity=".10"/>
-            <rect x="70" y="54" width="180" height="14" rx="2" fill="var(--ink)" opacity=".13"/>
-            <rect x="56" y="76" width="208" height="48" rx="3" fill="var(--surface)" stroke="var(--accent)"/>
-            <rect x="70" y="88" width="82" height="6" rx="3" fill="var(--accent)"/>
-            <rect x="70" y="102" width="140" height="5" rx="2.5" fill="var(--ink)" opacity=".24"/>
-            <rect x="70" y="132" width="180" height="14" rx="2" fill="var(--ink)" opacity=".13"/>
-            <rect x="70" y="152" width="180" height="14" rx="2" fill="var(--ink)" opacity=".10"/>
-          </svg>
-          <div class="body">
+            <rect width="320" height="200" fill="#5B9BD5" opacity=".08"/>
+            <rect x="44" y="30" width="232" height="140" rx="4" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="60" y="48" width="44" height="6" rx="3" fill="#5B9BD5"/>
+            <rect x="60" y="62" width="132" height="8" rx="3" fill="var(--ink)" opacity=".32"/>
+            <rect x="60" y="86" width="200" height="1" fill="var(--ink)" opacity=".12"/>
+            <rect x="60" y="100" width="34" height="5" rx="2.5" fill="var(--ink)" opacity=".16"/>
+            <rect x="110" y="100" width="94" height="5" rx="2.5" fill="var(--ink)" opacity=".28"/>
+            <rect x="60" y="120" width="34" height="5" rx="2.5" fill="var(--ink)" opacity=".16"/>
+            <rect x="110" y="120" width="62" height="5" rx="2.5" fill="var(--ink)" opacity=".28"/>
+            <rect x="60" y="140" width="34" height="5" rx="2.5" fill="var(--ink)" opacity=".16"/>
+            <rect x="110" y="140" width="78" height="5" rx="2.5" fill="#5B9BD5" opacity=".85"/>
+          </svg>          <div class="body">
             <h2>Projects</h2>
             <p class="what">Open one project and work from it &mdash; its client, status, deadline and deliverables in one place.</p>
             <p class="stat" id="stProjects"><span class="quiet">reading the projects&hellip;</span></p>
@@ -2270,15 +2293,15 @@ img, svg { max-width: 100%; }
                thumbnail so a section and a build read as the same kind of object. -->
           <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Three builds stacked, the newest in front">
             <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#35C7D8" opacity=".08"/>
             <rect x="62" y="40" width="150" height="56" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
             <rect x="84" y="66" width="150" height="56" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
-            <rect x="106" y="92" width="150" height="56" rx="3" fill="var(--surface)" stroke="var(--accent)"/>
-            <rect x="118" y="104" width="58" height="5" rx="2.5" fill="var(--accent)"/>
+            <rect x="106" y="92" width="150" height="56" rx="3" fill="var(--surface)" stroke="#35C7D8"/>
+            <rect x="118" y="104" width="58" height="5" rx="2.5" fill="#35C7D8"/>
             <rect x="118" y="116" width="94" height="4" rx="2" fill="var(--ink)" opacity=".22"/>
             <rect x="118" y="126" width="72" height="4" rx="2" fill="var(--ink)" opacity=".22"/>
-            <rect x="240" y="132" width="8" height="8" fill="var(--accent)"/>
-          </svg>
-          <div class="body">
+            <rect x="240" y="132" width="8" height="8" fill="#35C7D8"/>
+          </svg>          <div class="body">
             <h2>Builds</h2>
             <p class="what">Every app, page and mock-up the team has made, with a one-click download of the latest version.</p>
             <p class="stat" id="stBuilds"><span class="quiet">reading the registry&hellip;</span></p>
@@ -4114,6 +4137,12 @@ function orderHome() {
   });
 
   arrangePlates();
+
+  /* Re-gate now that the slots exist. gateDev() runs once at boot, before this function
+     has built them, so at that point it can only hide the anchor - which leaves a slot
+     with nothing in it holding a full grid column open. Running it again here means the
+     first paint is already right rather than waiting for the next route change. */
+  if (typeof gateDev === "function") gateDev();
 }
 
 /* ---- pinned plates ----
@@ -4888,8 +4917,17 @@ function gateDev() {
      pointing at a page they get bounced straight out of. Tidiness, not security. */
   var plate = el("devPlate");
   /* Hide the SLOT, not the anchor. A hidden anchor inside a visible slot still holds its
-     grid track open, which would leave a gap where the Dev plate is not. */
-  if (plate) (plate.closest(".plateslot") || plate).hidden = !devAllowed();
+     grid track open, which would leave a gap where the Dev plate is not.
+
+     The anchor is cleared every time because the FIRST call happens at boot, before
+     orderHome() has built the slots - so there is nothing to close over yet and the anchor
+     itself gets hidden. Without this line that first hide is permanent, and ZF ends up
+     with a full-width empty column where the Dev card should be. */
+  if (plate) {
+    plate.hidden = false;
+    var host = plate.closest(".plateslot") || plate;
+    host.hidden = !devAllowed();
+  }
   if (!devAllowed() && routeName() === "dev") { location.hash = "#/"; }
 }
 
