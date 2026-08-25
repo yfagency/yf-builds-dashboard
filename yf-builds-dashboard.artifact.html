@@ -198,7 +198,28 @@ input.pick {
 .card {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
   padding: 18px; display: flex; flex-direction: column; gap: 11px; box-shadow: var(--shadow);
+  transition: background-color .18s ease, border-color .18s ease;
 }
+
+/* ---- the whole card opens the build ----
+   A stretched link: an anchor pinned over the card, with every control inside it lifted
+   back above. Wrapping the card in an <a> would be the obvious way and is invalid markup -
+   the card holds a checkbox, two selects and four buttons, and a browser will simply break
+   them out of the anchor.
+
+   ONLY on a build with a live page. A card that changes colour under the cursor is
+   promising a click, and a build with nothing to open should not make that promise. */
+.cardhit {
+  position: absolute; inset: 0; z-index: 3;
+  border-radius: var(--radius); text-decoration: none;
+}
+/* Every genuinely interactive descendant, and nothing else. Lifting whole blocks instead
+   would put the title and the commit line above the anchor too, and clicking the name of
+   the build - the most obvious place to click - would do nothing. */
+.card a:not(.cardhit), .card button, .card select, .card input, .card label {
+  position: relative; z-index: 4;
+}
+.card.linked:hover { background: var(--surface-2); border-color: var(--muted); }
 .card h3 { font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
 /* The right padding is clearance for the corner pin group, which is positioned against the
    card rather than laid out in this row. It only actually matters on a card with no
@@ -226,7 +247,11 @@ input.pick {
 }
 .thumb img {
   display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center;
+  transition: transform .45s cubic-bezier(.2, .7, .3, 1);
 }
+/* The tile already clips, so the zoom needs nothing but the transform. Slow and small on
+   purpose: this is a hover affordance, not an animation. */
+.card.linked:hover .thumb img { transform: scale(1.06); }
 /* A missing thumbnail is a defect, and looks like one: hazard stripes rather than a tasteful
    empty state. Every build is supposed to have a picture, so an absent one should nag. */
 .thumb.missing {
@@ -366,6 +391,9 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
   /* The shape still reads as a placeholder standing still, so drop the sweep rather than
      the skeleton. */
   .sk::after { animation: none; }
+  /* Killing the transition alone would leave the zoom, just instant. Drop the zoom too and
+     keep the colour change, which carries the same information without moving anything. */
+  .card.linked:hover .thumb img { transform: none; }
   * { transition: none !important; }
 }
 
@@ -3046,7 +3074,13 @@ function card(b) {
   if (dl) links.push(["Download", dl]);
   if (b.live) links.push(["Live", b.live]);
   if (gh) links.push(["GitHub", gh]);
-  return '<article class="card">' +
+  return '<article class="card' + (b.live ? " linked" : "") + '">' +
+    /* The stretched link, first so it sits under the card in source order too - a screen
+       reader meets "open X, live page" before the card rather than after it. */
+    (b.live
+      ? '<a class="cardhit" href="' + esc(b.live) + '" target="_blank" rel="noopener noreferrer"' +
+        ' aria-label="Open ' + esc(b.name) + ', live page"></a>'
+      : "") +
     (wantPreview ? '<div class="thumb' + (shot ? "" : " missing") + '">' +
       (shot ? '<img src="' + shot + '" alt="' + esc(b.name) + '" loading="lazy">'
             : '<div class="nothumb"><span class="mark">Thumbnail missing</span>' +
