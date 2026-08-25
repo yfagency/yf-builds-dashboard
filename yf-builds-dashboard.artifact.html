@@ -790,23 +790,31 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
    340px column is the constraint, not the other way round. */
 .gamebox .code { gap: 10px; }
 .gamebox .cap input { width: 62px; height: 84px; font-size: 34px; border-radius: 12px; }
-.gamebox .legend { gap: 12px; font-size: 9.5px; margin-top: 16px; }
+/* The gamebox legend override lives with the shared legend rules further down. */
 
 @media (max-width: 460px) {
   .code { gap: 8px; }
   .cap input, .gamebox .cap input { width: 56px; height: 78px; font-size: 30px; }
 }
 
-.pz .legend {
+/* The legend belongs to BOTH games - the modal and the box in the masthead - and these
+   rules were scoped to .pz alone. In the masthead the dots therefore had no size and the
+   three labels had no layout, so they ran together into one line of nonsense:
+   "in placeelsewherenot in it". The gamebox tweaks below only ever set gap and font-size,
+   which is not enough to build the row on its own. */
+.pz .legend, .gamebox .legend {
   display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
   font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--muted); margin: 20px 0 0;
 }
-.pz .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.pz .legend i { width: 8px; height: 8px; border-radius: 50%; display: block; }
-.pz .legend i.red { background: var(--crit); }
-.pz .legend i.amber { background: var(--warn); }
-.pz .legend i.green { background: var(--ok); }
+.pz .legend span, .gamebox .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.pz .legend i, .gamebox .legend i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+.pz .legend i.red, .gamebox .legend i.red { background: var(--crit); }
+.pz .legend i.amber, .gamebox .legend i.amber { background: var(--warn); }
+.pz .legend i.green, .gamebox .legend i.green { background: var(--ok); }
+/* Tighter in the masthead box, which has 304px of usable width. Must come after the shared
+   rule above, or it loses to it. */
+.gamebox .legend { gap: 12px; font-size: 9.5px; margin: 16px 0 0; }
 
 .pz .acts { display: flex; gap: 8px; justify-content: center; margin: 18px 0 0; flex-wrap: wrap; }
 .pz .verdict {
@@ -4965,6 +4973,11 @@ var RESET_ARMED = null;
    a roll changes the code under a game in progress too, and holding a board built from the
    old code would be worse than dealing a fresh one. */
 function refreshPlay() {
+  /* Every reset in #/dev lands here, so this is the one place that has to forget. Note it
+     only forgets on THIS browser - resetting someone else's day from here cannot reach
+     their localStorage. Rolling the hidden code is what releases everybody, because the
+     memory is keyed on the salt. */
+  setLocalDone(null);
   return mcp.invalidate(SERVER, T_QUERY, sqlInput(PLAY_DS, Q_PLAY))
     .catch(function () {})
     .then(loadPlay)
@@ -6145,6 +6158,31 @@ var PLAY_FREE = false;
    tolerate duplicates as well - two layers, because neither alone is enough. */
 var PLAY_READY = Promise.resolve();
 
+/* ---- the browser's own memory of finishing ----
+   The registry is the record. This is what actually stops a replay, and it has to exist
+   because every way the registry read can go wrong - cached behind a 20s staleTime, a
+   write that has not landed yet, a query that failed, a duplicate blank row - looks
+   identical to "you have not played today", and hands the player a second go at a code
+   they have already cracked.
+
+   Keyed on the salt as well as the day, so ZF rolling the hidden code releases this
+   exactly as it releases the registry rows: a new code is a new game, and being locked
+   out of a code you have never seen would be the worse bug. */
+var PLAY_DONE_KEY = "yfbridge.play.done";
+function localDone() {
+  try { return JSON.parse(localStorage.getItem(PLAY_DONE_KEY) || "null"); } catch (e) { return null; }
+}
+function setLocalDone(v) {
+  try {
+    if (v) { localStorage.setItem(PLAY_DONE_KEY, JSON.stringify(v)); }
+    else { localStorage.removeItem(PLAY_DONE_KEY); }
+  } catch (e) {}
+}
+function localDoneFor(ini, day, salt) {
+  var d = localDone();
+  return (d && d.ini === ini && d.day === day && d.salt === salt) ? d : null;
+}
+
 function myIni() { return PEOPLE[WHO] ? PEOPLE[WHO].ini : null; }
 function playable() { return !!(mcp && SERVER && myIni()); }
 
@@ -6234,7 +6272,14 @@ function myStanding() {
 function countOpen() {
   if (PLAY_COUNTED || !playable()) return Promise.resolve();
   PLAY_COUNTED = true;
-  PLAY_READY = PLAY_READY.then(countOpenNow, countOpenNow);
+  /* Both writers decide create-vs-update from rowFor, which reads PLAY_ROWS - so running
+     before the first read has landed means finding nothing and creating a row that already
+     exists. That is where the blank duplicates came from: seven rows for ZF on one day, one
+     per page load. Read first, then decide. */
+  var go = function () {
+    return (PLAY_ROWS === null ? loadPlay() : Promise.resolve()).then(countOpenNow);
+  };
+  PLAY_READY = PLAY_READY.then(go, go);
   return PLAY_READY;
 }
 function countOpenNow() {
@@ -6408,6 +6453,11 @@ function renderPlayBox() {
     // Cracked in this session but the registry does not say so - a failed write, or a
     // re-read that has not landed. Trust what happened in front of the player.
     if (finishedHere) { showResult(PZ.score || 0, PZ.guesses || PZ.hist.length, true, stat); return; }
+    /* Cracked on this browser at some earlier point today. Survives a reload, which is
+       what the two checks above do not: PZ dies with the page and the registry row can be
+       invisible for any of a dozen ordinary reasons. */
+    var ld = localDoneFor(myIni(), day, salt);
+    if (ld) { showResult(+ld.score || 0, +ld.guesses || 0, true, stat); return; }
   }
 
   if (!PZ || PZ.day !== day || PZ.salt !== salt) {
@@ -6591,10 +6641,19 @@ function showResult(score, guesses, already, stat) {
    the game is not worth a red banner over. */
 function savePlay(score, guesses, took) {
   if (!playable()) return;
+  /* Written before anything goes over the wire, and not inside the queue: the point of it
+     is to be true even when the write below never lands. Only ever reached with practice
+     mode off, which is the one case where a finish is not supposed to stick. */
+  setLocalDone({ ini: myIni(), day: jstDay(), salt: saltFor(jstDay()),
+                 score: score, guesses: guesses });
   // Behind whatever countOpen is doing, so the row it is creating is visible to rowFor by
   // the time this looks for one.
-  PLAY_READY = PLAY_READY.then(function () { return savePlayNow(score, guesses, took); },
-                               function () { return savePlayNow(score, guesses, took); });
+  var go = function () {
+    // Same reason as countOpen: decide against rows that have actually been read.
+    return (PLAY_ROWS === null ? loadPlay() : Promise.resolve())
+      .then(function () { return savePlayNow(score, guesses, took); });
+  };
+  PLAY_READY = PLAY_READY.then(go, go);
 }
 function savePlayNow(score, guesses, took) {
   if (!playable()) return;
