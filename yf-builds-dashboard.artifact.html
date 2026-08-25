@@ -201,6 +201,9 @@ input.pick {
 }
 .card h3 { font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
 .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+/* The status control and the pin ride together at the right of a build card, so the title
+   still has the whole of the rest of the line. */
+.cardpin { display: inline-flex; align-items: center; gap: 4px; flex: none; }
 .pill {
   font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .04em;
   padding: 3px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent;
@@ -1621,6 +1624,17 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 .pinbtn[aria-pressed="true"] { color: var(--accent); }
 .pinbtn svg { display: block; }
 
+/* The pin and its two arrows travel together, so a row only ever has one thing to make
+   space for. Arrows are quieter than the pin: the pin is the decision, the order is a
+   nudge. */
+.pingrp { display: inline-flex; align-items: center; gap: 1px; flex: none; }
+.pinmv {
+  flex: none; cursor: pointer; background: none; border: 0; padding: 0;
+  width: 16px; height: 18px; border-radius: 3px;
+  font-family: var(--sans); font-size: 12px; line-height: 1; color: var(--muted);
+}
+.pinmv:hover { background: var(--surface-2); color: var(--ink); }
+
 /* Pins on the home strip: a second row under the summary, inside the same bar. */
 .lead-pins {
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -3022,7 +3036,9 @@ function card(b) {
     '<div class="card-top"><h3>' +
       (SELECTING && b.pageId ? '<input type="checkbox" class="pick" data-pick="' + esc(b.pageId) + '"' +
         (SELECTED[b.pageId] ? " checked" : "") + ' aria-label="Select ' + esc(b.name) + '">' : "") +
-      esc(b.name) + "</h3>" + statusControl(b) +
+      esc(b.name) + "</h3>" +
+      '<span class="cardpin">' + statusControl(b) +
+        (b.pageId ? pinCtl("b", b.pageId, b.name) : "") + "</span>" +
     "</div>" +
     checkoutLine(b) +
     (b.stack.length ? '<div class="chips">' + b.stack.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join("") + "</div>" : "") +
@@ -3156,7 +3172,9 @@ function render() {
   var main = el("main");
   if (!pool.length) { main.innerHTML = EMPTY; return; }
   if (!shown.length) { main.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>No build matches those filters. Clear the search or pick another status.</p></div>'; return; }
-  main.innerHTML = '<div class="grid">' + shown.map(card).join("") + "</div>";
+  // Pinned builds first, in your order; the rest keep the order the filters left them in.
+  main.innerHTML = '<div class="grid">' +
+    sortPinned(shown, "b", function (x) { return x.pageId; }).map(card).join("") + "</div>";
   clampNotes();
   // Drop selections for rows that are no longer on screen, so the count never claims
   // more than the viewer can see.
@@ -4232,8 +4250,12 @@ function minePredicate(t) {
 function myTasks() {
   return (TASK_ROWS || []).filter(minePredicate);
 }
+/* Pinned tasks rise inside their bucket, not out of it. A pin says "keep this in front of
+   me"; the bucket says when you meant to do it, and a pin that yanked a Later task up into
+   Today would be the pin quietly rewriting the plan. */
 function inBucket(list, b) {
-  return list.filter(function (t) { return (t["Planning"] || "Later") === b; });
+  return sortPinned(list.filter(function (t) { return (t["Planning"] || "Later") === b; }),
+                    "t", function (t) { return pageIdFrom(t.url); });
 }
 
 var HOT  = String.fromCharCode(0xD83D, 0xDD25);  // U+1F525 fire, the Priority high value
@@ -4284,7 +4306,7 @@ function taskRow(t) {
       // should be the thing you change it with.
       (tid ? taskSel(tid, "Planning", t["Planning"], PLAN_OPTS, "tplan") : "") +
       (tid ? taskSel(tid, "Progress", t["Progress"], PROG_OPTS, "tprog " + pc) : "") +
-      (tid ? pinBtn("t", tid, t["Tasks"]) : "") +
+      (tid ? pinCtl("t", tid, t["Tasks"]) : "") +
     "</div>" +
   "</div>";
 }
@@ -5453,7 +5475,8 @@ function renderProjects() {
 
   // The directory: search first, because 431 rows is not something you scroll.
   var q = PROJ_FILTER.toLowerCase().trim();
-  var hits = PROJ_ROWS.filter(function (r) { return projMatches(r, q); });
+  var hits = sortPinned(PROJ_ROWS.filter(function (r) { return projMatches(r, q); }),
+                        "p", projIdOf);
   var list = hits.slice(0, 60).map(function (r) {
     var c = projClientName(r), code = projCode(r);
     // A row, not a button: it holds a select button AND a pin button, and a button
@@ -5464,7 +5487,7 @@ function renderProjects() {
         (code ? '<span class="pc">' + esc(code) + "</span> " : "") + esc(projTitle(r)) + "</button>" +
       (c ? '<span class="pc">' + esc(c) + "</span>" : "") +
       '<span class="tpill">' + esc(r["Status"] || "unset") + "</span>" +
-      pinBtn("p", pid, projTitle(r)) +
+      pinCtl("p", pid, projTitle(r)) +
       "</div>";
   }).join("");
 
@@ -5698,22 +5721,63 @@ function isPinned(kind, id) {
   for (var i = 0; i < PINS.length; i++) if (PINS[i].k === kind && PINS[i].id === id) return true;
   return false;
 }
-/* Newest first, so a pin you just made is the one that shows in the two-slot home strip. */
+/* A new pin goes to the END of its kind. It used to go to the front, which was right when
+   the order was "most recent" and nothing else; now that the order is something you set
+   with the arrows, pinning a fourth thing must not demote the three you already chose. */
 function togglePin(kind, id, title) {
   var out = [], found = false;
   PINS.forEach(function (p) {
     if (p.k === kind && p.id === id) { found = true; return; }
     out.push(p);
   });
-  if (!found) out.unshift({ k: kind, id: id, t: String(title || "").slice(0, 120) });
+  if (!found) out.push({ k: kind, id: id, t: String(title || "").slice(0, 120) });
   PINS = out;
   savePins();
-  renderLeadPins();
-  renderProjects();
-  renderTasksPage();
+  repaintPinned();
 }
 function pinsOf(kind) {
   return PINS.filter(function (p) { return p.k === kind; });
+}
+
+/* Every surface that sorts pinned items to the top has to be redrawn when the pins change,
+   or one list agrees with the strip and the next one does not. Listed once, here. */
+function repaintPinned() {
+  renderLeadPins();
+  renderProjects();
+  renderTasksPage();
+  if (typeof renderDecisions === "function") renderDecisions();
+  if (typeof render === "function" && typeof BUILDS_ROWS !== "undefined" && BUILDS_ROWS) render();
+}
+
+/* Position within a kind, which is the only ordering that means anything: PINS holds every
+   kind in one array, and moving a project past a task would be nonsense. */
+function pinIndex(kind, id) {
+  var of = pinsOf(kind);
+  for (var i = 0; i < of.length; i++) if (of[i].id === id) return i;
+  return -1;
+}
+function movePin(kind, id, d) {
+  var of = pinsOf(kind), i = pinIndex(kind, id);
+  if (i < 0) return;
+  var j = i + d;
+  if (j < 0 || j >= of.length) return;
+  var a = of[i], b = of[j];
+  // Swap them where they actually sit in PINS, leaving every other kind untouched.
+  var ia = PINS.indexOf(a), ib = PINS.indexOf(b);
+  PINS[ia] = b; PINS[ib] = a;
+  savePins();
+  repaintPinned();
+}
+
+/* Pinned first, in your order, then everything else exactly as it arrived. Array sort is
+   stable, so the unpinned tail keeps whatever order the caller worked out - due date,
+   weight, freshness - rather than being quietly reshuffled. */
+function sortPinned(list, kind, idOf) {
+  var rank = function (x) {
+    var i = pinIndex(kind, idOf(x));
+    return i < 0 ? Infinity : i;
+  };
+  return list.slice().sort(function (a, b) { return rank(a) - rank(b); });
 }
 
 /* Drawn, because this file cannot hold the pushpin character. A filled head on a stem:
@@ -5731,7 +5795,27 @@ function pinBtn(kind, id, title) {
     '" title="' + (on ? "Unpin" : "Pin this") + '">' + pinSvg(on) + "</button>";
 }
 
+/* The pin plus its two arrows. The arrows exist only on a pinned item, and only once there
+   is a second pin of the same kind to order it against - a control that can do nothing is
+   worse than no control. Same shape as the home cards, deliberately: one gesture to learn.
+
+   Written as one inline-flex group so it drops into a row wherever pinBtn used to go. */
+function pinCtl(kind, id, title) {
+  var on = isPinned(kind, id);
+  var n = pinsOf(kind).length;
+  var arrows = "";
+  if (on && n > 1) {
+    arrows =
+      '<button class="pinmv" data-pinmv="' + esc(kind) + '" data-pinmvid="' + esc(id) +
+        '" data-d="-1" title="Move up">' + String.fromCharCode(8249) + "</button>" +
+      '<button class="pinmv" data-pinmv="' + esc(kind) + '" data-pinmvid="' + esc(id) +
+        '" data-d="1" title="Move down">' + String.fromCharCode(8250) + "</button>";
+  }
+  return '<span class="pingrp">' + pinBtn(kind, id, title) + arrows + "</span>";
+}
+
 /* ---- pins on the home strip ---- */
+var PIN_KIND = { p: "PRJ", t: "TSK", b: "BLD", d: "D&amp;L" };
 function renderLeadPins() {
   var host = el("leadPins");
   if (!host) return;
@@ -5740,7 +5824,17 @@ function renderLeadPins() {
   host.hidden = false;
   host.innerHTML = show.map(function (p) {
     var label = p.t, href = "#/tasks";
-    if (p.k === "p") {
+    if (p.k === "b") {
+      var bb = (typeof BUILDS_ROWS !== "undefined" && BUILDS_ROWS ? BUILDS_ROWS : [])
+        .filter(function (x) { return x.pageId === p.id; })[0];
+      label = bb ? bb.name : p.t;
+      href = "#/builds";
+    } else if (p.k === "d") {
+      var dd = (typeof DL_ROWS !== "undefined" && DL_ROWS ? DL_ROWS : [])
+        .filter(function (x) { return x.url === p.id; })[0];
+      label = dd ? String(dd["Entry"] || p.t) : p.t;
+      href = "#/decisions";
+    } else if (p.k === "p") {
       var row = projRowOf(p.id);
       label = row ? projTitle(row) : p.t;
       href = "#/projects?p=" + encodeURIComponent(p.id);
@@ -5750,7 +5844,7 @@ function renderLeadPins() {
       href = t ? notionUrl(t.url) : "#/tasks";
     }
     var ext = (p.k === "t" && href.indexOf("#") !== 0);
-    return '<span class="pinchip"><span class="kind">' + (p.k === "p" ? "PRJ" : "TSK") + "</span>" +
+    return '<span class="pinchip"><span class="kind">' + PIN_KIND[p.k] + "</span>" +
       '<a href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener noreferrer"' : "") + '>' +
       esc(label || "(untitled)") + "</a>" +
       '<button class="drop" data-unpin="' + esc(p.k) + '" data-unpinid="' + esc(p.id) +
@@ -5764,6 +5858,12 @@ document.addEventListener("click", function (e) {
   if (pin) {
     e.preventDefault(); e.stopPropagation();
     togglePin(pin.getAttribute("data-pin"), pin.getAttribute("data-pinid"), pin.getAttribute("data-pintitle"));
+    return;
+  }
+  var mv = t.closest ? t.closest("[data-pinmv]") : null;
+  if (mv) {
+    e.preventDefault(); e.stopPropagation();
+    movePin(mv.getAttribute("data-pinmv"), mv.getAttribute("data-pinmvid"), Number(mv.getAttribute("data-d")));
     return;
   }
   var un = t.closest ? t.closest("[data-unpin]") : null;
@@ -7139,7 +7239,7 @@ function renderDecisions() {
     loadDL().then(renderDecisions);
     return;
   }
-  var list = dcFiltered();
+  var list = sortPinned(dcFiltered(), "d", function (r) { return r.url; });
   var count = el("dcCount");
   if (count) {
     count.textContent = list.length + " of " + (DL_ROWS || []).length;
@@ -7159,6 +7259,7 @@ function renderDecisions() {
         '<span class="dcwhen">' + esc(r.day ? shortDate(r.day) : "") + "</span>" +
         (r["Source"] ? '<span class="dcsrc">' + esc(r["Source"]) + "</span>" : "") +
         (isYes(r["Still applies"]) ? "" : '<span class="dcstale">superseded</span>') +
+        pinCtl("d", r.url, r["Entry"]) +
       "</div>" +
       '<h3><a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">' +
         esc(r["Entry"] || "(untitled)") + "</a></h3>" +
