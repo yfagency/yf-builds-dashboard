@@ -1341,6 +1341,32 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 .chip .caret { color: var(--muted); font-size: 9px; }
 .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
+/* ---- the identity hue ----
+   --me is set on the root element by applyMe(), from the hue on the roster. Everything
+   below reads it and nothing hard-codes a person, so adding a fifth builder is one hue in
+   PEOPLE and nothing else.
+
+   Kept deliberately quiet: a 2px frame at 45% and a chip border. Loud enough to catch at a
+   glance, soft enough that it is not the first thing you see on a page you are reading. */
+#meframe {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none;
+  border: 2px solid var(--me); opacity: .45;
+  display: none;
+}
+:root[data-me] #meframe { display: block; }
+
+/* The chip is where you go to fix it, so it is the one place the hue is at full strength. */
+:root[data-me] .chip { border-color: var(--me); color: var(--ink); }
+:root[data-me] .chip:hover { border-color: var(--me); filter: brightness(1.15); }
+:root[data-me] .chip .who { color: var(--me); }
+
+/* Every "this row is yours" marker in the app follows the same variable, so being signed
+   in as the wrong person and your own work being highlighted can never disagree. The
+   fallback keeps the team view looking exactly as it did. */
+:root[data-me] .superson.me { border-left-color: var(--me); }
+:root[data-me] .superson.me .suwho .ini { background: var(--me); color: var(--accent-ink); }
+:root[data-me] .whopick[aria-current="true"] { border-color: var(--me); }
+
 /* ---- dev tools ----
    Nav-only by design: it has no home-page block at all, which in the ladder is a
    weight of 1-2. A maintenance console should be reachable, not promoted. */
@@ -1863,6 +1889,12 @@ img, svg { max-width: 100%; }
 </style>
 
 <div class="wrap">
+
+  <!-- Whose window this is. Fixed to the viewport rather than drawn inside the layout, so
+       it survives every route, every scroll position and every view - one thing that is
+       always true no matter where you are in the app. Empty and invisible until someone
+       is selected. -->
+  <div id="meframe" aria-hidden="true"></div>
 
   <nav class="topbar">
     <a class="wordmark" href="#/">YF <span class="slash">&#9585;</span> Bridge</a>
@@ -3952,11 +3984,24 @@ function truncatedPeople() {
 
    Notion returns initials as account names, so full names are mapped here; resolved
    2026-08-21 from notion-get-users. */
+/* Each person carries a hue, and it is worn everywhere: a frame round the window, the
+   identity chip, and every "this one is yours" marker in the app. The question it answers
+   is "am I looking at this as the right person", which is a glance rather than a read, so
+   it has to be colour and it has to be on every page.
+
+   BB is yellow by request, but NOT the app accent (#EBB20C) - a lighter, greener gold, so
+   an identity mark can never be mistaken for a button. Same reason PS is a coral orange
+   rather than --warn (#D9822B): a personal colour that doubles as a warning colour is
+   worse than useless. ZF is off-white, which is the quietest of the four and belongs to
+   the person who is in here most.
+
+   The team view has no hue at all. That is the point - no frame means you are nobody in
+   particular, which is exactly the state worth noticing. */
 var PEOPLE = {
-  "257d872b-594c-81b9-8dbb-00020be015be": { ini: "ZF", name: "Zia Firouz",       role: "Strategist, Technology & AI" },
-  "51885300-ccbc-4ca8-b257-2a393906f9f3": { ini: "PS", name: "Polina Savenkova", role: "Designer, Media & Creative" },
-  "1298f431-181e-484b-abf1-8d82ab6f3a87": { ini: "BB", name: "Brano Beres",      role: "Partner, Strategy & Creative" },
-  "94da9330-c68f-4628-9474-4e74de5f83a5": { ini: "JK", name: "Jasmyne Koh",      role: "Manager, Account & Creative" }
+  "257d872b-594c-81b9-8dbb-00020be015be": { ini: "ZF", name: "Zia Firouz",       role: "Strategist, Technology & AI", hue: "#C9CBD1" },
+  "51885300-ccbc-4ca8-b257-2a393906f9f3": { ini: "PS", name: "Polina Savenkova", role: "Designer, Media & Creative",  hue: "#FF8A4C" },
+  "1298f431-181e-484b-abf1-8d82ab6f3a87": { ini: "BB", name: "Brano Beres",      role: "Partner, Strategy & Creative", hue: "#F5D33D" },
+  "94da9330-c68f-4628-9474-4e74de5f83a5": { ini: "JK", name: "Jasmyne Koh",      role: "Manager, Account & Creative", hue: "#C77DFF" }
 };
 function isBuilder(id) { return !!id && Object.prototype.hasOwnProperty.call(PEOPLE, id); }
 
@@ -4488,13 +4533,17 @@ var AV = {
 function avatarSvg(ini, size) {
   var a = AV[ini] || { dir: 1, bars: 4, hit: 1 };
   var s = size || 32, n = a.bars, i, bars = "";
+  /* The struck bar carries the person's hue rather than the app accent. Looked up by
+     initials here rather than passed in, so the picker - which draws all four at once -
+     teaches the four colours next to the four faces without any extra plumbing. */
+  var hue = (PEOPLE_BY_INI[ini] && PEOPLE_BY_INI[ini].hue) || "var(--accent)";
   // 64-unit space, scaled by the SVG viewBox, so one geometry serves every size.
   var step = 64 / (n + 1);
   for (i = 0; i < n; i++) {
     var x = step * (i + 1);
     var accent = (i === a.hit);
     bars += '<rect x="' + (x - 3) + '" y="-16" width="' + (accent ? 5 : 3) + '" height="96" ' +
-      'fill="' + (accent ? "var(--accent)" : "var(--ink)") + '"' +
+      'fill="' + (accent ? hue : "var(--ink)") + '"' +
       (accent ? "" : ' opacity=".17"') + "/>";
   }
   return '<svg class="av av-ring" width="' + s + '" height="' + s + '" viewBox="0 0 64 64" ' +
@@ -4527,6 +4576,25 @@ function renderChip() {
   av.innerHTML = avatarFor(WHO, 26);
   who.textContent = WHO === WHO_ALL ? "Team" : whoInitials(WHO);
 }
+
+/* Painting the hue is one attribute and one variable on the root element; every rule that
+   uses it is in the stylesheet. Doing it here rather than per-component is what makes it
+   reach pages this function has never heard of. */
+function applyMe() {
+  var r = document.documentElement;
+  var p = PEOPLE[WHO];
+  if (!p) {
+    r.removeAttribute("data-me");
+    r.style.removeProperty("--me");
+    return;
+  }
+  r.setAttribute("data-me", p.ini);
+  r.style.setProperty("--me", p.hue);
+}
+
+var _setWhoHue = setWho;
+setWho = function (id, name) { _setWhoHue(id, name); applyMe(); renderChip(); };
+applyMe();
 
 /* ---- dev tools gating ----
    Cosmetic, and deliberately documented as such. Anyone can select ZF, because there is
