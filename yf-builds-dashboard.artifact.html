@@ -546,6 +546,35 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 /* Superseded entries stay readable but stop competing - the log is a history, so an entry
    that no longer applies is still worth finding, just not worth reading first. */
 .dcard.stale { opacity: .62; }
+
+/* ---- one size for every entry ----
+   A log where the cards are all different heights reads as a pile. Fixed height with the
+   title and summary clamped makes it a table you can scan, and the entries that have more
+   to say announce it with a button rather than by being taller than their neighbours.
+
+   The height is a budget: one meta row, two lines of title, four of summary, one row of
+   tags. Anything past that is behind Read more. */
+.dcard { display: flex; flex-direction: column; height: 272px; overflow: hidden; }
+.dcard h3, .dcsum {
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+}
+.dcard h3 { -webkit-line-clamp: 2; line-clamp: 2; }
+.dcsum { -webkit-line-clamp: 4; line-clamp: 4; flex: none; }
+/* Tags sit on the floor of the card, so they line up across the row instead of floating
+   wherever the summary happened to end. */
+.dcard .chips { margin-top: auto; padding-top: 10px; }
+.dcmore {
+  background: none; border: 0; padding: 4px 0 0; margin: 0; cursor: pointer; align-self: flex-start;
+  font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--muted);
+}
+.dcmore:hover { color: var(--accent); }
+/* An opened card is allowed to be as tall as it needs. Its row grows with it; the rest of
+   the row keeps its own height rather than stretching to match, which is what makes the
+   opened one obvious. */
+.dcard.open { height: auto; overflow: visible; }
+.dcard.open h3, .dcard.open .dcsum {
+  display: block; -webkit-line-clamp: unset; line-clamp: unset;
+}
 .dctop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
 .dcat {
   font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
@@ -564,7 +593,6 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .dcard h3 a { color: var(--ink); text-decoration: none; }
 .dcard h3 a:hover { color: var(--accent); }
 .dcsum { font-size: 13.5px; color: var(--ink-2); margin: 0 0 9px; line-height: 1.55; }
-.dcard .chips { margin-top: 2px; }
 #dcSearch { flex: 1 1 260px; min-width: 180px; }
 
 /* ---- everything is a card grid ----
@@ -2317,6 +2345,8 @@ img, svg { max-width: 100%; }
     <div class="controls">
       <input type="text" id="dcSearch" placeholder="Search entries and summaries" autocomplete="off">
       <select id="dcKindF"><option value="">All kinds</option><option>Decision</option><option>Learning</option><option>Correction</option><option>Context update</option></select>
+      <!-- Filled from PEOPLE at boot, so it cannot drift out of step with the roster. -->
+      <select id="dcWho"><option value="">Everyone</option></select>
       <label class="toggle"><input type="checkbox" id="dcLive" checked> Still applies</label>
       <span class="quiet mono" id="dcCount"></span>
     </div>
@@ -7074,9 +7104,15 @@ function dlCatClass(c) {
 function dcFiltered() {
   var q = (el("dcSearch") ? el("dcSearch").value : "").trim().toLowerCase();
   var kind = el("dcKindF") ? el("dcKindF").value : "";
+  var who = el("dcWho") ? el("dcWho").value : "";
   var live = el("dcLive") ? el("dcLive").checked : false;
   return (DL_ROWS || []).filter(function (r) {
     if (kind && r["Category"] !== kind) return false;
+    /* Source is the only person signal this database carries, and it is always
+       "<INI> - <device>" - ZF - PC, BB - Macbook, JK - Laptop. So the person is the token
+       before the dash, and filtering on it also catches every machine they write from,
+       which is the thing you actually want. */
+    if (who && dcPerson(r) !== who) return false;
     if (live && !isYes(r["Still applies"])) return false;
     if (!q) return true;
     // Search the title and the summary together - the reasoning is where the useful
@@ -7110,7 +7146,7 @@ function renderDecisions() {
   }
   if (!list.length) {
     body.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>' +
-      ((DL_ROWS || []).length ? "Try fewer words, or turn off Still applies."
+      ((DL_ROWS || []).length ? "Try fewer words, another person, or turn off Still applies."
         : "The log is empty, which after this much work is unlikely - check the connector.") + "</p></div>";
     return;
   }
@@ -7208,9 +7244,70 @@ el("dcCancel").addEventListener("click", function () {
 el("dcSave").addEventListener("click", saveDecision);
 // Filtering is local to rows already in memory, so it can run on every keystroke without
 // costing a round trip.
-["dcSearch", "dcKindF", "dcLive"].forEach(function (id) {
+function dcPerson(r) {
+  return String(r["Source"] || "").split("-")[0].trim().toUpperCase();
+}
+
+function fillDcWho() {
+  var sel = el("dcWho");
+  if (!sel) return;
+  var keep = sel.value;
+  sel.innerHTML = '<option value="">Everyone</option>' +
+    Object.keys(PEOPLE).map(function (id) {
+      var p = PEOPLE[id];
+      return '<option value="' + esc(p.ini) + '">' + esc(p.name.split(" ")[0]) + "</option>";
+    }).join("");
+  sel.value = keep;
+}
+fillDcWho();
+
+/* The clamp is a function of the real font, so it is measured after render - and again
+   once the webfonts land, because Inter Tight wraps differently from the fallback and a
+   button offered before it loads is a button on the wrong cards. A card with nothing
+   hidden gets no button: an entry that is already complete should not invite a click that
+   does nothing. */
+function dcClamps() {
+  var body = el("dcBody");
+  if (!body) return;
+  Array.prototype.forEach.call(body.querySelectorAll(".dcard"), function (card) {
+    var old = card.querySelector(".dcmore");
+    if (old) old.parentNode.removeChild(old);
+    if (card.classList.contains("open")) return;
+    var over = false;
+    Array.prototype.forEach.call(card.querySelectorAll("h3, .dcsum"), function (n) {
+      if (n.scrollHeight > n.clientHeight + 1) over = true;
+    });
+    if (!over) return;
+    var b = document.createElement("button");
+    b.className = "dcmore";
+    b.type = "button";
+    b.textContent = "Read more";
+    var sum = card.querySelector(".dcsum");
+    if (sum && sum.nextSibling) { card.insertBefore(b, sum.nextSibling); }
+    else { card.appendChild(b); }
+  });
+}
+
+el("dcBody").addEventListener("click", function (ev) {
+  var b = ev.target.closest ? ev.target.closest(".dcmore") : null;
+  if (!b) return;
+  var card = b.closest(".dcard");
+  if (!card) return;
+  card.classList.add("open");
+  b.parentNode.removeChild(b);
+});
+
+var _renderDecisionsClamp = renderDecisions;
+renderDecisions = function () {
+  var r = _renderDecisionsClamp();
+  dcClamps();
+  return r;
+};
+try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(dcClamps); } catch (e) {}
+
+["dcSearch", "dcKindF", "dcWho", "dcLive"].forEach(function (id) {
   var e = el(id);
-  if (e) e.addEventListener(id === "dcSearch" ? "input" : "change", renderDecisions);
+  if (e) e.addEventListener(id === "dcSearch" ? "input" : "change", function () { renderDecisions(); });
 });
 
 /* Both sections read Notion, so both need the connector hook rather than a call at boot -
