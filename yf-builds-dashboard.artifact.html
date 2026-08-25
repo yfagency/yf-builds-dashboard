@@ -571,8 +571,12 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .sudate { grid-column: 1 / -1; }
 .superson {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
-  padding: 14px 16px 16px; border-bottom: 1px solid var(--rule);
+  padding: 14px 16px 16px;
 }
+/* The list version stripped the last row's rule so the group did not end on a line. A card
+   needs all four sides, so put it back - otherwise the last card in every day loses its
+   bottom edge. */
+.superson:last-child { border-bottom: 1px solid var(--rule); }
 /* Your own card keeps the accent rail it had as a row. */
 .superson.me { border-left: 2px solid var(--accent); }
 .sucols { grid-template-columns: 1fr; gap: 10px; }
