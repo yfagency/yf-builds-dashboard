@@ -8,6 +8,23 @@ The mark between the letters is `&#9585;` (U+2571) &mdash; the forward-leaning
 diagonal. It is not a backslash and not U+27CD; getting it wrong is the most common
 mistake in docs about this page.
 
+**Bridge writes now, it does not only read.** Until 2026-08-25 the only writeable things
+were the build registry and the dev panel's decision form; every other surface was a
+window. Tasks, the daily and the decision log are all writeable from the page, with each
+viewer's own Notion connector doing the writing.
+
+Three property types are involved and only one is obvious, so they are recorded here
+because each was verified against a live write rather than guessed:
+
+| Notion type | Write format | Reads back as |
+| --- | --- | --- |
+| select | `"Prototype"` | same |
+| **status** (`Planning`, `Progress`) | `"In Progress"` — a plain name, same as a select | same |
+| **person** (`Assignee`) | `["<bare-uuid>"]` | `["user://<uuid>"]` |
+
+The person one is the trap: sending back the `user://` form you read is the natural
+mistake, and it is wrong.
+
 | Section | Route | Reads | Written by |
 | --- | --- | --- | --- |
 | Home | `#/` | both of the below | - |
@@ -159,6 +176,81 @@ running the PowerShell script:
 
 The capture is deterministic: re-rendering an unchanged build produces a byte-identical
 JPEG, so a no-op run leaves a clean `git diff`.
+
+## Daily — `#/standup`
+
+Replaces the Geekbot flow in **#yf-daily**. The two rituals and their exact questions are
+the ones already running there: BB set the shape in the channel topic on 2025-09-04, and
+Geekbot's Day Out sharpened it. **The sharpened wording is what people actually answer, so
+it is what the page asks.** Nobody has to learn a new habit, only a new place to put it.
+
+- **Day In** — what you want to achieve, anything you want to talk about, blockers.
+- **Day Out** — what you shipped against the Day In promise, and what changed because of it.
+
+One row per person per JST day in **Bridge Standup**
+(`collection://7fffc797-2289-4baa-b2c4-c2e9a4b77c89`). Both halves are always on screen:
+a filed one shows the answers, an unfiled one shows the form. That is deliberate — part of
+the page's job is making an outstanding Day Out visible, which a tab would hide.
+
+**Nothing is posted to Slack**, and that is a decision rather than an omission. Writing back
+to #yf-daily needs a Slack connector every viewer grants — a new per-person setup, which is
+exactly the burden this app keeps refusing to add. So the record moves here and the channel
+goes back to being a conversation. If a Slack copy is still wanted, the ZF-PC scheduled
+runner already posts there daily and can read this database.
+
+**Nine days of real history were imported** from the channel and are marked `slack` in the
+team list, so the page did not open empty.
+
+**Geekbot can be switched off once the team is using this** — that is ZF's call in Slack,
+not something the page does.
+
+## Decisions — `#/decisions`
+
+Decisions & Learnings had been **write-only for months**: the dev panel wrote to it and
+nothing in the app could read it back, so the studio's own record of what it had worked out
+was invisible unless you opened Notion.
+
+Search covers the title *and* the summary together, because the reasoning is where the
+useful words are — a title-only search misses almost everything worth finding. Superseded
+entries are dimmed rather than hidden and are behind the **Still applies** toggle; the log
+is a history, so an entry that no longer applies is still worth finding, just not worth
+reading first.
+
+Writing from here stamps `Source` as e.g. `ZF - Bridge`. The KB's convention is that a new
+environment gets a new `Source` option when it first appears, so **the first write from
+each person will add one option to that select** — expected, not a mistake.
+
+## Tasks — capture, triage, inline status
+
+**Quick capture** sits at the top of `#/tasks`: a title, who it is for, a bucket, an
+optional due date. The point is the gap between thinking of a task and being somewhere you
+can write one down.
+
+**Triage** — `Needs a bucket` — is the panel that surfaces tasks with no `Planning` set.
+`inBucket()` reads `(Planning || "Later")`, so those tasks had been sitting inside Later
+this whole time, indistinguishable from ones deliberately parked there. **Later is a
+decision; no Planning is an unanswered question.** They are pulled out of Later so nothing
+is listed twice.
+
+**Every row's Planning and Progress are selects**, not labels — changing one is the common
+case, so the thing you read it from is the thing you change it with. `Planning` deliberately
+omits **Overdue**: Notion derives that from the due date, so offering it would let someone
+declare a task overdue without moving the date, and the next sync would silently undo them.
+
+## Mobile
+
+Verified at a 390px column across home, daily, tasks and decisions: nothing overflows its
+container and there is no horizontal scroll. Every two-column grid added for the daily
+collapses to one — side by side, Day In and Day Out are two ~165px columns holding three
+textareas each, which is not a form anybody fills in on a train.
+
+**Form controls go to 16px under 640px**, and that is not a taste decision: iOS zooms the
+whole page in when you focus an input under 16px and leaves you scrolled sideways. It
+mattered little while the page was read-only; it now has forms on four surfaces.
+
+Honest limit: this was measured by constraining the layout to a phone column, **not by
+loading it on a phone**. The preview pane cannot resize, so touch targets and real device
+behaviour are still unverified.
 
 ## The daily code
 

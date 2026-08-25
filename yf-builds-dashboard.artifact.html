@@ -452,6 +452,158 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .flag p { font-size: 13.5px; margin-bottom: 0; }
 
+
+/* ================================================================
+   DAILY - the standup surface.
+
+   Two halves, always both present. A filed half shows the answers,
+   an unfiled one shows the form, and neither is ever hidden from
+   the other: the page's job is partly to make an outstanding Day
+   Out visible, which a tab would defeat.
+   ================================================================ */
+.supanel { margin-bottom: 26px; }
+.supanel > h2 {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 12px;
+}
+.suhalves { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.suhalf {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-left: 2px solid var(--warn); border-radius: var(--radius); padding: 16px 18px 18px;
+}
+/* Filed turns the rail green. Outstanding is the warn colour, because an unfiled Day Out
+   at 19:00 is a small failure of the ritual and should not look neutral. */
+.suhalf.filed { border-left-color: var(--ok); }
+.suhead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-bottom: 12px;
+}
+.suhead .k { font-size: 15px; font-weight: 600; letter-spacing: -.02em; color: var(--ink); }
+.suhead .at { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.suhead .at.open { color: var(--warn); }
+.suhint { display: block; font-size: 11.5px; color: var(--muted); margin: 1px 0 5px; line-height: 1.45; }
+.suform textarea { width: 100%; min-height: 56px; resize: vertical; }
+.suacts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.suacts .formmsg { margin: 0; min-height: 0; }
+.suans { margin-bottom: 11px; }
+.suans:last-child { margin-bottom: 0; }
+.suans .q {
+  display: block; font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 3px;
+}
+.suans .a { font-size: 13.5px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+.suhalf .none { font-size: 13px; color: var(--muted); margin: 0; }
+.suhalf .btn.tiny { margin-top: 12px; }
+
+.suday { margin-bottom: 20px; }
+.sudate {
+  display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--rule); padding-bottom: 7px; margin-bottom: 4px;
+}
+.superson { padding: 13px 0; border-bottom: 1px solid var(--rule-soft); }
+.superson:last-child { border-bottom: 0; }
+.suwho { display: flex; align-items: baseline; gap: 9px; margin-bottom: 7px; }
+.suwho .ini {
+  font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .06em;
+  color: var(--accent-ink); background: var(--accent); border-radius: 3px; padding: 2px 6px;
+}
+.superson:not(.me) .suwho .ini { background: var(--surface-2); color: var(--ink-2); }
+.suwho .nm { font-size: 13px; color: var(--ink); font-weight: 500; }
+.suwho .imp {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px;
+}
+.sucols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.sucol .ck {
+  display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--rule); margin-bottom: 5px;
+}
+.sucol .none { font-size: 12.5px; color: var(--rule); margin: 0; }
+
+/* ================================================================
+   DECISIONS
+   ================================================================ */
+.dcform {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 18px 20px; margin-bottom: 20px;
+}
+.dclist { display: flex; flex-direction: column; gap: 12px; }
+.dcard {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 15px 18px 17px;
+}
+/* Superseded entries stay readable but stop competing - the log is a history, so an entry
+   that no longer applies is still worth finding, just not worth reading first. */
+.dcard.stale { opacity: .62; }
+.dctop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+.dcat {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px; border: 1px solid transparent;
+}
+.dcat-d { color: var(--accent); background: var(--accent-soft); border-color: rgba(235, 178, 12, .3); }
+.dcat-l { color: var(--ok); background: var(--ok-soft); border-color: rgba(95, 201, 127, .3); }
+.dcat-c { color: var(--crit); background: var(--crit-soft); border-color: rgba(232, 92, 79, .3); }
+.dcat-u { color: var(--ink-2); background: var(--surface-2); border-color: var(--rule); }
+.dcwhen, .dcsrc, .dcstale {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--muted);
+}
+.dcsrc { margin-left: auto; }
+.dcstale { color: var(--warn); text-transform: uppercase; letter-spacing: .09em; }
+.dcard h3 { font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; line-height: 1.35; margin-bottom: 7px; }
+.dcard h3 a { color: var(--ink); text-decoration: none; }
+.dcard h3 a:hover { color: var(--accent); }
+.dcsum { font-size: 13.5px; color: var(--ink-2); margin: 0 0 9px; line-height: 1.55; }
+.dcard .chips { margin-top: 2px; }
+#dcSearch { flex: 1 1 260px; min-width: 180px; }
+
+/* ---- quick capture ---- */
+.qcap {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent); border-radius: var(--radius);
+  padding: 11px 14px; margin-bottom: 18px;
+}
+#qcTitle { flex: 1 1 260px; min-width: 160px; }
+.qcap select, .qcap input[type="date"] {
+  flex: none; font-family: var(--sans); font-size: 13px; padding: 8px 9px;
+  background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 8px;
+}
+.qcap .btn { flex: none; }
+.qcap .formmsg { margin: 0; min-height: 0; flex: 0 1 auto; }
+
+/* ---- inline task status ----
+   Two selects per row, drawn as quietly as the pill they replaced. They have to read as
+   values first and controls second, or a task list turns into a form. */
+.tsel {
+  appearance: none; -webkit-appearance: none;
+  font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  padding: 3px 20px 3px 8px; border-radius: 999px; border: 1px solid transparent;
+  cursor: pointer; white-space: nowrap; line-height: 1.45; max-width: 132px;
+  background-color: var(--surface-2); color: var(--ink-2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center;
+}
+.tsel:hover { border-color: var(--muted); }
+.tsel option { background: var(--surface); color: var(--ink); font-weight: 500; letter-spacing: 0; }
+.tsel.saving { opacity: .45; pointer-events: none; }
+.tsel.failed { border-color: var(--crit); color: var(--crit); }
+/* Planning is the quieter of the two: it is a bucket, not a state. */
+.tplan { font-family: var(--mono); font-size: 10px; font-weight: 400; letter-spacing: .06em; color: var(--muted); }
+/* Progress reuses the classes progressClass() already returns, so the colour a task
+   carries is decided in one place rather than two that can drift apart. */
+.tprog.doing   { background-color: var(--accent-soft); color: var(--accent); }
+.tprog.stuck   { background-color: var(--crit-soft); color: var(--crit); }
+.tprog.waiting { background-color: var(--warn-soft); color: var(--warn); }
+
+/* ---- triage ----
+   Amber rail, like an unfiled Day Out: not an error, but an unanswered question that
+   should not blend into the buckets around it. */
+.tgroup.triage { border-color: var(--warn); }
+.tgroup.triage .ghead { color: var(--warn); }
+.tgroup.triage .tplan { color: var(--warn); border-color: rgba(217, 130, 43, .4); background-color: var(--warn-soft); }
 /* connection footer */
 .conn { margin-top: 32px; border-top: 1px solid var(--rule); padding-top: 16px; }
 .conn summary { cursor: pointer; color: var(--muted); font-size: 13px; }
@@ -1623,6 +1775,48 @@ img, svg { max-width: 100%; }
 
   .bitem { grid-template-columns: 20px 1fr; gap: 10px; }
   .drow { grid-template-columns: 1fr; gap: 4px; }
+
+  /* --- the writable surfaces, on a phone ---
+     Every two-column grid added for the daily becomes one column. Side by side, Day In
+     and Day Out are two ~165px columns holding three textareas each, which is not a form
+     anybody would fill in on a train. */
+  .suhalves { grid-template-columns: 1fr; gap: 12px; }
+  .sucols { grid-template-columns: 1fr; gap: 11px; }
+  .suhalf { padding: 14px 15px 16px; }
+  .sucol .ck { margin-bottom: 3px; }
+  .superson { padding: 11px 0; }
+
+  /* Capture: the title takes the row, the three controls share the next one, and the
+     button is full width so it is a thumb target rather than a corner. */
+  .qcap { gap: 7px; padding: 10px 12px; }
+  #qcTitle { flex: 1 1 100%; }
+  .qcap select { flex: 1 1 0; min-width: 0; }
+  .qcap input[type="date"] { flex: 1 1 100%; }
+  .qcap .btn { flex: 1 1 100%; justify-content: center; }
+
+  /* Two selects and a pin will not sit beside a task name at this width, so the row's
+     right-hand side drops under it and lines up left with everything else. */
+  .trow .right { flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
+  .tsel { max-width: none; }
+
+  /* 16px on every focusable field, and this is not a taste decision: iOS zooms the whole
+     page in when you focus an input whose font-size is under 16px, and then leaves you
+     scrolled sideways. The page was mostly read-only when that did not matter much. It is
+     now full of forms - the daily, capture, the decision entry - so it matters on every
+     one of them. The rendered size only changes on a phone. */
+  input[type="text"], input[type="url"], input[type="date"], select, textarea,
+  .qcap select, .qcap input[type="date"], .gr select, .gr input[type="date"] { font-size: 16px; }
+  /* The inline task pills stay small - they are not typed into, so they cannot trigger
+     the zoom, and 16px pills would swamp a task name. */
+  .tsel { font-size: 11px; }
+  .tplan { font-size: 10px; }
+
+  .dcform { padding: 15px 16px; }
+  .dcard { padding: 13px 15px 15px; }
+  /* The source stops being pushed to the far edge, where it was landing on its own line
+     under a wrapped date anyway. */
+  .dcsrc { margin-left: 0; }
+  #dcSearch { flex: 1 1 100%; }
 }
 
 /* --- very narrow, and large text --- */
@@ -1639,8 +1833,10 @@ img, svg { max-width: 100%; }
     <a class="wordmark" href="#/">YF <span class="slash">&#9585;</span> Bridge</a>
     <div class="topbar-right">
       <div class="navlinks">
+        <a href="#/standup" data-nav="standup">Daily</a>
         <a href="#/tasks" data-nav="tasks">Tasks</a>
         <a href="#/projects" data-nav="projects">Projects</a>
+        <a href="#/decisions" data-nav="decisions">Decisions</a>
         <a href="#/briefing" data-nav="briefing">Briefing</a>
         <a href="#/builds" data-nav="builds">Builds</a>
         <a href="#/dev" data-nav="dev" id="navDev" hidden>Dev</a>
@@ -1849,8 +2045,92 @@ img, svg { max-width: 100%; }
         </div>
       </div>
     </header>
+    <!-- Quick capture. The point of it is the gap between thinking of a task and being
+         somewhere you can write one down: this page is already open, so it should take
+         the thought rather than send you to Notion for it. -->
+    <div class="qcap">
+      <input type="text" id="qcTitle" placeholder="Something that needs doing" maxlength="200" autocomplete="off">
+      <select id="qcWho" title="Who it is for"></select>
+      <select id="qcPlan" title="When">
+        <option value="Today">Today</option>
+        <option value="This Week" selected>This week</option>
+        <option value="Later">Later</option>
+      </select>
+      <input type="date" id="qcDue" title="Due date, optional">
+      <button class="btn primary" id="qcAdd">Add</button>
+      <span class="formmsg" id="qcMsg"></span>
+    </div>
+
     <div id="tasksBody"><div class="panel"><span class="spin"></span>Loading tasks&hellip;</div></div>
     <p class="foot">Read live from the YF OS Tasks database through your own Notion connection, so you see exactly the tasks you can already see in Notion. Scoped to the <b>builders team</b> &mdash; ZF, PS, BB and JK. <b>Overdue, Today, This Week and Later come from the <span class="mono">Planning</span> field</b> &mdash; they are set by a person, not calculated from the due date, so a task with a past due date sitting in Later means nobody has re-planned it yet. Delivered and Archived tasks are excluded.</p>
+  </section>
+
+  <!-- ============================= DAILY =============================
+       Replaces the Geekbot flow in #yf-daily. The two rituals and their exact
+       questions are the ones already in use there, taken from the channel: nobody has
+       to learn a new habit, only a new place to put it. -->
+  <section id="v-standup" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Daily</p>
+          <h1>Daily</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="suRefresh" title="Re-read the daily now">Refresh</button>
+        </div>
+      </div>
+      <p class="tagline">Day In in the morning, Day Out at the end. The same two rituals the team has been running in #yf-daily, written here instead of answered to a bot.</p>
+    </header>
+    <div id="suBody"><div class="panel"><span class="spin"></span>Loading the daily&hellip;</div></div>
+    <p class="foot">One row per person per JST day, in <b>Bridge Standup</b>. Filing here is the record &mdash; nothing is posted to Slack, so once the team is using this, Geekbot can be switched off in <b>#yf-daily</b> and the channel becomes a conversation again rather than a form.</p>
+  </section>
+
+  <!-- =========================== DECISIONS ===========================
+       Decisions & Learnings was write-only for months. The dev panel wrote to it and
+       nothing in the app could read it back, so the studio's own record of what it had
+       worked out was invisible unless you opened Notion. -->
+  <section id="v-decisions" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Decisions</p>
+          <h1>Decisions</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn primary" id="dcNew">Write one</button>
+          <button class="btn ghost" id="dcRefresh" title="Re-read the log now">Refresh</button>
+        </div>
+      </div>
+      <p class="tagline">Everything the studio has figured out and written down, searchable. Read from Decisions &amp; Learnings in YF OS.</p>
+    </header>
+
+    <div class="dcform" id="dcForm" hidden>
+      <div class="field"><span class="label">Entry</span>
+        <input type="text" id="dcEntry" placeholder="What was decided, in one line" maxlength="200"></div>
+      <div class="field"><span class="label">Summary</span>
+        <textarea id="dcSummary" placeholder="The reasoning, and what it means for next time"></textarea></div>
+      <div class="pair">
+        <div class="field"><span class="label">Kind</span>
+          <select id="dcKind"><option>Decision</option><option>Learning</option><option>Correction</option><option>Context update</option></select></div>
+        <div class="field"><span class="label">Tags</span>
+          <select id="dcTag"><option value="">None</option><option>process</option><option>tools</option><option>strategy</option><option>content</option><option>clients</option></select></div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn" id="dcCancel">Cancel</button>
+        <button class="btn primary" id="dcSave">Write entry</button>
+      </div>
+      <p class="formmsg" id="dcMsg"></p>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="dcSearch" placeholder="Search entries and summaries" autocomplete="off">
+      <select id="dcKindF"><option value="">All kinds</option><option>Decision</option><option>Learning</option><option>Correction</option><option>Context update</option></select>
+      <label class="toggle"><input type="checkbox" id="dcLive" checked> Still applies</label>
+      <span class="quiet mono" id="dcCount"></span>
+    </div>
+    <div id="dcBody"><div class="panel"><span class="spin"></span>Loading decisions&hellip;</div></div>
+    <p class="foot">Written by Claude and by anyone here. Every entry is stamped with the environment that wrote it, which is how a contradiction between two sessions gets traced back to one of them.</p>
   </section>
 
   <!-- ========================== BRIEFING ==========================
@@ -3557,6 +3837,12 @@ var PEOPLE = {
 };
 function isBuilder(id) { return !!id && Object.prototype.hasOwnProperty.call(PEOPLE, id); }
 
+/* The same four people keyed the other way. Notion stores a person as their Notion user
+   id, but the databases this page writes - Bridge Play, Bridge Standup - key on initials,
+   because a select is readable in Notion and a raw uuid is not. */
+var PEOPLE_BY_INI = {};
+Object.keys(PEOPLE).forEach(function (id) { PEOPLE_BY_INI[PEOPLE[id].ini] = PEOPLE[id]; });
+
 var WHO_ALL = "*";
 var WHO = WHO_ALL;
 try { WHO = localStorage.getItem("yfbridge.who") || WHO_ALL; } catch (e) { WHO = WHO_ALL; }
@@ -3643,10 +3929,58 @@ function taskRow(t) {
       (meta.length ? '<p class="meta">' + meta.join("") + "</p>" : "") +
     "</div>" +
     '<div class="right">' +
-      (t["Progress"] ? '<span class="tpill ' + pc + '">' + esc(t["Progress"]) + "</span>" : "") +
+      // Both statuses are controls rather than labels, for the same reason the registry's
+      // status pill is: changing one is the common case, so the thing you read it from
+      // should be the thing you change it with.
+      (tid ? taskSel(tid, "Planning", t["Planning"], PLAN_OPTS, "tplan") : "") +
+      (tid ? taskSel(tid, "Progress", t["Progress"], PROG_OPTS, "tprog " + pc) : "") +
       (tid ? pinBtn("t", tid, t["Tasks"]) : "") +
     "</div>" +
   "</div>";
+}
+
+/* Planning omits Overdue on purpose: Notion derives it from the due date, so offering it
+   as a choice would let someone declare a task overdue without moving the date, and the
+   next sync would silently undo them. */
+var PLAN_OPTS = ["Today", "This Week", "Later"];
+var PROG_OPTS = ["Backlog", "Up Next", "In Progress", "On Hold", "Blocked",
+                 "Ready for review", "QA", "Waiting for feedback", "Delivered"];
+
+function taskSel(tid, field, current, opts, cls) {
+  var cur = current || "";
+  var blank = opts.indexOf(cur) < 0;
+  return '<select class="tsel ' + cls + '" data-t="' + tid + '" data-f="' + field + '">' +
+    (blank ? '<option value="" selected>' + (field === "Planning" ? "unplanned" : "-") + "</option>" : "") +
+    opts.map(function (o) {
+      return '<option' + (o === cur ? " selected" : "") + ">" + esc(o) + "</option>";
+    }).join("") + "</select>";
+}
+
+/* One field, one task. The write goes straight out and the row is left alone until the
+   re-read lands - an optimistic repaint here would be a second source of truth for a
+   value the whole page reads. */
+function saveTaskField(sel) {
+  if (!mcp || !SERVER) return;
+  var tid = sel.getAttribute("data-t"), field = sel.getAttribute("data-f"), val = sel.value;
+  if (!tid || !val) return;
+  var props = {};
+  props[field] = val;
+  sel.classList.add("saving");
+  mcp.callTool(SERVER, T_UPDATE, { page_id: tid, command: "update_properties", properties: props })
+    .then(function () {
+      // Invalidate every person's query rather than guessing whose task it was: the row
+      // could belong to anyone whose list is on screen, and four cheap invalidations beat
+      // one wrong one.
+      return Promise.all(Object.keys(PEOPLE).map(function (id) {
+        return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(id))).catch(function () {});
+      }));
+    })
+    .then(function () { sel.classList.remove("saving"); },
+          function () {
+            sel.classList.remove("saving");
+            sel.classList.add("failed");
+            setTimeout(function () { sel.classList.remove("failed"); }, 2500);
+          });
 }
 
 /* One bucket. Later is collapsed by default - it is the bucket nobody opens the page
@@ -3657,7 +3991,7 @@ function bucketPanel(name, list, opts) {
     (o.hint ? '<span class="ghint">' + esc(o.hint) + "</span>" : "");
   var rows = list.length ? list.map(taskRow).join("")
     : '<p class="none">Nothing here.</p>';
-  var cls = "tgroup" + (o.urgent && list.length ? " urgent" : "");
+  var cls = "tgroup" + (o.urgent && list.length ? " urgent" : "") + (o.triage ? " triage" : "");
 
   if (o.collapsed) {
     return '<details class="' + cls + '"' + (o.open ? " open" : "") + '><summary><span class="chev"></span>' +
@@ -3762,11 +4096,22 @@ function renderTasksPage() {
   var t = tally();
   /* Later stays collapsed only when it is genuinely long - one person has fifty in it.
      Under a dozen it opens, because collapsing a short list hides tasks for no gain. */
+  /* Triage first, and only when there is something in it.
+
+     inBucket() reads (Planning || "Later"), so a task nobody has planned has been sitting
+     inside Later this whole time, indistinguishable from one deliberately put there.
+     Those are different states: Later is a decision, no Planning is an unanswered
+     question. Pulling them out is the whole point of the panel. */
+  var untriaged = mine.filter(function (x) { return !x["Planning"]; });
+  // ...and take them back out of Later, or every untriaged task would be listed twice.
+  var realLater = t.later.filter(function (x) { return x["Planning"] === "Later"; });
   var groups =
+    (untriaged.length ? bucketPanel("Needs a bucket", untriaged,
+      { triage: true, hint: "no Planning set - pick one and it moves" }) : "") +
     bucketPanel("Overdue", t.over, { urgent: true }) +
     bucketPanel("Today", t.today, {}) +
     bucketPanel("This week", t.week, {}) +
-    bucketPanel("Later", t.later, { collapsed: true, open: t.later.length <= 12, hint: "not planned yet" });
+    bucketPanel("Later", realLater, { collapsed: true, open: realLater.length <= 12, hint: "parked on purpose" });
 
   /* Never swallow a truncated read. If the connector said has_more for somebody, their
      list is incomplete and the page has to admit it rather than quietly under-report. */
@@ -6061,6 +6406,500 @@ watchBuilds = function () {
   return r;
 };
 
+
+/* ================================================================
+   DAILY - the standup, replacing Geekbot in #yf-daily.
+
+   The questions are lifted verbatim from what the channel already
+   runs, so the ritual is unchanged and only its destination moves.
+   BB set the shape in the channel topic on 2025-09-04; Geekbot's
+   Day Out sharpened it, and that sharper wording is what people are
+   actually answering, so it is what is used here.
+
+   WHY NOT POST TO SLACK. Bridge could write the answers back to
+   #yf-daily, but only through a Slack connector every viewer would
+   have to grant - a new per-person setup, which is the burden this
+   app keeps refusing to add. So the record moves here, and the
+   channel goes back to being a conversation. If the team still wants
+   a Slack copy, the ZF-PC scheduled runner already posts to Slack
+   daily and can read this database.
+   ================================================================ */
+var STAND_DS = "collection://7fffc797-2289-4baa-b2c4-c2e9a4b77c89";
+var Q_STAND = 'SELECT url, "Person", "date:Day:start" AS day, "In Goal", "In Talk", ' +
+  '"In Blocker", "date:In At:start" AS inAt, "Out Shipped", "Out Changed", ' +
+  '"date:Out At:start" AS outAt, "Source" FROM "' + STAND_DS + '" ORDER BY day DESC LIMIT 200';
+
+var STAND_ROWS = null;
+var SU_EDIT = null;      // "in" or "out" while a form is deliberately open
+
+var SU_Q = {
+  in: [
+    ["In Goal", "What do you want to achieve today?", "The promise your Day Out gets measured against."],
+    ["In Talk", "Anything you want to talk about?", "A problem worth someone else's attention."],
+    ["In Blocker", "Blocked on anything?", "Name it early or it stays yours."]
+  ],
+  out: [
+    ["Out Shipped", "What did you ship or finish today?",
+     "Against the Day In promise. If nothing shipped, write that - a miss said out loud is worth more than a blank."],
+    ["Out Changed", "What changed because of it?",
+     "Who can move now, what is unblocked, what slips. Dependency, consequence, ownership."]
+  ]
+};
+
+function standRowFor(ini, day) {
+  var all = (STAND_ROWS || []).filter(function (r) { return r["Person"] === ini && r.day === day; });
+  if (!all.length) return null;
+  // Prefer a row that has actually been filed, so a stray blank cannot mask a real one.
+  for (var i = 0; i < all.length; i++) if (all[i].inAt || all[i].outAt) return all[i];
+  return all[0];
+}
+
+function loadStand() {
+  if (!mcp || !SERVER) return Promise.resolve([]);
+  return mcp.callTool(SERVER, T_QUERY, sqlInput(STAND_DS, Q_STAND), { cache: { staleTime: 20000 } })
+    .then(rows)
+    .then(function (r) { STAND_ROWS = r; return r; })
+    .catch(function (e) { STAND_ROWS = STAND_ROWS || []; return STAND_ROWS; });
+}
+
+function suFieldsHtml(kind, row) {
+  return SU_Q[kind].map(function (q) {
+    var val = row ? (row[q[0]] || "") : "";
+    return '<div class="field"><span class="label">' + esc(q[1]) + "</span>" +
+      '<small class="suhint">' + esc(q[2]) + "</small>" +
+      '<textarea data-f="' + esc(q[0]) + '" rows="3">' + esc(val) + "</textarea></div>";
+  }).join("");
+}
+
+function suAnswersHtml(kind, row) {
+  var any = false;
+  var body = SU_Q[kind].map(function (q) {
+    var v = (row && row[q[0]] || "").trim();
+    if (!v) return "";
+    any = true;
+    return '<div class="suans"><span class="q">' + esc(q[1]) + "</span>" +
+      '<p class="a">' + esc(v).replace(/\n/g, "<br>") + "</p></div>";
+  }).join("");
+  return any ? body : '<p class="none">Nothing written.</p>';
+}
+
+/* Your own card: a filed half shows what you wrote with a way back in, an unfiled half
+   shows the form. Both halves are always present, so the page never hides the fact that
+   one of them is outstanding. */
+function suMineHtml(day) {
+  var ini = myIni(), row = standRowFor(ini, day);
+  var halves = ["in", "out"].map(function (kind) {
+    var filed = row && (kind === "in" ? row.inAt : row.outAt);
+    var open = SU_EDIT === kind || !filed;
+    var when = filed ? clock(new Date(filed).getTime()) : "";
+    return '<div class="suhalf' + (filed ? " filed" : "") + '">' +
+      '<div class="suhead"><span class="k">Day ' + (kind === "in" ? "In" : "Out") + "</span>" +
+        (filed ? '<span class="at">filed ' + esc(when) + "</span>"
+               : '<span class="at open">not filed</span>') + "</div>" +
+      (open
+        ? '<div class="suform" data-k="' + kind + '">' + suFieldsHtml(kind, row) +
+            '<div class="suacts"><button class="btn primary" data-save="' + kind + '">' +
+            (filed ? "Update" : "File Day " + (kind === "in" ? "In" : "Out")) + "</button>" +
+            (filed ? '<button class="btn" data-cancel="' + kind + '">Cancel</button>' : "") +
+            '<span class="formmsg" data-msg="' + kind + '"></span></div></div>'
+        : suAnswersHtml(kind, row) +
+          '<button class="btn tiny" data-edit="' + kind + '">Edit</button>') +
+      "</div>";
+  }).join("");
+  return '<section class="supanel mine"><h2>Your day</h2><div class="suhalves">' + halves + "</div></section>";
+}
+
+/* Everyone else, newest day first. Days nobody filed are skipped rather than rendered as
+   a row of blanks - an empty day is not information. */
+function suTeamHtml(today) {
+  var byDay = {};
+  (STAND_ROWS || []).forEach(function (r) {
+    if (!r.day) return;
+    if (!byDay[r.day]) byDay[r.day] = [];
+    byDay[r.day].push(r);
+  });
+  var days = Object.keys(byDay).sort().reverse().slice(0, 10);
+  if (!days.length) return '<section class="supanel"><h2>The team</h2><p class="none">Nothing filed yet.</p></section>';
+
+  var out = days.map(function (d) {
+    var mine = myIni();
+    var people = byDay[d].filter(function (r) { return r.inAt || r.outAt || r["Out Shipped"] || r["In Goal"]; });
+    if (!people.length) return "";
+    people.sort(function (a, b) { return (a["Person"] || "").localeCompare(b["Person"] || ""); });
+    var rowsHtml = people.map(function (r) {
+      var who = PEOPLE_BY_INI[r["Person"]];
+      return '<div class="superson' + (r["Person"] === mine ? " me" : "") + '">' +
+        '<div class="suwho"><span class="ini">' + esc(r["Person"] || "?") + "</span>" +
+        '<span class="nm">' + esc(who ? who.name : "") + "</span>" +
+        (r["Source"] === "Geekbot import" ? '<span class="imp" title="Imported from the Slack channel">slack</span>' : "") +
+        "</div>" +
+        '<div class="sucols">' +
+          '<div class="sucol"><span class="ck">In</span>' + suAnswersHtml("in", r) + "</div>" +
+          '<div class="sucol"><span class="ck">Out</span>' + suAnswersHtml("out", r) + "</div>" +
+        "</div></div>";
+    }).join("");
+    return '<div class="suday"><span class="sudate">' + esc(d === today ? "Today" : longDate(d)) + "</span>" +
+      rowsHtml + "</div>";
+  }).join("");
+  return '<section class="supanel"><h2>The team</h2>' + out + "</section>";
+}
+
+function renderStandup() {
+  var body = el("suBody");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>The daily reads and writes YF OS ' +
+      "through your own Notion connection.</p></div>";
+    return;
+  }
+  if (!myIni()) {
+    body.innerHTML = '<div class="panel"><h2>Who are you?</h2><p>The daily is per person. ' +
+      'Say who you are in the top bar and it will open.</p></div>';
+    return;
+  }
+  if (STAND_ROWS === null) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the daily&hellip;</div>';
+    loadStand().then(renderStandup);
+    return;
+  }
+  var day = jstDay();
+  body.innerHTML = suMineHtml(day) + suTeamHtml(day);
+  wireStandup(day);
+}
+
+function wireStandup(day) {
+  var body = el("suBody");
+  [].slice.call(body.querySelectorAll("[data-edit]")).forEach(function (b) {
+    b.addEventListener("click", function () { SU_EDIT = b.getAttribute("data-edit"); renderStandup(); });
+  });
+  [].slice.call(body.querySelectorAll("[data-cancel]")).forEach(function (b) {
+    b.addEventListener("click", function () { SU_EDIT = null; renderStandup(); });
+  });
+  [].slice.call(body.querySelectorAll("[data-save]")).forEach(function (b) {
+    b.addEventListener("click", function () { saveStandup(b.getAttribute("data-save"), day, b); });
+  });
+}
+
+function saveStandup(kind, day, btn) {
+  var body = el("suBody");
+  var form = body.querySelector('.suform[data-k="' + kind + '"]');
+  var msg = body.querySelector('[data-msg="' + kind + '"]');
+  if (!form) return;
+
+  var props = {};
+  var wrote = false;
+  [].slice.call(form.querySelectorAll("textarea")).forEach(function (t) {
+    var v = t.value.trim();
+    props[t.getAttribute("data-f")] = v || null;
+    if (v) wrote = true;
+  });
+  if (!wrote) {
+    msg.className = "formmsg bad";
+    msg.textContent = "Write something first.";
+    return;
+  }
+  props[kind === "in" ? "date:In At:start" : "date:Out At:start"] = new Date().toISOString();
+  props[kind === "in" ? "date:In At:is_datetime" : "date:Out At:is_datetime"] = 1;
+
+  var ini = myIni(), r = standRowFor(ini, day);
+  btn.disabled = true;
+  var label = btn.textContent;
+  btn.textContent = "Filing";
+  msg.className = "formmsg";
+  msg.textContent = "";
+
+  var after = function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(STAND_DS, Q_STAND)).catch(function () {})
+      .then(loadStand)
+      .then(function () { SU_EDIT = null; renderStandup(); });
+  };
+  var fail = function (e) {
+    btn.disabled = false; btn.textContent = label;
+    msg.className = "formmsg bad";
+    msg.textContent = "Could not file it: " + (explain(e).head || "unknown");
+  };
+
+  if (r) {
+    var id = pageIdFrom(r.url);
+    if (!id) { fail({}); return; }
+    mcp.callTool(SERVER, T_UPDATE, { page_id: id, command: "update_properties", properties: props })
+      .then(after, fail);
+    return;
+  }
+  props["Entry"] = ini + " " + day;
+  props["Person"] = ini;
+  props["date:Day:start"] = day;
+  props["date:Day:is_datetime"] = 0;
+  props["Source"] = "Bridge";
+  mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: STAND_DS.replace("collection://", "") },
+    pages: [{ properties: props }]
+  }).then(after, fail);
+}
+
+VIEWS.standup = "v-standup";
+var _applyRouteSU = applyRoute;
+applyRoute = function (name) {
+  _applyRouteSU(name);
+  if (name === "standup") renderStandup();
+};
+
+
+/* ================================================================
+   DECISIONS - Decisions & Learnings, finally readable.
+
+   The database has been wired into this page for as long as the dev
+   panel has had its "Log a decision" form, and nothing could read it
+   back. Everything the studio worked out was write-only unless you
+   opened Notion.
+   ================================================================ */
+var Q_DL = 'SELECT url, "Entry", "Summary", "Category", "Source", "Tags", ' +
+  '"Still applies", "date:Date:start" AS day FROM "' + DL_DS + '" ORDER BY day DESC LIMIT 300';
+
+var DL_ROWS = null;
+
+function loadDL() {
+  if (!mcp || !SERVER) return Promise.resolve([]);
+  return mcp.callTool(SERVER, T_QUERY, sqlInput(DL_DS, Q_DL), { cache: { staleTime: 30000 } })
+    .then(rows)
+    .then(function (r) { DL_ROWS = r; return r; })
+    .catch(function () { DL_ROWS = DL_ROWS || []; return DL_ROWS; });
+}
+
+function dlCatClass(c) {
+  return c === "Decision" ? "dcat-d" : c === "Learning" ? "dcat-l"
+    : c === "Correction" ? "dcat-c" : "dcat-u";
+}
+
+function dcFiltered() {
+  var q = (el("dcSearch") ? el("dcSearch").value : "").trim().toLowerCase();
+  var kind = el("dcKindF") ? el("dcKindF").value : "";
+  var live = el("dcLive") ? el("dcLive").checked : false;
+  return (DL_ROWS || []).filter(function (r) {
+    if (kind && r["Category"] !== kind) return false;
+    if (live && !isYes(r["Still applies"])) return false;
+    if (!q) return true;
+    // Search the title and the summary together - the reasoning is where the useful
+    // words are, and a title-only search misses almost everything worth finding.
+    return ((r["Entry"] || "") + " " + (r["Summary"] || "")).toLowerCase().indexOf(q) >= 0;
+  }).sort(function (a, b) {
+    // Sort here rather than leaning on the query's ORDER BY. The rows arrive sorted
+    // today, but a list that only looks right because of something two layers away is a
+    // list that will silently come out wrong one day.
+    return String(b.day || "").localeCompare(String(a.day || ""));
+  });
+}
+
+function renderDecisions() {
+  var body = el("dcBody");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>Decisions are read from YF OS ' +
+      "through your own Notion connection.</p></div>";
+    return;
+  }
+  if (DL_ROWS === null) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading decisions&hellip;</div>';
+    loadDL().then(renderDecisions);
+    return;
+  }
+  var list = dcFiltered();
+  var count = el("dcCount");
+  if (count) {
+    count.textContent = list.length + " of " + (DL_ROWS || []).length;
+  }
+  if (!list.length) {
+    body.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>' +
+      ((DL_ROWS || []).length ? "Try fewer words, or turn off Still applies."
+        : "The log is empty, which after this much work is unlikely - check the connector.") + "</p></div>";
+    return;
+  }
+  body.innerHTML = '<div class="dclist">' + list.map(function (r) {
+    var cat = r["Category"] || "";
+    var tags = asList(r["Tags"]);
+    return '<article class="dcard' + (isYes(r["Still applies"]) ? "" : " stale") + '">' +
+      '<div class="dctop">' +
+        '<span class="dcat ' + dlCatClass(cat) + '">' + esc(cat || "Entry") + "</span>" +
+        '<span class="dcwhen">' + esc(r.day ? shortDate(r.day) : "") + "</span>" +
+        (r["Source"] ? '<span class="dcsrc">' + esc(r["Source"]) + "</span>" : "") +
+        (isYes(r["Still applies"]) ? "" : '<span class="dcstale">superseded</span>') +
+      "</div>" +
+      '<h3><a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">' +
+        esc(r["Entry"] || "(untitled)") + "</a></h3>" +
+      (r["Summary"] ? '<p class="dcsum">' + esc(r["Summary"]) + "</p>" : "") +
+      (tags.length ? '<div class="chips">' + tags.map(function (t) {
+        return '<span class="chip">' + esc(t) + "</span>";
+      }).join("") + "</div>" : "") +
+    "</article>";
+  }).join("") + "</div>";
+}
+
+function saveDecision() {
+  var entry = el("dcEntry").value.trim(), summary = el("dcSummary").value.trim();
+  var msg = el("dcMsg"), btn = el("dcSave");
+  if (!entry) {
+    msg.className = "formmsg bad"; msg.textContent = "An entry needs a title.";
+    el("dcEntry").focus(); return;
+  }
+  var tag = el("dcTag").value;
+  var props = {
+    "Entry": entry,
+    "Summary": summary,
+    "Category": el("dcKind").value,
+    "Still applies": "__YES__",
+    "date:Date:start": jstDay(),
+    "date:Date:is_datetime": 0
+  };
+  // Source is the environment that wrote it. From the app there is no environment ID to
+  // stamp, so it records the person instead, which is the same question answered.
+  var p = PEOPLE[WHO];
+  if (p) props["Source"] = p.ini + " - Bridge";
+  if (tag) props["Tags"] = [tag];
+
+  btn.disabled = true; btn.textContent = "Writing";
+  msg.className = "formmsg"; msg.textContent = "";
+  mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: DL_DS.replace("collection://", "") },
+    pages: [{ properties: props }]
+  }).then(function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(DL_DS, Q_DL)).catch(function () {})
+      .then(loadDL)
+      .then(function () {
+        btn.disabled = false; btn.textContent = "Write entry";
+        el("dcEntry").value = ""; el("dcSummary").value = "";
+        el("dcForm").hidden = true;
+        renderDecisions();
+      });
+  }, function (e) {
+    btn.disabled = false; btn.textContent = "Write entry";
+    msg.className = "formmsg bad";
+    msg.textContent = "Could not write it: " + (explain(e).head || "unknown");
+  });
+}
+
+VIEWS.decisions = "v-decisions";
+var _applyRouteDC = applyRoute;
+applyRoute = function (name) {
+  _applyRouteDC(name);
+  if (name === "decisions") renderDecisions();
+};
+
+/* ---- wiring for both new sections ---- */
+el("suRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(STAND_DS, Q_STAND)).catch(function () {})
+    .then(loadStand).then(renderStandup);
+});
+
+el("dcRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(DL_DS, Q_DL)).catch(function () {})
+    .then(loadDL).then(renderDecisions);
+});
+el("dcNew").addEventListener("click", function () {
+  var f = el("dcForm");
+  f.hidden = !f.hidden;
+  if (!f.hidden) el("dcEntry").focus();
+});
+el("dcCancel").addEventListener("click", function () {
+  el("dcForm").hidden = true;
+  el("dcMsg").textContent = "";
+});
+el("dcSave").addEventListener("click", saveDecision);
+// Filtering is local to rows already in memory, so it can run on every keystroke without
+// costing a round trip.
+["dcSearch", "dcKindF", "dcLive"].forEach(function (id) {
+  var e = el(id);
+  if (e) e.addEventListener(id === "dcSearch" ? "input" : "change", renderDecisions);
+});
+
+/* Both sections read Notion, so both need the connector hook rather than a call at boot -
+   the same lesson the check strip, the play box and #/dev each had to learn separately. */
+var _watchBuildsSections = watchBuilds;
+watchBuilds = function () {
+  var r = _watchBuildsSections();
+  var n = routeName();
+  if (n === "standup") renderStandup();
+  if (n === "decisions") renderDecisions();
+  return r;
+};
+
+/* ================================================================
+   TASKS, WRITABLE - quick capture, triage, inline status.
+
+   Until now every task surface in this page was a window: you could
+   read the studio's work and not touch it, which meant the answer to
+   "I should write that down" was always somewhere else. The three
+   things below are the whole difference between a dashboard and a
+   tool.
+   ================================================================ */
+
+/* The assignee list is the builders team, same as everywhere else in this page. A person
+   property takes a BARE uuid in an array on write - it reads back as "user://uuid", and
+   sending back what you read is the obvious mistake to make here. */
+function fillCapturePeople() {
+  var sel = el("qcWho");
+  if (!sel) return;
+  sel.innerHTML = Object.keys(PEOPLE).map(function (id) {
+    return '<option value="' + id + '"' + (id === WHO ? " selected" : "") + ">" +
+      esc(PEOPLE[id].name.split(" ")[0]) + "</option>";
+  }).join("");
+  // Nobody selected means the team view is on; default to whoever is likeliest to be
+  // typing rather than silently assigning to the first name in the list.
+  if (WHO !== WHO_ALL && PEOPLE[WHO]) sel.value = WHO;
+}
+
+function createTask() {
+  var title = el("qcTitle").value.trim();
+  var msg = el("qcMsg"), btn = el("qcAdd");
+  var say = function (t, cls) { msg.className = "formmsg" + (cls ? " " + cls : ""); msg.textContent = t; };
+
+  if (!mcp || !SERVER) { say("No connector.", "bad"); return; }
+  if (!title) { say("Give it a name first.", "bad"); el("qcTitle").focus(); return; }
+
+  var who = el("qcWho").value;
+  var props = {
+    "Tasks": title,
+    "Planning": el("qcPlan").value,
+    "Progress": "Backlog"
+  };
+  if (who) props["Assignee"] = [who];
+  var due = el("qcDue").value;
+  if (due) { props["date:Due:start"] = due; props["date:Due:is_datetime"] = 0; }
+
+  btn.disabled = true; btn.textContent = "Adding"; say("");
+  mcp.callTool(SERVER, T_CREATE, {
+    parent: { type: "data_source_id", data_source_id: TASKS_DS.replace("collection://", "") },
+    pages: [{ properties: props }]
+  }).then(function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(who))).catch(function () {});
+  }).then(function () {
+    btn.disabled = false; btn.textContent = "Add";
+    el("qcTitle").value = ""; el("qcDue").value = "";
+    say("Added.", "good");
+    setTimeout(function () { if (msg.textContent === "Added.") say(""); }, 3000);
+    el("qcTitle").focus();
+  }, function (e) {
+    btn.disabled = false; btn.textContent = "Add";
+    say("Could not add it: " + (explain(e).head || "unknown"), "bad");
+  });
+}
+
+/* Delegated, because the rows are rebuilt on every read and per-row listeners would be
+   re-attached each time or leak. */
+el("tasksBody").addEventListener("change", function (e) {
+  var sel = e.target;
+  if (sel && sel.classList && sel.classList.contains("tsel")) saveTaskField(sel);
+});
+
+el("qcAdd").addEventListener("click", createTask);
+el("qcTitle").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") { e.preventDefault(); createTask(); }
+});
+
+fillCapturePeople();
+var _setWhoCap = setWho;
+setWho = function (id, name) { _setWhoCap(id, name); fillCapturePeople(); };
 renderChip();
 gateDev();
 renderPlayBox();
