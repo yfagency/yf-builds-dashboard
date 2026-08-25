@@ -926,7 +926,7 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 }
 .zfstrip a:hover { border-bottom-color: var(--accent); }
 
-.plates { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+/* The live .plates rule is further down, with the pinning controls. */
 .plate {
   display: flex; flex-direction: column; text-decoration: none; color: inherit;
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
@@ -1239,6 +1239,38 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
   display: grid; gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(max(min(270px, 100%), (100% - 32px) / 3), 1fr));
 }
+
+/* ---- pinning ----
+   The plates are ordered by the weight ladder, which is an argument about what matters to
+   the studio. This is the other half: what matters to YOU. Pins come first, in the order
+   you put them in, and everything else keeps the ladder order behind them.
+
+   Arrows rather than drag. A drag handle has to be big and obvious to be usable, which is
+   exactly the loudness this is meant to avoid, and arrows work from a keyboard for free. */
+.plateslot { position: relative; display: flex; }
+.plateslot > .plate { flex: 1; min-width: 0; }
+.platectl {
+  position: absolute; top: 8px; right: 8px; z-index: 2;
+  display: flex; gap: 3px;
+  opacity: 0; transition: opacity .12s ease;
+}
+/* Invisible until you go looking for it - or until a plate is pinned, because a pin you
+   cannot see is a setting you will not remember making. */
+.plateslot:hover .platectl,
+.plateslot:focus-within .platectl,
+.plateslot.fav .platectl { opacity: 1; }
+.platectl button {
+  width: 21px; height: 21px; padding: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 10, 11, .78); color: var(--muted);
+  border: 1px solid var(--rule); border-radius: 4px;
+  font-family: var(--sans); font-size: 12px; line-height: 1;
+}
+.platectl button:hover { color: var(--ink); border-color: var(--muted); }
+/* A pinned plate wears whoever is signed in, falling back to the accent in the team view
+   - the same variable as the identity frame, so the two can never disagree. */
+.plateslot.fav .pfav { color: var(--me, var(--accent)); border-color: var(--me, var(--accent)); }
+.plateslot.fav > .plate { border-color: rgba(243, 240, 233, .19); }
 
 /* ---- tier: strip (3-4) ---- */
 .tier-strip {
@@ -1801,6 +1833,9 @@ img, svg { max-width: 100%; }
   .gauge .n, .tg .n { font-size: 21px; }
 
   .plates { grid-template-columns: 1fr; }
+  /* There is no hover on a touch screen, so a control that appears on hover is a control
+     that does not exist there. Held at a low opacity instead - present, not shouting. */
+  .platectl { opacity: .5; }
   .tier-lead { padding: 13px 14px 14px; }
   .lead-top { gap: 6px 14px; }
   .lead-go { font-size: 10px; }
@@ -3893,6 +3928,10 @@ function tierFor(w) {
 function orderHome() {
   var stack = el("homeStack");
   if (!stack) return;
+  /* Laying out twice would append a second, empty .plates wrap and leave the pins reading
+     the wrong one. The blocks only need placing once; after that the only thing that
+     changes is the pin order, which is arrangePlates() on its own. */
+  if (stack.querySelector(".plateslot")) { arrangePlates(); return; }
   var byKey = {};
   Array.prototype.forEach.call(stack.querySelectorAll("[data-block]"), function (n) {
     byKey[n.getAttribute("data-block")] = n;
@@ -3910,8 +3949,23 @@ function orderHome() {
         plateWrap.className = "plates";
         stack.appendChild(plateWrap);
       }
+      /* The plate is an anchor, and a button inside an anchor is invalid markup that
+         browsers break out of. So each plate gets a slot around it and the pin controls
+         are siblings positioned over it, not children of the link. */
       var inner = node.firstElementChild;
-      if (inner) plateWrap.appendChild(inner);
+      if (inner) {
+        var slot = document.createElement("div");
+        slot.className = "plateslot";
+        slot.setAttribute("data-plate", s.block);
+        slot.appendChild(inner);
+        slot.insertAdjacentHTML("beforeend",
+          '<div class="platectl">' +
+          '<button class="pfav" type="button" aria-pressed="false" title="Pin to the front">&#9734;</button>' +
+          '<button class="pmv" type="button" data-d="-1" title="Move earlier" hidden>&#8249;</button>' +
+          '<button class="pmv" type="button" data-d="1" title="Move later" hidden>&#8250;</button>' +
+          "</div>");
+        plateWrap.appendChild(slot);
+      }
       node.parentNode.removeChild(node);
       return;
     }
@@ -3928,7 +3982,97 @@ function orderHome() {
     var n = w.querySelectorAll(".plate").length;
     w.style.maxWidth = n === 1 ? "400px" : "";
   });
+
+  arrangePlates();
 }
+
+/* ---- pinned plates ----
+   Per browser rather than per person: the pins are how YOU like this laid out, and being
+   handed a different home page because you looked at the team view for a second would be
+   a worse surprise than sharing one layout across identities on one machine. */
+var PLATE_FAVS = [];
+try {
+  PLATE_FAVS = JSON.parse(localStorage.getItem("yfbridge.plates") || "[]");
+} catch (e) { PLATE_FAVS = []; }
+if (!Array.isArray(PLATE_FAVS)) PLATE_FAVS = [];
+
+function savePlateFavs() {
+  try { localStorage.setItem("yfbridge.plates", JSON.stringify(PLATE_FAVS)); } catch (e) {}
+}
+
+function arrangePlates() {
+  var wrap = document.querySelector("#homeStack .plates");
+  if (!wrap) return;
+  var slots = Array.prototype.slice.call(wrap.querySelectorAll(".plateslot"));
+  var keys = slots.map(function (s) { return s.getAttribute("data-plate"); });
+
+  /* A pin for a plate that no longer exists is dropped rather than carried, or a section
+     removed from BLOCKS would keep a ghost at the front of the order forever. */
+  var before = PLATE_FAVS.length;
+  PLATE_FAVS = PLATE_FAVS.filter(function (k) { return keys.indexOf(k) >= 0; });
+  if (PLATE_FAVS.length !== before) savePlateFavs();
+
+  var fav = [], rest = [];
+  slots.forEach(function (s) {
+    (PLATE_FAVS.indexOf(s.getAttribute("data-plate")) >= 0 ? fav : rest).push(s);
+  });
+  fav.sort(function (a, b) {
+    return PLATE_FAVS.indexOf(a.getAttribute("data-plate")) -
+           PLATE_FAVS.indexOf(b.getAttribute("data-plate"));
+  });
+  // Unpinned plates are NOT reordered - they keep the weight ladder they arrived in.
+  fav.concat(rest).forEach(function (s) { wrap.appendChild(s); });
+
+  slots.forEach(function (s) {
+    var on = PLATE_FAVS.indexOf(s.getAttribute("data-plate")) >= 0;
+    if (on) { s.classList.add("fav"); } else { s.classList.remove("fav"); }
+    var b = s.querySelector(".pfav");
+    if (b) {
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.innerHTML = on ? "&#9733;" : "&#9734;";
+      b.title = on ? "Unpin" : "Pin to the front";
+    }
+    Array.prototype.forEach.call(s.querySelectorAll(".pmv"), function (m) {
+      // Nothing to reorder with a single pin, so the arrows stay away until there are two.
+      m.hidden = !on || PLATE_FAVS.length < 2;
+    });
+  });
+}
+
+function movePlate(key, d) {
+  var i = PLATE_FAVS.indexOf(key);
+  if (i < 0) return;
+  var j = i + d;
+  if (j < 0 || j >= PLATE_FAVS.length) return;
+  PLATE_FAVS.splice(j, 0, PLATE_FAVS.splice(i, 1)[0]);
+  savePlateFavs();
+}
+
+document.addEventListener("click", function (ev) {
+  var btn = ev.target.closest ? ev.target.closest(".pfav, .pmv") : null;
+  if (!btn) return;
+  var slot = btn.closest(".plateslot");
+  if (!slot) return;
+  ev.preventDefault();
+  var key = slot.getAttribute("data-plate");
+
+  if (btn.classList.contains("pfav")) {
+    var i = PLATE_FAVS.indexOf(key);
+    // A new pin goes to the END of the pinned run, not the front: pinning a fourth thing
+    // should not demote the three you already chose.
+    if (i >= 0) { PLATE_FAVS.splice(i, 1); } else { PLATE_FAVS.push(key); }
+    savePlateFavs();
+  } else {
+    movePlate(key, Number(btn.getAttribute("data-d")));
+  }
+
+  arrangePlates();
+  /* Re-appending a node blurs it, so a second press would need a second click to land.
+     Put focus back on the same control in its new position. */
+  var again = document.querySelector('.plateslot[data-plate="' + key + '"] ' +
+    (btn.classList.contains("pfav") ? ".pfav" : '.pmv[data-d="' + btn.getAttribute("data-d") + '"]'));
+  if (again && !again.hidden) { again.focus(); }
+});
 
 /* ---- who is looking ----
    There is no viewer identity available to an artifact - the runtime serves no
@@ -4609,7 +4753,9 @@ function gateDev() {
   /* The home plate is gated with the nav link, or the door sits on everyone home page
      pointing at a page they get bounced straight out of. Tidiness, not security. */
   var plate = el("devPlate");
-  if (plate) plate.hidden = !devAllowed();
+  /* Hide the SLOT, not the anchor. A hidden anchor inside a visible slot still holds its
+     grid track open, which would leave a gap where the Dev plate is not. */
+  if (plate) (plate.closest(".plateslot") || plate).hidden = !devAllowed();
   if (!devAllowed() && routeName() === "dev") { location.hash = "#/"; }
 }
 
