@@ -1936,6 +1936,87 @@ img, svg { max-width: 100%; }
         </div>
       </section>
 
+      <section data-block="daily-plate">
+        <a class="plate" href="#/standup">
+          <!-- Daily, drawn: the two halves the page is actually made of. The left one is
+               filed and carries the green rail, the right is still open and carries the
+               amber - the same two colours the real cards use, so the picture is the page
+               rather than an illustration of it. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Two standup halves, the first filed and the second still open">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect x="34" y="54" width="118" height="92" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="34" y="54" width="2" height="92" fill="var(--ok)"/>
+            <rect x="48" y="70" width="52" height="5" rx="2.5" fill="var(--ok)"/>
+            <rect x="48" y="88" width="86" height="4" rx="2" fill="var(--ink)" opacity=".26"/>
+            <rect x="48" y="100" width="70" height="4" rx="2" fill="var(--ink)" opacity=".26"/>
+            <rect x="48" y="118" width="90" height="4" rx="2" fill="var(--ink)" opacity=".18"/>
+            <rect x="48" y="130" width="58" height="4" rx="2" fill="var(--ink)" opacity=".18"/>
+            <rect x="168" y="54" width="118" height="92" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="168" y="54" width="2" height="92" fill="var(--warn)"/>
+            <rect x="182" y="70" width="46" height="5" rx="2.5" fill="var(--warn)"/>
+            <rect x="182" y="88" width="90" height="14" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="182" y="108" width="90" height="14" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="182" y="130" width="34" height="10" rx="2" fill="var(--warn)" opacity=".55"/>
+          </svg>
+          <div class="body">
+            <h2>Daily</h2>
+            <p class="what">Your Day In and Day Out, and everyone else's &mdash; the standup that used to live in Slack.</p>
+            <p class="stat" id="stStand"><span class="quiet">reading the daily&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
+      <section data-block="decisions-plate">
+        <!-- Decisions, drawn: a spine with entries hung off it, newest at the top in the
+             accent and one further down faded, because a superseded entry stays in the
+             log rather than leaving it. A timeline, not a list - the point of this
+             database is that it is ordered in time. -->
+        <a class="plate" href="#/decisions">
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A timeline of decisions, the newest highlighted and an older one faded">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect x="69" y="40" width="1" height="120" fill="var(--ink)" opacity=".16"/>
+            <circle cx="69.5" cy="56" r="5" fill="var(--accent)"/>
+            <rect x="86" y="48" width="98" height="5" rx="2.5" fill="var(--accent)"/>
+            <rect x="86" y="60" width="152" height="4" rx="2" fill="var(--ink)" opacity=".26"/>
+            <circle cx="69.5" cy="100" r="5" fill="var(--surface-2)" stroke="var(--ink)" stroke-opacity=".34"/>
+            <rect x="86" y="92" width="76" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="86" y="104" width="130" height="4" rx="2" fill="var(--ink)" opacity=".18"/>
+            <circle cx="69.5" cy="144" r="5" fill="var(--surface-2)" stroke="var(--ink)" stroke-opacity=".18"/>
+            <rect x="86" y="136" width="62" height="5" rx="2.5" fill="var(--ink)" opacity=".16"/>
+            <rect x="86" y="148" width="104" height="4" rx="2" fill="var(--ink)" opacity=".10"/>
+          </svg>
+          <div class="body">
+            <h2>Decisions</h2>
+            <p class="what">Why the studio does things the way it does &mdash; the choices, the lessons, and the ones that no longer apply.</p>
+            <p class="stat">the log, searchable</p>
+          </div>
+        </a>
+      </section>
+
+      <section data-block="dev-plate">
+        <!-- Dev, drawn: switches. This page is a panel of levers - resets, checks, the
+             hidden code of the day - and nothing else in the app looks like that. -->
+        <a class="plate" href="#/dev" id="devPlate">
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A panel of toggle switches">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect x="60" y="56" width="90" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
+            <rect x="216" y="50" width="44" height="18" rx="9" fill="var(--accent)" opacity=".28"/>
+            <circle cx="251" cy="59" r="7" fill="var(--accent)"/>
+            <rect x="60" y="94" width="118" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
+            <rect x="216" y="88" width="44" height="18" rx="9" fill="var(--ink)" opacity=".12"/>
+            <circle cx="225" cy="97" r="7" fill="var(--ink)" opacity=".34"/>
+            <rect x="60" y="132" width="74" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
+            <rect x="216" y="126" width="44" height="18" rx="9" fill="var(--ink)" opacity=".12"/>
+            <circle cx="225" cy="135" r="7" fill="var(--ink)" opacity=".34"/>
+          </svg>
+          <div class="body">
+            <h2>Dev</h2>
+            <p class="what">ZF only. What the automations did last night, what they are supposed to do, and the levers for the game.</p>
+            <p class="stat">checks and levers</p>
+          </div>
+        </a>
+      </section>
+
       <section data-block="tasks-plate">
         <a class="plate" href="#/tasks">
           <!-- Tasks, drawn: four rows with a marker column, the first marker overdue-red
@@ -3746,11 +3827,17 @@ applyRoute(routeName() || "home");
 var BLOCKS = [
   { block: "tasks-lead",     section: "tasks",    weight: 9 },
   { block: "briefing",       section: "briefing", weight: 7 },
-  { block: "tasks-plate",    section: "tasks",    weight: 6 },
-  { block: "projects-plate", section: "projects", weight: 6 },
-  { block: "builds-plate",   section: "builds",   weight: 5 }
+  { block: "daily-plate",     section: "standup",   weight: 6 },
+  { block: "tasks-plate",     section: "tasks",     weight: 6 },
+  { block: "projects-plate",  section: "projects",  weight: 6 },
+  { block: "decisions-plate", section: "decisions", weight: 6 },
+  { block: "builds-plate",    section: "builds",    weight: 5 },
+  { block: "dev-plate",       section: "dev",       weight: 5 }
 ];
-var PAGES = { tasks: 6, projects: 7, briefing: 3, builds: 7 };
+/* Briefing keeps its band and gets no plate. The band already shows three real stories,
+   which is more than a door to the same place could say - demoting it to a plate would
+   trade live content for a picture. */
+var PAGES = { standup: 5, tasks: 6, projects: 7, decisions: 5, briefing: 3, builds: 7 };
 
 function tierFor(w) {
   return w >= 9 ? "lead" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
@@ -4438,6 +4525,10 @@ function devAllowed() { return WHO === ZF_ID; }
 function gateDev() {
   var link = el("navDev");
   if (link) link.hidden = !devAllowed();
+  /* The home plate is gated with the nav link, or the door sits on everyone home page
+     pointing at a page they get bounced straight out of. Tidiness, not security. */
+  var plate = el("devPlate");
+  if (plate) plate.hidden = !devAllowed();
   if (!devAllowed() && routeName() === "dev") { location.hash = "#/"; }
 }
 
@@ -6844,8 +6935,39 @@ watchBuilds = function () {
   var n = routeName();
   if (n === "standup") renderStandup();
   if (n === "decisions") renderDecisions();
+  paintStandStat();
   return r;
 };
+
+/* The Daily plate is the one home stat worth a query of its own: an unfiled Day Out is
+   the thing the page exists to make visible, and a door that does not say whether you
+   have filed yet is just a label. Decisions and Dev carry a phrase instead - a count of
+   log entries tells nobody anything, and it would cost a second read to say it.
+
+   The query is the same one the Daily page runs, cached, so opening Daily afterwards is
+   free rather than twice the work. */
+function paintStandStat() {
+  var st = el("stStand");
+  if (!st) return;
+  if (!mcp || !SERVER) { st.innerHTML = '<span class="quiet">connector needed</span>'; return; }
+  if (WHO === WHO_ALL || !PEOPLE[WHO]) {
+    st.innerHTML = '<span class="quiet">sign in to file yours</span>';
+    return;
+  }
+  var ini = PEOPLE[WHO].ini;
+  loadStand().then(function () {
+    if (!PEOPLE[WHO] || PEOPLE[WHO].ini !== ini) return;   // they switched while it loaded
+    var row = standRowFor(ini, jstDay());
+    var bits = [
+      row && row.inAt ? "<b>day in</b> filed" : '<span class="flagged">day in</span> open',
+      row && row.outAt ? "<b>day out</b> filed" : '<span class="flagged">day out</span> open'
+    ];
+    st.innerHTML = bits.join("  ");
+  });
+}
+
+var _setWhoStand = setWho;
+setWho = function (id, name) { _setWhoStand(id, name); paintStandStat(); };
 
 /* ================================================================
    TASKS, WRITABLE - quick capture, triage, inline status.
