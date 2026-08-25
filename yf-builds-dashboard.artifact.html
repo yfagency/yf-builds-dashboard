@@ -1299,8 +1299,12 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
    story: section, headline, source. The stakes clause is deliberately not here -
    at a 7 this is a pointer, and the reading happens on the page. */
 .bandrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; }
-.bandcell { padding: 12px 20px 12px 0; border-right: 1px solid var(--rule-soft); }
-.bandcell:last-child { border-right: 0; }
+/* Padded on BOTH sides, because the divider belongs to the cell before it - with no left
+   padding the second and third headlines wrapped straight onto the rule next to them. The
+   first cell keeps its left edge flush so the band still lines up with the column. */
+.bandcell { padding: 12px 20px; border-right: 1px solid var(--rule-soft); }
+.bandcell:first-child { padding-left: 0; }
+.bandcell:last-child { border-right: 0; padding-right: 0; }
 .bandcell .sec {
   font-family: var(--mono); font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
   color: var(--accent); display: block; margin-bottom: 5px;
