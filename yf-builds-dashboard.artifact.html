@@ -200,7 +200,10 @@ input.pick {
   padding: 18px; display: flex; flex-direction: column; gap: 11px; box-shadow: var(--shadow);
 }
 .card h3 { font-size: 16px; font-weight: 600; letter-spacing: -.02em; }
-.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+/* The right padding is clearance for the corner pin group, which is positioned against the
+   card rather than laid out in this row. It only actually matters on a card with no
+   thumbnail, where the group would otherwise sit on top of the title. */
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-right: 24px; }
 /* The status control and the pin ride together at the right of a build card, so the title
    still has the whole of the rest of the line. */
 .cardpin { display: inline-flex; align-items: center; gap: 4px; flex: none; }
@@ -1298,17 +1301,8 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 .plateslot:hover .platectl,
 .plateslot:focus-within .platectl,
 .plateslot.fav .platectl { opacity: 1; }
-.platectl button {
-  width: 21px; height: 21px; padding: 0; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(10, 10, 11, .78); color: var(--muted);
-  border: 1px solid var(--rule); border-radius: 4px;
-  font-family: var(--sans); font-size: 12px; line-height: 1;
-}
-.platectl button:hover { color: var(--ink); border-color: var(--muted); }
-/* A pinned plate wears whoever is signed in, falling back to the accent in the team view
-   - the same variable as the identity frame, so the two can never disagree. */
-.plateslot.fav .pfav { color: var(--me, var(--accent)); border-color: var(--me, var(--accent)); }
+/* Chrome and colour for these buttons live in the shared pin rules further down, with the
+   record pins - one definition, so the two can never drift apart again. */
 .plateslot.fav > .plate { border-color: rgba(243, 240, 233, .19); }
 
 /* ---- tier: strip (3-4) ---- */
@@ -1616,24 +1610,49 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
    render when the underlying record is outside the loaded set.
    ================================================================ */
 
-.pinbtn {
-  flex: none; cursor: pointer; background: none; border: 0; padding: 3px;
-  line-height: 0; border-radius: 4px; color: var(--muted);
-}
-.pinbtn:hover { background: var(--surface-2); color: var(--ink); }
-.pinbtn[aria-pressed="true"] { color: var(--accent); }
-.pinbtn svg { display: block; }
+/* ---- ONE PINNING CONTROL, EVERYWHERE ----
+   The home cards and the record lists had two different-looking controls doing the same
+   job. This is the home card version, and everything wears it: same chrome, same star,
+   same reveal, same colour.
 
-/* The pin and its two arrows travel together, so a row only ever has one thing to make
-   space for. Arrows are quieter than the pin: the pin is the decision, the order is a
-   nudge. */
-.pingrp { display: inline-flex; align-items: center; gap: 1px; flex: none; }
-.pinmv {
-  flex: none; cursor: pointer; background: none; border: 0; padding: 0;
-  width: 16px; height: 18px; border-radius: 3px;
-  font-family: var(--sans); font-size: 12px; line-height: 1; color: var(--muted);
+   The chrome is deliberately opaque rather than transparent, because on a build card the
+   group sits over a thumbnail and a bare glyph on a photograph is unreadable. */
+.pinbtn, .pinmv, .platectl button {
+  flex: none; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 21px; height: 21px; border-radius: 4px;
+  background: rgba(10, 10, 11, .78); color: var(--muted);
+  border: 1px solid var(--rule);
+  font-family: var(--sans); font-size: 12px; line-height: 1;
 }
-.pinmv:hover { background: var(--surface-2); color: var(--ink); }
+.pinbtn:hover, .pinmv:hover, .platectl button:hover { color: var(--ink); border-color: var(--muted); }
+/* A pinned star wears whoever is signed in, falling back to the accent in the team view -
+   the same variable as the identity frame, so the two can never disagree. */
+.pinbtn[aria-pressed="true"], .plateslot.fav .pfav {
+  color: var(--me, var(--accent)); border-color: var(--me, var(--accent));
+}
+.pingrp, .platectl { display: inline-flex; align-items: center; gap: 3px; flex: none; }
+
+/* Out of the way until you go looking - or until the thing is pinned, because a pin you
+   cannot see is a setting you will not remember making. Exactly the home card behaviour,
+   now on every surface that has pinning. */
+.card .pingrp, .dcard .pingrp, .trow .pingrp, .projrow .pingrp, .pincard .pingrp {
+  opacity: 0; transition: opacity .12s ease;
+}
+.card:hover .pingrp, .card:focus-within .pingrp,
+.dcard:hover .pingrp, .dcard:focus-within .pingrp,
+.trow:hover .pingrp, .trow:focus-within .pingrp,
+.projrow:hover .pingrp, .projrow:focus-within .pingrp,
+.pincard:hover .pingrp, .pincard:focus-within .pingrp,
+.pingrp.on { opacity: 1; }
+
+/* On a card with a picture the group goes in the corner over the art, which is where the
+   home cards put it. Rows keep theirs in the flow: a row has no corner to speak of, and
+   floating it over one would just cover the text. */
+.card, .dcard { position: relative; }
+.card > .card-top .pingrp, .dcard .pingrp { position: absolute; top: 10px; right: 10px; z-index: 2; }
+/* so the source stamp never runs under the group */
+.dctop { padding-right: 58px; }
 
 /* Pins on the home strip: a second row under the summary, inside the same bar. */
 .lead-pins {
@@ -1884,8 +1903,11 @@ img, svg { max-width: 100%; }
 
   .plates { grid-template-columns: 1fr; }
   /* There is no hover on a touch screen, so a control that appears on hover is a control
-     that does not exist there. Held at a low opacity instead - present, not shouting. */
-  .platectl { opacity: .5; }
+     that does not exist there. Held at a low opacity instead - present, not shouting.
+     Every pinning surface, not just the home cards. */
+  .platectl,
+  .card .pingrp, .dcard .pingrp, .trow .pingrp, .projrow .pingrp, .pincard .pingrp { opacity: .5; }
+  .pingrp.on { opacity: 1; }
   .tier-lead { padding: 13px 14px 14px; }
   .lead-top { gap: 6px 14px; }
   .lead-go { font-size: 10px; }
@@ -5745,7 +5767,10 @@ function repaintPinned() {
   renderLeadPins();
   renderProjects();
   renderTasksPage();
-  if (typeof renderDecisions === "function") renderDecisions();
+  /* Only if the log has actually been read. renderDecisions() starts a fetch when DL_ROWS
+     is still null, so without this guard pinning a task on the Tasks page would fire a
+     query against a database you are not looking at. */
+  if (typeof renderDecisions === "function" && typeof DL_ROWS !== "undefined" && DL_ROWS) renderDecisions();
   if (typeof render === "function" && typeof BUILDS_ROWS !== "undefined" && BUILDS_ROWS) render();
 }
 
@@ -5780,13 +5805,11 @@ function sortPinned(list, kind, idOf) {
   return list.slice().sort(function (a, b) { return rank(a) - rank(b); });
 }
 
-/* Drawn, because this file cannot hold the pushpin character. A filled head on a stem:
-   outlined when loose, solid accent when pinned. */
+/* The same hollow-then-filled star the home cards use. It was a drawn pin, which meant the
+   app taught two marks for one idea - you learned the star on the home page and then had
+   to learn a pin everywhere else. Entities, because this file is kept pure ASCII. */
 function pinSvg(on) {
-  return '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">' +
-    '<circle cx="8" cy="5.5" r="3.6" fill="' + (on ? "currentColor" : "none") +
-    '" stroke="currentColor" stroke-width="1.4"/>' +
-    '<line x1="8" y1="9.4" x2="8" y2="14.5" stroke="currentColor" stroke-width="1.4"/></svg>';
+  return on ? "&#9733;" : "&#9734;";
 }
 function pinBtn(kind, id, title) {
   var on = isPinned(kind, id);
@@ -5811,7 +5834,7 @@ function pinCtl(kind, id, title) {
       '<button class="pinmv" data-pinmv="' + esc(kind) + '" data-pinmvid="' + esc(id) +
         '" data-d="1" title="Move down">' + String.fromCharCode(8250) + "</button>";
   }
-  return '<span class="pingrp">' + pinBtn(kind, id, title) + arrows + "</span>";
+  return '<span class="pingrp' + (on ? " on" : "") + '">' + pinBtn(kind, id, title) + arrows + "</span>";
 }
 
 /* ---- pins on the home strip ---- */
