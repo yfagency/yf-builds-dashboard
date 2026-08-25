@@ -1697,8 +1697,13 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
   border-top: 1px solid var(--rule-soft); padding: 10px 18px 12px;
 }
+/* BASELINE, not centre. The chip holds a 9px all-caps mono tag next to a 12.5px sans
+   label, and centring their boxes centres the leading rather than the letters: measured,
+   the tag sat 1.49px above the label it belongs to. Baseline puts the two on the same
+   line, which is what the eye is checking. All-caps has no descenders, so this lands the
+   cap bottoms exactly on the label's. */
 .pinchip {
-  display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+  display: inline-flex; align-items: baseline; gap: 7px; max-width: 100%;
   background: var(--surface-2); border: 1px solid var(--rule); border-radius: 999px;
   padding: 4px 5px 4px 11px;
 }
@@ -1712,8 +1717,11 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
   font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--accent); flex: none;
 }
+/* The dismiss is a mark, not a word, so it centres on the chip instead of joining the
+   baseline - a button's baseline is its last line box, which for a single glyph in a
+   padded box is not where the glyph looks like it sits. */
 .pinchip .drop {
-  background: none; border: 0; cursor: pointer; color: var(--muted);
+  background: none; border: 0; cursor: pointer; color: var(--muted); align-self: center;
   font-family: var(--mono); font-size: 12px; line-height: 1; padding: 2px 4px; border-radius: 3px; flex: none;
 }
 .pinchip .drop:hover { color: var(--crit); background: var(--paper); }
