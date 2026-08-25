@@ -558,6 +558,25 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .dcard .chips { margin-top: 2px; }
 #dcSearch { flex: 1 1 260px; min-width: 180px; }
 
+/* ---- everything is a card grid ----
+   Daily and Decisions use the same auto-fill grid as builds, tasks and projects, so the
+   whole app has one card idiom instead of three. auto-fill is what makes the row count
+   open-ended: it fits as many 320px columns as the width allows and wraps to as many rows
+   as there are cards, so nothing here has to change when the log or the team grows. */
+.dclist, .suday {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px; align-items: start;
+}
+/* The date is a heading for its row group, not a card in it. */
+.sudate { grid-column: 1 / -1; }
+.superson {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 14px 16px 16px; border-bottom: 1px solid var(--rule);
+}
+/* Your own card keeps the accent rail it had as a row. */
+.superson.me { border-left: 2px solid var(--accent); }
+.sucols { grid-template-columns: 1fr; gap: 10px; }
+
 /* ---- quick capture ---- */
 .qcap {
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
