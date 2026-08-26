@@ -5486,7 +5486,7 @@ function wireDevForm() {
         "Entry": entry,
         "Summary": summary,
         "Category": el("dlCat").value,
-        "Source": "ZF - PC",
+        "Source": "ZF - Bridge",   // this form runs in Bridge, not on the PC
         "Still applies": "__YES__",
         "date:Date:start": todayISO(),
         "date:Date:is_datetime": 0
@@ -7565,6 +7565,14 @@ function saveDecision() {
   };
   // Source is the environment that wrote it. From the app there is no environment ID to
   // stamp, so it records the person instead, which is the same question answered.
+  //
+  // "<INI> - Bridge" MUST exist as an option on the Source select in Decisions &
+  // Learnings, or Notion rejects the whole write with a validation_error - a select
+  // will not accept a value outside its option list, and the connector does not create
+  // one for you. All four people in PEOPLE have an option as of 2026-08-26; ADDING A
+  // FIFTH PERSON HERE MEANS ADDING THEIR OPTION IN NOTION TOO. This shipped broken
+  // because WHO defaults to the team view, where PEOPLE[WHO] is undefined and Source is
+  // simply omitted - so the form worked until somebody picked their own name.
   var p = PEOPLE[WHO];
   if (p) props["Source"] = p.ini + " - Bridge";
   if (tag) props["Tags"] = [tag];
@@ -7585,8 +7593,11 @@ function saveDecision() {
       });
   }, function (e) {
     btn.disabled = false; btn.textContent = "Write entry";
+    var x = explain(e);
     msg.className = "formmsg bad";
-    msg.textContent = "Could not write it: " + (explain(e).head || "unknown");
+    // .body carries the connector's own words - for a rejected write that names the
+    // property and the value it would not take, which is the whole diagnosis.
+    msg.textContent = "Could not write it: " + (x.head || "unknown") + (x.body ? " - " + x.body : "");
   });
 }
 
