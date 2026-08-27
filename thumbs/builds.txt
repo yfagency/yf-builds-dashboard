@@ -29,3 +29,4 @@ token-physics-rig
 yf-web-builds-index
 yf-web-concept
 yfkk-landing-mvp
+yf-logo-loop
