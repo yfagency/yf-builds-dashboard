@@ -36,7 +36,23 @@ Set `Status` to `Working` and `date:Picked:start` to now, on that row, **before 
 This is the one kind you can take from end to end, and it is the reason the inbox exists. `Target` holds the repo name.
 
 1. `cd` to the dashboard repo, `git pull`.
-2. `node tools/render-thumbnails.mjs` - it discovers `[YF Build]` repos, filters on a live Pages response, and bakes the screenshot into the artifact HTML as a data URI. The CSP means a thumbnail cannot be linked, only embedded.
+2. Render. The default is MISSING-ONLY, so a request about a build that already has a tile
+   would do nothing and then report success. Decide which case you are in:
+
+       node tools/render-thumbnails.mjs                     # a build with no tile
+       FORCE=<slug> node tools/render-thumbnails.mjs        # a tile that is wrong or stale
+
+   Most Thumbnail requests about an EXISTING tile mean "this one is out of date" - use
+   FORCE with that slug. Only skip it when the build genuinely has no image yet.
+
+   It discovers `[YF Build]` repos, filters on a live Pages response, and bakes the
+   screenshot into the artifact HTML as a data URI. The CSP means a thumbnail cannot be
+   linked, only embedded.
+
+   Missing-only is the default for a reason: animated and WebGL builds do not capture
+   reliably, so a blanket re-render can replace a good tile with a worse one. That is why
+   FORCE takes a slug rather than being the default, and why `FORCE=all` is not something
+   to reach for on a single request.
 3. `pwsh tools/check-artifact.ps1` - must exit 0.
 4. Commit and push.
 5. **Republish the artifact.** This is the step that matters and the step nobody else can do: publishing requires the artifact's owner, so a request from PS or JK has always meant waiting for ZF. You are running as ZF, so you close that loop.
