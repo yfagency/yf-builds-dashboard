@@ -1160,7 +1160,10 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
    uses the full 1132, which read as a hole rather than as a measure. 96ch of 12.5px text
    is about 690 - wide for reading, but this is a footnote scanned once, and it is only
    ever two lines unless somebody opens it. */
+/* Never clamped - see clampProse(). The width is 96ch rather than 78 so it does not read as
+   a stranded column under a block that uses the full width. */
 .foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 96ch; }
+.foot.clampable { display: block; -webkit-line-clamp: unset; line-clamp: unset; }
 
 
 /* ================================================================
@@ -9514,14 +9517,18 @@ function clampMore(node) {
   wrap.insertBefore(b, node.nextSibling);
 }
 
-/* Every closing footnote on every page, plus the colophon's description. Run on each route
-   change because a clamp can only be measured while the element is on screen - a hidden
-   view reports a scrollHeight of zero and would never grow a toggle. */
+/* The colophon's description only.
+
+   The closing footnotes used to be clamped too, and it was the wrong call: at 12.5px in
+   the muted grey they are two or three short lines, and a Read more / Show less control
+   under them is bigger and louder than the text it hides. Clamping earns its place where
+   a paragraph would otherwise set the height of something around it - the colophon
+   description shares a row with the facts grid - and nowhere else. Reverted 2026-08-28.
+
+   Still run on each route change, because a clamp can only be measured while the element
+   is on screen: a hidden view reports a scrollHeight of zero and would never grow a
+   toggle. */
 function clampProse() {
-  var v = el(VIEWS[routeName()] || "");
-  if (v) {
-    Array.prototype.forEach.call(v.querySelectorAll(".foot"), clampMore);
-  }
   clampMore(document.querySelector(".colophon .doing"));
 }
 
