@@ -657,6 +657,68 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 /* Your own card keeps the accent rail it had as a row. */
 .superson.me { border-left: 2px solid var(--accent); }
 
+/* ---- the pulse ----
+   What the automations have actually produced, and how long ago. NOT what the Scheduled
+   Tasks registry claims runs - #/dev has said for months that a row there is not proof of
+   anything, and it was right. Every figure here is the freshest ARTEFACT the job leaves
+   behind, read out of data the page already has: no extra queries, and nothing that can
+   report healthy while the job is dead.
+
+   It exists because ZF noticed a two-day-stale sync before any automation did. Being the
+   monitor is not a job anybody should have. */
+.pulse { display: flex; flex-wrap: wrap; gap: 0; width: 100%; }
+.pulse .beat {
+  padding: 0 22px 0 0; margin-right: 22px; border-right: 1px solid var(--rule-soft);
+  min-width: 96px;
+}
+.pulse .beat:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+.pulse .k {
+  display: block; font-family: var(--mono); font-size: 9.5px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 3px;
+}
+.pulse .v { font-family: var(--mono); font-size: 13px; color: var(--ink-2); }
+.pulse .v.ok   { color: var(--ok); }
+.pulse .v.warn { color: var(--warn); }
+.pulse .v.crit { color: var(--crit); }
+.pulse .v.none { color: var(--muted); }
+
+/* ---- the day-out nudge ----
+   A slim bar under the topbar, on every page rather than just home. The Daily plate
+   already says "day out open", but only to somebody looking at the home page in the
+   morning - and the thing worth catching is at 18:00, wherever you happen to be.
+
+   It is deliberately narrow, appears only after the threshold, and can be dismissed for
+   the day. A nudge you cannot silence stops being a nudge and becomes furniture. */
+.nudge {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  border: 1px solid var(--rule); border-left: 2px solid var(--warn);
+  background: var(--warn-soft); border-radius: var(--radius);
+  padding: 8px 12px; margin: -14px 0 22px;
+  font-size: 13px; color: var(--ink-2);
+}
+.nudge b { color: var(--ink); font-weight: 600; }
+.nudge .go {
+  color: var(--warn); text-decoration: none; font-weight: 600;
+  border-bottom: 1px solid rgba(217, 130, 43, .4);
+}
+.nudge .go:hover { border-bottom-color: var(--warn); }
+.nudge .later {
+  margin-left: auto; background: none; border: 0; cursor: pointer; padding: 2px 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); border-radius: 3px;
+}
+.nudge .later:hover { color: var(--ink); background: var(--surface); }
+
+/* ---- per-section freshness ----
+   Builds has said "read 09:14" since the beginning; nothing else did. When a query is slow
+   or has quietly failed, every other page looks confidently up to date. Same words, same
+   place, on every section that reads. */
+.freshstamp {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .04em; color: var(--muted);
+  align-self: center; white-space: nowrap;
+}
+.freshstamp.stale { color: var(--warn); }
+
 /* ================================================================
    INBOX
    ================================================================ */
@@ -2171,6 +2233,9 @@ img, svg { max-width: 100%; }
     </div>
   </nav>
 
+  <!-- Not inside any view: the point is that it follows you across the app. -->
+  <div class="nudge" id="nudge" hidden></div>
+
   <!-- ============================ HOME ============================ -->
   <section id="v-home" class="view">
     <header class="home-mast">
@@ -2365,6 +2430,12 @@ img, svg { max-width: 100%; }
             <p class="stat" id="stProjects"><span class="quiet">reading the projects&hellip;</span></p>
           </div>
         </a>
+      </section>
+
+      <section data-block="pulse">
+        <div class="tier-strip">
+          <div class="pulse" id="pulse"></div>
+        </div>
       </section>
 
       <section data-block="inbox-plate">
@@ -4229,6 +4300,12 @@ applyRoute(routeName() || "home");
 var BLOCKS = [
   { block: "tasks-lead",     section: "tasks",    weight: 9 },
   { block: "briefing",       section: "briefing", weight: 7 },
+  /* A 4, so it lands in the strip tier: a hairline and a row of figures, at the foot of
+     the page below the doors. The ladder puts strips last by construction - anything
+     between the briefing at 7 and the plates at 6 would have to be a 6 itself, and would
+     then be pulled into the plate grid as a card. Last is right anyway: this is a thing
+     you should be able to ignore for weeks and read in one glance on the day it matters. */
+  { block: "pulse",           section: "home",      weight: 4 },
   { block: "daily-plate",     section: "standup",   weight: 6 },
   { block: "tasks-plate",     section: "tasks",     weight: 6 },
   { block: "projects-plate",  section: "projects",  weight: 6 },
@@ -7822,6 +7899,240 @@ watchBuilds = function () {
   paintInboxStat();
   return r;
 };
+
+/* ================================================================
+   THE PULSE - evidence that the automations are alive
+   ================================================================ */
+
+/* Rounded down, and deliberately vague past a day: the difference between 26 and 31 hours
+   does not change what anybody does about it. */
+function agoWords(ms) {
+  if (ms === null || ms === undefined) return null;
+  var m = Math.floor(ms / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + "m ago";
+  var h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
+  var d = Math.floor(h / 24);
+  return d + (d === 1 ? " day ago" : " days ago");
+}
+
+function tsOf(iso) {
+  if (!iso) return null;
+  var t = Date.parse(iso.length === 10 ? iso + "T00:00:00Z" : iso);
+  return isNaN(t) ? null : t;
+}
+
+/* Each beat is one job, measured by the freshest thing it produces. The thresholds are the
+   job's own cadence with slack, not round numbers: a daily job is fine at 25 hours and
+   wrong at 40. */
+function pulseBeats() {
+  var now = Date.now(), out = [];
+
+  // The 06:30 JST sync writes Last Commit onto every registry row.
+  var newestCommit = null;
+  (BUILDS_ROWS || []).forEach(function (b) {
+    var t = tsOf(b.commitDate);
+    if (t !== null && (newestCommit === null || t > newestCommit)) newestCommit = t;
+  });
+  out.push({
+    k: "registry sync", t: newestCommit,
+    warn: 36 * 3600000, crit: 72 * 3600000,
+    none: BUILDS_ROWS ? "no commits on file" : null
+  });
+
+  // The 07:00 JST briefing writes its stories into the archive.
+  var days = (typeof briefDays === "function") ? briefDays() : [];
+  out.push({
+    k: "briefing", t: days.length ? tsOf(days[0]) : null,
+    warn: 30 * 3600000, crit: 54 * 3600000,
+    none: (typeof BRIEF_ROWS !== "undefined" && BRIEF_ROWS) ? "nothing archived" : null
+  });
+
+  // The daily. Newest filing of any kind, from anybody.
+  var newestStand = null;
+  (STAND_ROWS || []).forEach(function (r) {
+    [r.outAt, r.inAt].forEach(function (v) {
+      var t = tsOf(v);
+      if (t !== null && (newestStand === null || t > newestStand)) newestStand = t;
+    });
+  });
+  out.push({
+    k: "daily", t: newestStand,
+    warn: 30 * 3600000, crit: 78 * 3600000,
+    none: STAND_ROWS ? "nobody has filed" : null
+  });
+
+  return out;
+}
+
+/* The inbox is the one beat measured the other way round: not how long since the runner
+   last worked, but how long the oldest unanswered request has been sitting. A runner that
+   answers nothing looks perfectly healthy by its own last-answered time. */
+function pulseInbox() {
+  if (IN_ROWS === null) return null;
+  var now = Date.now(), oldest = null, waiting = 0;
+  IN_ROWS.forEach(function (r) {
+    if (r["Status"] === "Answered" || r["Status"] === "Wont do") return;
+    waiting++;
+    var t = tsOf(r.sent);
+    if (t !== null && (oldest === null || t < oldest)) oldest = t;
+  });
+  if (!waiting) return { k: "inbox", txt: "clear", cls: "ok" };
+  var age = oldest === null ? 0 : now - oldest;
+  var cls = age > 6 * 3600000 ? "crit" : age > 2 * 3600000 ? "warn" : "";
+  return { k: "inbox", txt: waiting + " waiting" + (oldest === null ? "" : ", " + agoWords(age)), cls: cls };
+}
+
+function renderPulse() {
+  var box = el("pulse");
+  if (!box) return;
+  /* The SECTION, not the strip inside it. A hidden strip inside a visible section leaves
+     the section's 30px of stack gap behind as a hole, and .tier-strip's border-top draws a
+     stray hairline across it. */
+  var host = box.closest("[data-block]") || box.closest(".tier-strip");
+  if (!mcp || !SERVER) { if (host) host.hidden = true; return; }
+  if (host) host.hidden = false;
+
+  var cells = pulseBeats().map(function (b) {
+    var txt, cls;
+    if (b.t === null) {
+      // Not read yet is not the same as not run. Say nothing rather than something wrong.
+      if (b.none === null) return null;
+      txt = b.none; cls = "none";
+    } else {
+      var age = Date.now() - b.t;
+      txt = agoWords(age);
+      cls = age > b.crit ? "crit" : age > b.warn ? "warn" : "ok";
+    }
+    return { k: b.k, txt: txt, cls: cls };
+  }).filter(Boolean);
+
+  var inb = pulseInbox();
+  if (inb) cells.push(inb);
+
+  if (!cells.length) { if (host) host.hidden = true; return; }
+  box.innerHTML = cells.map(function (c) {
+    return '<div class="beat"><span class="k">' + esc(c.k) + "</span>" +
+      '<span class="v ' + esc(c.cls) + '">' + esc(c.txt) + "</span></div>";
+  }).join("");
+}
+
+/* ================================================================
+   THE DAY-OUT NUDGE and PER-SECTION FRESHNESS
+   ================================================================ */
+
+/* After this hour, JST, an unfiled Day Out is worth mentioning. Before it, filing one would
+   be premature and the bar would just be wrong. */
+var NUDGE_FROM = 17;
+
+function nudgeKey() { return "yfbridge.nudge." + jstDay(); }
+function nudgeSnoozed() {
+  try { return localStorage.getItem(nudgeKey()) === "1"; } catch (e) { return false; }
+}
+
+function paintNudge() {
+  var bar = el("nudge");
+  if (!bar) return;
+  var hide = function () { bar.hidden = true; };
+
+  if (!mcp || !SERVER || !PEOPLE[WHO]) return hide();
+  if (nudgeSnoozed()) return hide();
+
+  var d = jstNow();
+  // Saturday and Sunday are not a failure of the ritual.
+  if (d.getDay() === 0 || d.getDay() === 6) return hide();
+  if (d.getHours() < NUDGE_FROM) return hide();
+
+  var ini = PEOPLE[WHO].ini, day = jstDay();
+  // Never fetch just to nag. If the daily has not been read yet this session the bar simply
+  // does not appear - it will once something else has cause to read it.
+  if (STAND_ROWS === null) return hide();
+
+  var row = standRowFor(ini, day);
+  if (row && row.outAt) return hide();
+
+  bar.hidden = false;
+  bar.innerHTML = '<span><b>Day Out</b> not filed for today.</span>' +
+    '<a class="go" href="#/standup">File it</a>' +
+    '<button class="later" type="button" id="nudgeLater">Not now</button>';
+}
+
+document.addEventListener("click", function (e) {
+  var b = e.target.closest ? e.target.closest("#nudgeLater") : null;
+  if (!b) return;
+  // For today only. Tomorrow it asks again, which is the whole point of a daily ritual.
+  try { localStorage.setItem(nudgeKey(), "1"); } catch (err) {}
+  paintNudge();
+});
+
+/* ---- freshness, one stamp per section ----
+   Written by the loaders and painted into each section's own header row, so no section
+   needs its own markup for it. */
+var STAMP = {};
+
+function markStamp(k) { STAMP[k] = Date.now(); paintStamps(); }
+
+function paintStamps() {
+  Object.keys(STAMP).forEach(function (k) {
+    var view = el(VIEWS[k] || ("v-" + k));
+    if (!view) return;
+    var row = view.querySelector(".sec-row") || view.querySelector(".sec-mast");
+    if (!row) return;
+    var span = row.querySelector(".freshstamp");
+    if (!span) {
+      span = document.createElement("span");
+      span.className = "freshstamp";
+      var acts = row.querySelector(".mast-actions");
+      if (acts) { acts.insertBefore(span, acts.firstChild); } else { row.appendChild(span); }
+    }
+    var age = Date.now() - STAMP[k];
+    span.textContent = "read " + clock(STAMP[k]);
+    // Ten minutes is not stale for any of this data, but an hour means something stopped.
+    if (age > 3600000) { span.classList.add("stale"); } else { span.classList.remove("stale"); }
+  });
+}
+
+/* Decorating the loaders rather than the renderers: the stamp is when the DATA arrived, not
+   when a page happened to be drawn. */
+["Stand", "DL", "Inbox"].forEach(function (n) {
+  var key = { Stand: "standup", DL: "decisions", Inbox: "inbox" }[n];
+  var orig = window["load" + n];
+  if (typeof orig !== "function") return;
+  window["load" + n] = function () {
+    return orig.apply(null, arguments).then(function (r) { markStamp(key); return r; });
+  };
+});
+
+var _applyRouteStamp = applyRoute;
+applyRoute = function (name) {
+  _applyRouteStamp(name);
+  paintStamps();
+  paintNudge();
+  renderPulse();
+};
+
+var _setWhoNudge = setWho;
+setWho = function (id, name) { _setWhoNudge(id, name); paintNudge(); };
+
+var _watchBuildsNudge = watchBuilds;
+watchBuilds = function () {
+  var r = _watchBuildsNudge();
+  paintNudge();
+  paintStamps();
+  renderPulse();
+  return r;
+};
+
+/* The pulse reads four datasets it does not own, so it repaints whenever any of them
+   lands rather than trying to sequence them. */
+["Stand", "Inbox"].forEach(function (n) {
+  var orig = window["load" + n];
+  if (typeof orig !== "function") return;
+  window["load" + n] = function () {
+    return orig.apply(null, arguments).then(function (r) { renderPulse(); return r; });
+  };
+});
 
 /* Arriving on the page has to draw it. Every other section decorates applyRoute for this;
    the inbox was hooked only to watchBuilds, which fires when the REGISTRY changes - so
