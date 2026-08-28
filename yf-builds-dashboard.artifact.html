@@ -5365,25 +5365,32 @@ var TASKS_DS = "collection://19b2e65a-2537-462e-9d93-9c2f8e965c3b";
 
    If a person ever crosses ~100 open tasks this breaks again, so has_more is checked on
    every response and reported in the UI rather than swallowed. */
-/* ---- one query for the whole team, not one per person ----
+/* ---- one query per person, and it has to stay that way ----
 
-   This used to be four queries - one per member, each filtered to that person's assignee id
-   and each with its own watch on a two-minute poll. So the page opened four connector calls
-   to draw the same list, and kept four polls running for as long as it stayed open,
-   whichever single person was signed in.
+   Four queries to draw one list looks like the obvious thing to collapse, and I tried it:
+   one query with the four assignee ids OR'd together, LIMIT 400. It returns the right rows
+   and it is one round-trip instead of four.
 
-   Counted live on 2026-08-28: 354 open tasks in the database, of which 167 belong to the
-   four people here (JK 78, BB 44, PS 36, ZF 9). One query with the four ids OR'd together
-   returns exactly those 167 rows - the same rows, in one trip - and LIMIT 400 leaves room
-   for well over double the current load before has_more starts mattering. */
-function taskQueryAll() {
-  var ors = Object.keys(PEOPLE).map(function (id) {
-    return '"Assignee" LIKE \'%' + id + '%\'';
-  }).join(" OR ");
+   It also loses about a third of them. Measured against live Notion on 2026-08-28:
+
+     full column set, LIMIT 400  ->  ~100 rows of the 167 that match, has_more TRUE
+     one column,      LIMIT  95  ->   95 rows,                        has_more FALSE
+
+   Only 167 rows exist, so LIMIT 400 cannot be what truncated it. The connector caps a SQL
+   response by SIZE, not by row count, and the ten columns this page needs put the ceiling
+   somewhere around a hundred rows. has_more means "your response was cut short", not "more
+   rows exist beyond your limit".
+
+   Per person, each response is one member's open tasks - 78 at the worst today - which fits
+   with room to spare. It also degrades honestly if that ever stops being true: TASK_TRUNC
+   is per person, so one overloaded list says so without the other three lying. A combined
+   query would have hidden tasks silently, and silently is the part that makes it worse than
+   three extra calls. */
+function taskQueryFor(id) {
   return 'SELECT url, "Tasks", "Assignee", "Planning", "Progress", "Priority", "Projects", ' +
     '"date:Due:start", "Estimated Hours", "Last edited time" FROM "' + TASKS_DS + '" ' +
-    "WHERE \"Progress\" NOT IN ('Delivered','Archived') AND (" + ors + ") " +
-    'ORDER BY "date:Due:start" ASC LIMIT 400';
+    "WHERE \"Progress\" NOT IN ('Delivered','Archived') AND \"Assignee\" LIKE '%" + id + "%' " +
+    'ORDER BY "date:Due:start" ASC LIMIT 200';
 }
 var TASKS_BY = {};     // person id -> their rows
 var TASK_TRUNC = {};   // person id -> true when the connector said has_more
@@ -5568,9 +5575,12 @@ function saveTaskField(sel) {
   sel.classList.add("saving");
   mcp.callTool(SERVER, T_UPDATE, { page_id: tid, command: "update_properties", properties: props })
     .then(function () {
-      // One query covers the whole team, so there is one thing to invalidate and no need to
-      // work out whose task it was.
-      return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryAll())).catch(function () {});
+      // Invalidate every person's query rather than guessing whose task it was: the row
+      // could belong to anyone whose list is on screen, and four cheap invalidations beat
+      // one wrong one.
+      return Promise.all(Object.keys(PEOPLE).map(function (id) {
+        return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(id))).catch(function () {});
+      }));
     })
     .then(function () { sel.classList.remove("saving"); },
           function () {
@@ -5858,34 +5868,25 @@ function rebuildTasks() {
 
 function startTasks() {
   if (!mcp || !SERVER) return;
-  mcp.watchTool(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryAll()), function (ev) {
-    if (ev.type === "data") {
-      var all = rows(ev.result);
-      var trunc = hasMoreOf(ev.result);
-      /* TASKS_BY stays the per-person index every counter and lane reads from - it is just
-         built by sorting one result set now instead of by four separate reads. A row
-         assigned to two of the four lands in both lists, which is what the per-person
-         counts should say; rebuildTasks() is what makes sure it is only counted once in
-         the flat list. */
-      Object.keys(PEOPLE).forEach(function (id) { TASKS_BY[id] = []; TASK_TRUNC[id] = trunc; });
-      all.forEach(function (r) {
-        var a = String(r["Assignee"] || "");
-        Object.keys(PEOPLE).forEach(function (id) {
-          if (a.indexOf(id) >= 0) TASKS_BY[id].push(r);
-        });
-      });
-      rebuildTasks();
-      return;
-    }
-    var e = explain(ev.error || {});
-    if (!TASK_ROWS) {
-      el("taskLine").textContent = e.head;
-      el("taskLine").className = "lead-line calm";
-      el("taskCounts").innerHTML = '<span class="lead-who">tasks unavailable</span>';
-      el("stTasks").innerHTML = '<span class="quiet">tasks unavailable</span>';
-      el("tasksBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
-    }
-  }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
+  Object.keys(PEOPLE).forEach(function (id) {
+    mcp.watchTool(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(id)), function (ev) {
+      if (ev.type === "data") {
+        TASKS_BY[id] = rows(ev.result);
+        TASK_TRUNC[id] = hasMoreOf(ev.result);
+        rebuildTasks();
+        return;
+      }
+      // One person's query failing must not blank the others.
+      var e = explain(ev.error || {});
+      if (!TASK_ROWS) {
+        el("taskLine").textContent = e.head;
+        el("taskLine").className = "lead-line calm";
+        el("taskCounts").innerHTML = '<span class="lead-who">tasks unavailable</span>';
+        el("stTasks").innerHTML = '<span class="quiet">tasks unavailable</span>';
+        el("tasksBody").innerHTML = '<div class="panel alert"><h2>' + esc(e.head) + "</h2><p>" + esc(e.body) + "</p></div>";
+      }
+    }, { cache: { staleTime: 60000 }, refetchInterval: 120000 });
+  });
 }
 
 /* ---- the briefing band replaces the old home digest ----
@@ -5955,8 +5956,10 @@ el("taskRefresh").addEventListener("click", function () {
   if (!mcp || !SERVER) return;
   var btn = el("taskRefresh"), restore = function () { btn.disabled = false; btn.textContent = "Refresh"; };
   btn.disabled = true; btn.textContent = "Refreshing";
-  mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryAll())).catch(function () {})
-    .then(function () { setTimeout(restore, 600); }, restore);
+  // One invalidation per person, since there is one query per person.
+  Promise.all(Object.keys(PEOPLE).map(function (id) {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(id))).catch(function () {});
+  })).then(function () { setTimeout(restore, 600); }, restore);
 });
 
 /* ================================================================
@@ -10397,7 +10400,7 @@ function createTask() {
     parent: { type: "data_source_id", data_source_id: TASKS_DS.replace("collection://", "") },
     pages: [{ properties: props }]
   }).then(function () {
-    return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryAll())).catch(function () {});
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(TASKS_DS, taskQueryFor(who))).catch(function () {});
   }).then(function () {
     btn.disabled = false; btn.textContent = "Add";
     el("qcTitle").value = ""; el("qcDue").value = "";
