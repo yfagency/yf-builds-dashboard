@@ -2875,7 +2875,7 @@ img, svg { max-width: 100%; }
   <main id="main"><div class="panel"><span class="spin"></span>Loading the registry&hellip;</div></main>
 
   <section class="colophon" id="colophon" hidden></section>
-  <p class="foot">Builds live in the YF Builds registry; the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads the registry through your own Notion connector and re-reads it every couple of minutes while you're looking at it &mdash; press Refresh if you can't wait. The commit line comes from git via the 06:30 JST sync, so it can lag by a day. Thumbnails are rendered images updated when the dashboard is republished.</p>
+  <p class="foot">Builds live in the YF Builds registry; the files live in public GitHub repos under <span class="mono">yfagency</span>. This page reads the registry through your own Notion connector and re-reads it every couple of minutes while you're looking at it &mdash; press Refresh if you can't wait. The commit line comes from git via the 06:30 JST sync, so it can lag by a day &mdash; but the time itself is exact to the minute, and hovering it shows the full stamp. git records the second; Notion&#39;s date property keeps the minute. Thumbnails are rendered images updated when the dashboard is republished.</p>
   </section>
 
   <!-- App-level, not section-level: when a connector is the reason nothing loaded, the
@@ -3297,19 +3297,83 @@ if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(function () { clampNotes(); });
 }
 
-function ageDays(iso) {
+/* Notion hands datetimes back as "2026-08-27 09:15:00Z" - a space where ISO 8601 wants a
+   T. V8 parses it anyway; other engines are not obliged to. Normalise rather than rely on
+   that, since every timestamp in the app goes through here. */
+function parseTs(iso) {
   if (!iso) return null;
-  var d = new Date(iso); if (isNaN(d)) return null;
+  var d = new Date(String(iso).replace(" ", "T"));
+  return isNaN(d) ? null : d;
+}
+
+function ageDays(iso) {
+  var d = parseTs(iso);
+  if (!d) return null;
   return Math.floor((Date.now() - d.getTime()) / 86400000);
 }
+
+/* HOW PRECISE THIS CAN HONESTLY BE.
+   git gives the commit time to the second - `git log --format=%aI` returns
+   2026-08-27T11:19:07+09:00. Notion's date property keeps it to the MINUTE: every row in
+   the registry ends :00, including one this session wrote with :07 seconds. So a minute is
+   the floor, and it is a hundred times finer than the whole days this used to print.
+
+   Coarse where coarse is honest, exact where it is not. A commit from this morning is
+   worth a time; one from March is not, and "5 months ago" says more than a date does. */
 function ago(iso) {
-  var d = ageDays(iso);
-  if (d === null) return "";
-  if (d <= 0) return "today";
-  if (d === 1) return "yesterday";
-  if (d < 30) return d + " days ago";
-  if (d < 365) return Math.floor(d / 30) + " months ago";
-  return Math.floor(d / 365) + " years ago";
+  var d = parseTs(iso);
+  if (!d) return "";
+  var ms = Date.now() - d.getTime();
+  // A clock that is a minute fast should not read "in 2 minutes".
+  if (ms < 0) ms = 0;
+  var mins = Math.floor(ms / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + (mins === 1 ? " minute ago" : " minutes ago");
+  var hrs = Math.floor(mins / 60);
+  // Relative for the last half day, where "4 hours ago" is what you actually want to know.
+  if (hrs < 12) return hrs + (hrs === 1 ? " hour ago" : " hours ago");
+  /* Past that, a clock time places it better than a count does - and saying both, as this
+     first did, produced "17 hours ago, 06:15 PM", which is the same fact twice.
+
+     CALENDAR days, not elapsed ones. 17 hours before now is yesterday evening but only
+     0.7 of a day, so an elapsed-hours count called it today. */
+  var days = calDaysAgo(d);
+  if (days === 0) return "today " + hhmm(d);
+  if (days === 1) return "yesterday " + hhmm(d);
+  // Inside a week the weekday places it faster than a date: "Tue 18:15" beats "26 Aug".
+  if (days < 7) return dayName(d) + " " + hhmm(d);
+  if (days < 365) return dmon(d) + ", " + hhmm(d);
+  return dmon(d) + " " + d.getFullYear();
+}
+
+/* Whole days between two local calendar dates, ignoring the clock. Midnight-to-midnight,
+   so it survives daylight saving anywhere it applies - not that JST has any. */
+function calDaysAgo(d) {
+  var a = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  var t = new Date();
+  var b = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+  return Math.round((b - a) / 86400000);
+}
+
+function hhmm(d) {
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+function dayName(d) {
+  return d.toLocaleDateString([], { weekday: "short" });
+}
+function dmon(d) {
+  return d.toLocaleDateString([], { day: "numeric", month: "short" });
+}
+
+/* The full stamp, for a title attribute: the thing you hover when the relative form is not
+   enough. Local to whoever is looking, which for this team is JST. */
+function stamp(iso) {
+  var d = parseTs(iso);
+  if (!d) return "";
+  return d.toLocaleString([], {
+    weekday: "short", year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  });
 }
 function clock(ms) {
   var d = new Date(ms);
@@ -3432,7 +3496,8 @@ function freshLine(b) {
   }
   var d = ageDays(b.commitDate);
   var cls = d === null ? "none" : d <= 14 ? "ok" : d <= 60 ? "warn" : "crit";
-  return '<span class="dot ' + cls + '"></span>Last commit <strong>' + esc(ago(b.commitDate)) + "</strong>" +
+  return '<span class="dot ' + cls + '"></span>Last commit ' +
+    '<strong title="' + esc(stamp(b.commitDate)) + '">' + esc(ago(b.commitDate)) + "</strong>" +
     (b.commit ? ' &middot; <span class="sha">' + esc(b.commit) + "</span>" : "") +
     (b.committer ? " by " + esc(b.committer) : "");
 }
@@ -3562,7 +3627,7 @@ function renderColophon(me) {
   if (me.status) facts.push("<span>status <b>" + esc(me.status) + "</b></span>");
   if (me.builder || me.committer) facts.push("<span>by <b>" + esc(me.builder || me.committer) + "</b></span>");
   if (me.commitDate) {
-    facts.push("<span>last commit <b>" + esc(ago(me.commitDate)) + "</b>" +
+    facts.push('<span>last commit <b title="' + esc(stamp(me.commitDate)) + '">' + esc(ago(me.commitDate)) + "</b>" +
       (me.commit ? " &middot; " + esc(me.commit) : "") + "</span>");
   } else if (me.repo) {
     facts.push("<span>commit <b>not synced yet</b></span>");
