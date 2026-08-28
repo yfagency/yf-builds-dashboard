@@ -135,6 +135,39 @@ foreach ($k in ($seen.Keys | Sort-Object)) {
 }
 foreach ($d in $dupFail) { $fail.Add($d) }
 
+# --- duplicate top-level declarations ------------------------------------------------
+#
+# The same bug in JavaScript. Two top-level `var`s of one name are ONE variable, and the
+# later initialiser wins - silently, everywhere, including inside code written next to the
+# earlier one. The reel and the Decisions page both declared Q_DL and DL_ROWS: the reel was
+# running the page's 300-row query instead of its own twelve, and its ten-minute refresh
+# was replacing the page's rows underneath it. Found 2026-08-28, by looking, not by
+# noticing. Column-0 only, which is what "top level" means in this file.
+$declSeen = @{}
+$fnSeen = @{}
+for ($i = 0; $i -lt $lines.Count; $i++) {
+  if ($lines[$i] -match '^var\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=') {
+    $nm = $Matches[1]
+    if (-not $declSeen.ContainsKey($nm)) { $declSeen[$nm] = @() }
+    $declSeen[$nm] += ($i + 1)
+  }
+  if ($lines[$i] -match '^function\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*\(') {
+    $nm = $Matches[1]
+    if (-not $fnSeen.ContainsKey($nm)) { $fnSeen[$nm] = @() }
+    $fnSeen[$nm] += ($i + 1)
+  }
+}
+foreach ($k in ($declSeen.Keys | Sort-Object)) {
+  if ($declSeen[$k].Count -gt 1) {
+    $fail.Add(("var declared {0}x: {1}  (lines {2}) - one of them wins silently, rename it" -f $declSeen[$k].Count, $k, ($declSeen[$k] -join ", ")))
+  }
+}
+foreach ($k in ($fnSeen.Keys | Sort-Object)) {
+  if ($fnSeen[$k].Count -gt 1) {
+    $fail.Add(("function declared {0}x: {1}  (lines {2}) - the later one wins, rename it" -f $fnSeen[$k].Count, $k, ($fnSeen[$k] -join ", ")))
+  }
+}
+
 # --- report ------------------------------------------------------------------------
 "thumbnails in page : $($inPage.Count)"
 "thumbnails on disk : $(@($onDisk).Count)"

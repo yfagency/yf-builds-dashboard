@@ -657,6 +657,31 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 /* Your own card keeps the accent rail it had as a row. */
 .superson.me { border-left: 2px solid var(--accent); }
 
+/* ---- what overturned this ----
+   "Still applies: no" was a dead end: you could see an entry had been overturned and not
+   by what. The link is shown whether or not the entry is dead, with different words for
+   each - a batch entry can be right about nine things and corrected on the tenth, and
+   calling that superseded would be a lie about the other nine. */
+.dcrel {
+  display: block; font-size: 12px; margin: 0 0 8px; line-height: 1.45;
+}
+.dcrel .lab {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--warn); margin-right: 6px;
+}
+.dcrel.back .lab { color: var(--ok); }
+.dcrel a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.dcrel a:hover { color: var(--ink); border-bottom-color: var(--muted); }
+/* The setter only appears on an opened card. Expanding one is already the "I care about
+   this entry" gesture, and a select on every card would turn the log into a form. */
+.dcset { display: none; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; }
+.dcard.open .dcset { display: flex; }
+.dcset select { font-size: 12px; padding: 4px 7px; max-width: 100%; }
+.dcset .lab {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted);
+}
+
 /* ---- the pulse ----
    What the automations have actually produced, and how long ago. NOT what the Scheduled
    Tasks registry claims runs - #/dev has said for months that a row there is not proof of
@@ -6288,9 +6313,14 @@ renderTaskLead = function () { _rtlPins(); renderLeadPins(); };
    ================================================================ */
 
 var DL_DS = "collection://79e8eda0-63bc-4a4a-badd-b981004c6f3c";
-var Q_DL = 'SELECT url, "Entry", "Category", "Source", "date:Date:start" FROM "' + DL_DS +
+/* The reel's own query and its own rows. These were called Q_DL and DL_ROWS, the same two
+   names the Decisions page uses - and two top-level `var`s of one name are ONE variable, so
+   the later pair won everywhere. The reel has been issuing the page's 300-row query rather
+   than its own twelve, and its ten-minute refresh has been replacing the page's rows from
+   underneath it. Renamed 2026-08-28; check-artifact.ps1 now fails on a repeat. */
+var Q_REEL_DL = 'SELECT url, "Entry", "Category", "Source", "date:Date:start" FROM "' + DL_DS +
   '" ORDER BY "date:Date:start" DESC LIMIT 12';
-var DL_ROWS = null;
+var REEL_DL_ROWS = null;
 var REEL_ON = true;
 try { REEL_ON = localStorage.getItem("yfbridge.reel") !== "off"; } catch (e) {}
 
@@ -6315,7 +6345,7 @@ function reelItems() {
       who: b.committer || b.builder, when: b.commitDate, href: "#/builds" });
   });
 
-  (DL_ROWS || []).forEach(function (d) {
+  (REEL_DL_ROWS || []).forEach(function (d) {
     out.push({ k: d["Category"] || "Note", x: d["Entry"] || "", who: d["Source"] || "",
       when: d["date:Date:start"], href: notionUrl(d.url), ext: true });
   });
@@ -6539,8 +6569,8 @@ function reelGlide(vPxPerMs) {
 
 function startReel() {
   if (!mcp || !SERVER) { renderReel(); return; }
-  mcp.watchTool(SERVER, T_QUERY, sqlInput(DL_DS, Q_DL), function (ev) {
-    if (ev.type === "data") { DL_ROWS = rows(ev.result); renderReel(); return; }
+  mcp.watchTool(SERVER, T_QUERY, sqlInput(DL_DS, Q_REEL_DL), function (ev) {
+    if (ev.type === "data") { REEL_DL_ROWS = rows(ev.result); renderReel(); return; }
     // The reel is decoration with benefits: if decisions cannot be read, it simply
     // carries the other sources rather than reporting an error nobody asked for.
     renderReel();
@@ -7541,10 +7571,11 @@ applyRoute = function (name) {
    back. Everything the studio worked out was write-only unless you
    opened Notion.
    ================================================================ */
-var Q_DL = 'SELECT url, "Entry", "Summary", "Category", "Source", "Tags", ' +
+var Q_DL = 'SELECT url, "Entry", "Summary", "Category", "Source", "Tags", "Replaced by", ' +
   '"Still applies", "date:Date:start" AS day FROM "' + DL_DS + '" ORDER BY day DESC LIMIT 300';
 
 var DL_ROWS = null;
+var DC_MAPS = { byId: {}, back: {} };
 
 function loadDL() {
   if (!mcp || !SERVER) return Promise.resolve([]);
@@ -7584,6 +7615,75 @@ function dcFiltered() {
   });
 }
 
+/* Notion hands a relation back as a JSON string holding an array of page URLs. The reverse
+   direction is computed here rather than read: the connector created the paired column but
+   never populated it, so a "Replaces" property would have sat empty forever and looked
+   broken. One column, one direction, and the other way round is a loop over 300 rows. */
+function dcRelOut(r) {
+  var raw = r["Replaced by"];
+  if (!raw) return [];
+  var list;
+  try { list = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return []; }
+  return Array.isArray(list) ? list : [];
+}
+
+function dcMaps() {
+  var byId = {}, back = {};
+  (DL_ROWS || []).forEach(function (r) { byId[pageIdFrom(r.url)] = r; });
+  (DL_ROWS || []).forEach(function (r) {
+    dcRelOut(r).forEach(function (u) {
+      var id = pageIdFrom(u);
+      if (!id) return;
+      if (!back[id]) back[id] = [];
+      back[id].push(r);
+    });
+  });
+  return { byId: byId, back: back };
+}
+
+function dcRelHtml(r, maps) {
+  var out = "";
+  var fwd = dcRelOut(r).map(function (u) { return maps.byId[pageIdFrom(u)]; }).filter(Boolean);
+  if (fwd.length) {
+    // Superseded means the whole entry is dead. Corrected means part of it was wrong and
+    // the rest still stands - which is the commoner case for a batch entry.
+    var dead = !isYes(r["Still applies"]);
+    out += '<span class="dcrel"><span class="lab">' + (dead ? "superseded by" : "corrected by") + "</span>" +
+      fwd.map(function (n) {
+        return '<a href="' + esc(notionUrl(n.url)) + '" target="_blank" rel="noopener noreferrer">' +
+          esc(n["Entry"] || "(untitled)") + "</a>";
+      }).join(", ") + "</span>";
+  }
+  var rev = maps.back[pageIdFrom(r.url)] || [];
+  if (rev.length) {
+    out += '<span class="dcrel back"><span class="lab">corrects</span>' +
+      rev.map(function (n) {
+        return '<a href="' + esc(notionUrl(n.url)) + '" target="_blank" rel="noopener noreferrer">' +
+          esc(n["Entry"] || "(untitled)") + "</a>";
+      }).join(", ") + "</span>";
+  }
+  return out;
+}
+
+/* Newest twenty, minus this entry itself. An entry can only be corrected by something
+   written after it, so the list is the recent end of the log and nothing else. */
+function dcSetHtml(r) {
+  var id = pageIdFrom(r.url);
+  var opts = (DL_ROWS || []).filter(function (n) {
+    return pageIdFrom(n.url) !== id && String(n.day || "") >= String(r.day || "");
+  }).slice(0, 20);
+  var cur = dcRelOut(r)[0] || "";
+  return '<span class="dcset"><span class="lab">corrected by</span>' +
+    '<select data-dcset="' + esc(id) + '">' +
+      '<option value="">nothing yet</option>' +
+      opts.map(function (n) {
+        var u = notionUrl(n.url);
+        return '<option value="' + esc(u) + '"' + (pageIdFrom(cur) === pageIdFrom(u) ? " selected" : "") + ">" +
+          esc(String(n["Entry"] || "(untitled)").slice(0, 70)) + "</option>";
+      }).join("") +
+    "</select></span>";
+}
+
 function renderDecisions() {
   var body = el("dcBody");
   if (!body) return;
@@ -7598,6 +7698,8 @@ function renderDecisions() {
     return;
   }
   var list = sortPinned(dcFiltered(), "d", function (r) { return r.url; });
+  // Built once per render rather than once per card: the reverse direction is a scan.
+  DC_MAPS = dcMaps();
   var count = el("dcCount");
   if (count) {
     count.textContent = list.length + " of " + (DL_ROWS || []).length;
@@ -7622,6 +7724,7 @@ function renderDecisions() {
       '<h3><a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">' +
         esc(r["Entry"] || "(untitled)") + "</a></h3>" +
       (r["Summary"] ? '<p class="dcsum">' + esc(r["Summary"]) + "</p>" : "") +
+      dcRelHtml(r, DC_MAPS) + dcSetHtml(r) +
       (tags.length ? '<div class="chips">' + tags.map(function (t) {
         return '<span class="chip">' + esc(t) + "</span>";
       }).join("") + "</div>" : "") +
@@ -8224,6 +8327,29 @@ function dcClamps() {
     else { card.appendChild(b); }
   });
 }
+
+el("dcBody").addEventListener("change", function (ev) {
+  var sel = ev.target;
+  if (!sel || !sel.getAttribute || !sel.getAttribute("data-dcset")) return;
+  if (!mcp || !SERVER) return;
+  var id = sel.getAttribute("data-dcset"), val = sel.value;
+  sel.disabled = true;
+  mcp.callTool(SERVER, T_UPDATE, {
+    page_id: id, command: "update_properties",
+    // An empty array clears it. Notion takes page URLs here, the same form it hands back.
+    properties: { "Replaced by": val ? [val] : [] }
+  }).then(function () {
+    return mcp.invalidate(SERVER, T_QUERY, sqlInput(DL_DS, Q_DL)).catch(function () {});
+  }).then(loadDL).then(function () {
+    sel.disabled = false;
+    renderDecisions();
+  }, function (e) {
+    sel.disabled = false;
+    var x = explain(e);
+    // Same lesson as the Source bug: the connector's own words are the diagnosis.
+    alert("Could not link it: " + (x.head || "unknown") + (x.body ? " - " + x.body : ""));
+  });
+});
 
 el("dcBody").addEventListener("click", function (ev) {
   var b = ev.target.closest ? ev.target.closest(".dcmore") : null;
