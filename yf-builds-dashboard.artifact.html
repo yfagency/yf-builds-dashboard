@@ -827,6 +827,116 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .freshstamp.stale { color: var(--warn); }
 
 /* ================================================================
+   PORTFOLIO, MEETINGS, CALENDAR - the three reference surfaces
+   ================================================================ */
+
+.pflist, .mtlist {
+  display: grid; gap: 14px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(max(320px, (100% - 28px) / 3), 1fr));
+}
+/* Same fixed card as Decisions and the Inbox. The rail is the entry's own brand colour,
+   which is the one piece of visual identity this database actually holds as data - the
+   images are Notion attachments the page cannot reach. */
+.pfcard, .mtcard {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  border-left: 2px solid var(--rule); padding: 15px 18px 17px;
+  display: flex; flex-direction: column; height: 272px; overflow: hidden; position: relative;
+}
+.pftop, .mttop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+.pfstat {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px; border: 1px solid transparent;
+}
+.pfstat.live     { color: var(--ok); background: var(--ok-soft); }
+.pfstat.progress { color: var(--warn); background: var(--warn-soft); }
+.pfstat.other    { color: var(--ink-2); background: var(--surface-2); border-color: var(--rule); }
+.pfwhen, .mtwhen {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--muted);
+  margin-left: auto;
+}
+.pfcard h3, .mtcard h3 {
+  font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; line-height: 1.35; margin-bottom: 7px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.pfsum, .mtsum {
+  font-size: 13.5px; color: var(--ink-2); margin: 0 0 9px; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden;
+}
+.pfcard .foot2, .mtcard .foot2 {
+  margin-top: auto; padding-top: 10px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--muted);
+}
+.pfcard .foot2 a, .mtcard .foot2 a { color: #8E9AAF; text-decoration: none; border-bottom: 1px solid var(--rule); }
+.pfcard .foot2 a:hover, .mtcard .foot2 a:hover { border-bottom-color: #8E9AAF; }
+.pfcard.open2, .mtcard.open2 { height: auto; overflow: visible; }
+.pfcard.open2 h3, .pfcard.open2 .pfsum,
+.mtcard.open2 h3, .mtcard.open2 .mtsum { display: block; -webkit-line-clamp: unset; line-clamp: unset; }
+/* The action-item count is the reason to open a meeting, so it is the loudest thing on it. */
+.mtacts {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px; color: var(--accent); background: var(--accent-soft);
+}
+.mtacts.none { color: var(--muted); background: var(--surface-2); }
+
+/* ---- the month grid ---- */
+.calgrid {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--rule); border-left: 1px solid var(--rule);
+}
+.caldow {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--muted); padding: 8px 10px; text-align: left;
+  border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  background: var(--surface-2);
+}
+.calday {
+  min-height: 104px; padding: 7px 8px 9px;
+  border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+}
+/* Days outside the month stay in the grid rather than being blanked, so the weeks keep
+   their shape - but they recede. */
+.calday.out { background: rgba(0, 0, 0, .18); }
+.calday.out .n { color: var(--rule); }
+.calday.today { background: var(--accent-soft); }
+.calday.today .n { color: var(--accent); font-weight: 600; }
+/* A holiday tints the whole cell, because the point of it is that nobody is working. */
+.calday.hol { background: var(--crit-soft); }
+.calday .n { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+.calday .hol {
+  font-size: 10.5px; color: var(--crit); line-height: 1.3; margin-bottom: 2px;
+}
+.calitem {
+  font-size: 11px; line-height: 1.35; color: var(--ink-2);
+  border-left: 2px solid var(--rule); padding: 1px 0 1px 6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.calitem.task { border-left-color: var(--accent); }
+.calitem.task.over { border-left-color: var(--crit); color: var(--crit); }
+.calitem.proj { border-left-color: #5B9BD5; }
+.calitem.meet { border-left-color: #8E9AAF; }
+.calmore { font-family: var(--mono); font-size: 9.5px; color: var(--muted); }
+.callegend { display: inline-flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+.callegend span {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); display: inline-flex; align-items: center; gap: 6px;
+}
+.callegend i { width: 9px; height: 3px; border-radius: 2px; display: block; }
+.callegend i.task { background: var(--accent); }
+.callegend i.proj { background: #5B9BD5; }
+.callegend i.meet { background: #8E9AAF; }
+.callegend i.hol  { background: var(--crit); }
+/* Seven columns of 40px is not a calendar. Below 720 it becomes a list of the days that
+   have something on them, which is the only part anybody reads on a phone anyway. */
+@media (max-width: 720px) {
+  .calgrid { grid-template-columns: 1fr; border-left: 0; }
+  .caldow { display: none; }
+  .calday { min-height: 0; border-right: 0; }
+  .calday.out, .calday.empty { display: none; }
+  .calday .n::after { content: " " attr(data-dow); color: var(--muted); }
+}
+
+/* ================================================================
    INBOX
    ================================================================ */
 .inform {
@@ -2351,6 +2461,9 @@ img, svg { max-width: 100%; }
         <a href="#/decisions" data-nav="decisions">Decisions</a>
         <a href="#/inbox" data-nav="inbox">Inbox</a>
         <a href="#/briefing" data-nav="briefing">Briefing</a>
+        <a href="#/calendar" data-nav="calendar">Calendar</a>
+        <a href="#/portfolio" data-nav="portfolio">Portfolio</a>
+        <a href="#/meetings" data-nav="meetings">Meetings</a>
         <a href="#/builds" data-nav="builds">Builds</a>
         <a href="#/dev" data-nav="dev" id="navDev" hidden>Dev</a>
       </div>
@@ -2649,6 +2762,104 @@ img, svg { max-width: 100%; }
         </a>
       </section>
 
+      <!-- THE REFERENCE THREE, in one hue rather than three more.
+           Seven coloured plates already sit above these and the wheel is genuinely full -
+           at eight the lime for Briefing was already the closest pairing in the set. So
+           rather than invent three more near-collisions, these share one muted slate and
+           are told apart by their drawings alone. It is also a real distinction: the
+           coloured plates are places you DO something, these are places you look something
+           up. If that stops being true for one of them, give it a colour. -->
+      <section data-block="calendar-plate">
+        <a class="plate" href="#/calendar">
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A month grid with one day marked and a holiday">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#8E9AAF" opacity=".07"/>
+            <rect x="48" y="36" width="224" height="128" rx="4" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="48" y="36" width="224" height="20" rx="4" fill="var(--ink)" opacity=".05"/>
+            <rect x="60" y="43" width="46" height="5" rx="2.5" fill="#8E9AAF"/>
+            <rect x="60" y="66" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="92" y="66" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="124" y="66" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="156" y="66" width="24" height="16" rx="2" fill="var(--accent)" opacity=".35"/>
+            <rect x="188" y="66" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="220" y="66" width="24" height="16" rx="2" fill="var(--crit)" opacity=".30"/>
+            <rect x="60" y="90" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="92" y="90" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="124" y="90" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="156" y="90" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="188" y="90" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="220" y="90" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="60" y="114" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="92" y="114" width="24" height="16" rx="2" fill="var(--warn)" opacity=".30"/>
+            <rect x="124" y="114" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="156" y="114" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="188" y="114" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="220" y="114" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="60" y="138" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="92" y="138" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+            <rect x="124" y="138" width="24" height="16" rx="2" fill="var(--ink)" opacity=".07"/>
+          </svg>
+          <div class="body">
+            <h2>Calendar</h2>
+            <p class="what">Every due date, deadline, meeting and day off on one month grid &mdash; including the next public holiday.</p>
+            <p class="stat" id="stCal"><span class="quiet">reading the month&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
+      <section data-block="portfolio-plate">
+        <a class="plate" href="#/portfolio">
+          <!-- Portfolio, drawn: a framed piece with its caption block beneath - the shape of
+               a case study, and the only plate in the set that is a picture OF a picture. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A framed piece of work above its caption">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#8E9AAF" opacity=".07"/>
+            <rect x="64" y="30" width="192" height="88" rx="3" fill="var(--surface)" stroke="var(--rule)"/>
+            <path d="M64 106 L108 74 L140 100 L182 60 L256 112 L256 118 L64 118 Z" fill="#8E9AAF" opacity=".38"/>
+            <circle cx="214" cy="54" r="9" fill="#8E9AAF" opacity=".55"/>
+            <rect x="64" y="132" width="52" height="5" rx="2.5" fill="#8E9AAF"/>
+            <rect x="64" y="148" width="130" height="6" rx="3" fill="var(--ink)" opacity=".30"/>
+            <rect x="64" y="164" width="88" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="162" y="164" width="42" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+          </svg>
+          <div class="body">
+            <h2>Portfolio</h2>
+            <p class="what">The case studies &mdash; what the work was, what changed because of it, and which ones are ready to publish.</p>
+            <p class="stat" id="stPort"><span class="quiet">reading the portfolio&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
+      <section data-block="meetings-plate">
+        <a class="plate" href="#/meetings">
+          <!-- Meetings, drawn: a checklist coming out of a conversation. The action items
+               are the part anybody actually wants, so they are the part that is drawn. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A conversation producing a checklist of action items">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#8E9AAF" opacity=".07"/>
+            <rect x="44" y="38" width="96" height="34" rx="6" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="56" y="50" width="52" height="4" rx="2" fill="var(--ink)" opacity=".20"/>
+            <rect x="56" y="59" width="34" height="4" rx="2" fill="var(--ink)" opacity=".20"/>
+            <rect x="60" y="84" width="96" height="30" rx="6" fill="var(--surface)" stroke="var(--rule)"/>
+            <rect x="72" y="94" width="44" height="4" rx="2" fill="var(--ink)" opacity=".20"/>
+            <rect x="72" y="103" width="60" height="4" rx="2" fill="var(--ink)" opacity=".20"/>
+            <rect x="180" y="46" width="12" height="12" rx="2" fill="none" stroke="#8E9AAF" stroke-width="1.6"/>
+            <rect x="200" y="50" width="72" height="5" rx="2.5" fill="#8E9AAF"/>
+            <rect x="180" y="74" width="12" height="12" rx="2" fill="none" stroke="var(--ink)" stroke-opacity=".30" stroke-width="1.6"/>
+            <rect x="200" y="78" width="58" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
+            <rect x="180" y="102" width="12" height="12" rx="2" fill="none" stroke="var(--ink)" stroke-opacity=".30" stroke-width="1.6"/>
+            <rect x="200" y="106" width="66" height="5" rx="2.5" fill="var(--ink)" opacity=".26"/>
+            <rect x="180" y="130" width="12" height="12" rx="2" fill="none" stroke="var(--ink)" stroke-opacity=".18" stroke-width="1.6"/>
+            <rect x="200" y="134" width="46" height="5" rx="2.5" fill="var(--ink)" opacity=".16"/>
+          </svg>
+          <div class="body">
+            <h2>Meetings</h2>
+            <p class="what">Action points from every meeting the notetaker covered, newest first &mdash; without opening Notion.</p>
+            <p class="stat" id="stMeet"><span class="quiet">reading the notes&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
       <section data-block="builds-plate">
         <a class="plate" href="#/builds">
           <!-- Builds, drawn: three builds stacked front-to-back, the newest one forward and
@@ -2717,6 +2928,80 @@ img, svg { max-width: 100%; }
     </header>
     <div id="devBody"><div class="panel"><span class="spin"></span>Running checks&hellip;</div></div>
     <p class="foot">Every check here is a live query through your own Notion connection &mdash; nothing is cached from a previous run and nothing is taken on trust from the registry. <b>A row in Scheduled Tasks has never been proof that anything runs</b>; the evidence panel exists because that distinction has caused real outages to go unnoticed.</p>
+  </section>
+
+  <!-- ============================ CALENDAR ============================
+       One month grid carrying everything with a date on it: task due dates, project
+       deadlines, meetings, and Japanese public holidays. The holidays are the only part
+       that is not read from Notion - see JP_HOLIDAYS in the script for where they came
+       from and how often they need checking. -->
+  <section id="v-calendar" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Calendar</p>
+          <h1 id="calTitle">Calendar</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="calPrev" title="Previous month">&#8249;</button>
+          <button class="btn" id="calToday">Today</button>
+          <button class="btn ghost" id="calNext" title="Next month">&#8250;</button>
+        </div>
+      </div>
+    </header>
+    <div class="controls">
+      <label class="toggle"><input type="checkbox" id="calMine" checked> Only my tasks</label>
+      <span class="quiet mono" id="calCount"></span>
+      <span class="callegend" id="calLegend"></span>
+    </div>
+    <div id="calBody"><div class="panel"><span class="spin"></span>Loading the month&hellip;</div></div>
+    <p class="foot">Dates come from your own Notion connection &mdash; task due dates, project deadlines and the meeting notes. <b>Public holidays are a baked-in table</b>, taken from the Japanese Cabinet Office list via holidays-jp on 2026-08-28 and covering 2026 to 2028; the page has no way to fetch them itself, so they need replacing when 2029 matters. Nothing here is read from Google Calendar &mdash; see the note in the Calendar section of the script for why.</p>
+  </section>
+
+  <!-- =========================== PORTFOLIO ===========================
+       The case studies. Read-only on purpose: this database is written by the people who
+       make the work, in Notion, where the long-form fields belong. -->
+  <section id="v-portfolio" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Portfolio</p>
+          <h1>Portfolio</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="pfRefresh" title="Re-read the portfolio now">Refresh</button>
+        </div>
+      </div>
+    </header>
+    <div class="controls">
+      <input type="text" id="pfSearch" placeholder="Search work, client or region" autocomplete="off">
+      <select id="pfStatus"><option value="">Any status</option></select>
+      <span class="quiet mono" id="pfCount"></span>
+    </div>
+    <div id="pfBody"><div class="panel"><span class="spin"></span>Loading the portfolio&hellip;</div></div>
+    <p class="foot">Read from the Portfolio database through your own Notion connection. The images live in Notion as attachments rather than as URLs, and this page&#39;s CSP blocks external hosts either way, so a card carries its <b>brand colour</b> instead of a picture &mdash; open the entry in Notion for the visuals.</p>
+  </section>
+
+  <!-- ============================ MEETINGS ============================ -->
+  <section id="v-meetings" class="view chrome-compact" hidden>
+    <header class="sec-mast">
+      <div class="sec-row">
+        <div>
+          <p class="crumb">Bridge <span class="slash">&#9585;</span> Meetings</p>
+          <h1>Meetings</h1>
+        </div>
+        <div class="mast-actions">
+          <button class="btn ghost" id="mtRefresh" title="Re-read the notes now">Refresh</button>
+        </div>
+      </div>
+    </header>
+    <div class="controls">
+      <input type="text" id="mtSearch" placeholder="Search meetings and their summaries" autocomplete="off">
+      <label class="toggle"><input type="checkbox" id="mtActions" checked> Only ones with action items</label>
+      <span class="quiet mono" id="mtCount"></span>
+    </div>
+    <div id="mtBody"><div class="panel"><span class="spin"></span>Loading the notes&hellip;</div></div>
+    <p class="foot">Read from the Meetings database, which the notetaker writes. The <b>action items are the first line of each summary</b> &mdash; that is how the notetaker formats them, so it is what this page leads with. Open a meeting in Notion for the full notes and the transcript.</p>
   </section>
 
   <!-- ============================= INBOX =============================
@@ -4582,6 +4867,9 @@ var BLOCKS = [
   { block: "decisions-plate", section: "decisions", weight: 6 },
   { block: "inbox-plate",     section: "inbox",     weight: 6 },
   { block: "briefing-plate",  section: "briefing",  weight: 6 },
+  { block: "calendar-plate",  section: "calendar",  weight: 6 },
+  { block: "portfolio-plate", section: "portfolio", weight: 6 },
+  { block: "meetings-plate",  section: "meetings",  weight: 6 },
   { block: "builds-plate",    section: "builds",    weight: 5 },
   { block: "dev-plate",       section: "dev",       weight: 5 }
 ];
@@ -8250,6 +8538,536 @@ function saveDecision() {
 }
 
 VIEWS.decisions = "v-decisions";
+
+/* ================================================================
+   CALENDAR
+
+   Everything with a date on it, on one month grid, in JST.
+
+   WHY THERE IS NO GOOGLE CALENDAR HERE. A published artifact can only
+   reach connectors the VIEWER has granted, through the mcp capability -
+   and there is no Google Calendar connector installed on this account.
+   The page cannot fetch one either: the CSP blocks every external host.
+   So this reads the dates YF OS already holds. If a Calendar connector
+   is added later, it slots in as a fourth source next to tasks,
+   deadlines and meetings - the grid does not care where a date came
+   from. Until then, saying so is better than a page that quietly shows
+   two thirds of somebody's week.
+   ================================================================ */
+VIEWS.calendar = "v-calendar";
+
+/* Japanese public holidays. Taken from the Cabinet Office list via holidays-jp on
+   2026-08-28 and checked against it rather than written from memory - the equinoxes move
+   with the astronomical date and the substitute days depend on which weekday a holiday
+   falls on, which is exactly the sort of thing that is wrong when you guess it.
+
+   Baked in because the page has no way to fetch anything. Covers 2026 to 2028; when 2029
+   matters, replace the table. Names are English only - this file is kept pure ASCII, which
+   tools/check-artifact.ps1 enforces. */
+var JP_HOLIDAYS = {
+  "2026-01-01": "New Year's Day", "2026-01-12": "Coming of Age Day",
+  "2026-02-11": "National Foundation Day", "2026-02-23": "Emperor's Birthday",
+  "2026-03-20": "Vernal Equinox", "2026-04-29": "Showa Day",
+  "2026-05-03": "Constitution Day", "2026-05-04": "Greenery Day",
+  "2026-05-05": "Children's Day", "2026-05-06": "Constitution Day, in lieu",
+  "2026-07-20": "Marine Day", "2026-08-11": "Mountain Day",
+  "2026-09-21": "Respect for the Aged Day", "2026-09-22": "Citizens' Holiday",
+  "2026-09-23": "Autumnal Equinox", "2026-10-12": "Sports Day",
+  "2026-11-03": "Culture Day", "2026-11-23": "Labour Thanksgiving Day",
+
+  "2027-01-01": "New Year's Day", "2027-01-11": "Coming of Age Day",
+  "2027-02-11": "National Foundation Day", "2027-02-23": "Emperor's Birthday",
+  "2027-03-21": "Vernal Equinox", "2027-03-22": "Vernal Equinox, in lieu",
+  "2027-04-29": "Showa Day", "2027-05-03": "Constitution Day",
+  "2027-05-04": "Greenery Day", "2027-05-05": "Children's Day",
+  "2027-07-19": "Marine Day", "2027-08-11": "Mountain Day",
+  "2027-09-20": "Respect for the Aged Day", "2027-09-23": "Autumnal Equinox",
+  "2027-10-11": "Sports Day", "2027-11-03": "Culture Day",
+  "2027-11-23": "Labour Thanksgiving Day",
+
+  "2028-01-01": "New Year's Day", "2028-01-10": "Coming of Age Day",
+  "2028-02-11": "National Foundation Day", "2028-02-23": "Emperor's Birthday",
+  "2028-03-20": "Vernal Equinox", "2028-04-29": "Showa Day",
+  "2028-05-03": "Constitution Day", "2028-05-04": "Greenery Day",
+  "2028-05-05": "Children's Day", "2028-07-17": "Marine Day",
+  "2028-08-11": "Mountain Day", "2028-09-18": "Respect for the Aged Day",
+  "2028-09-22": "Autumnal Equinox", "2028-10-09": "Sports Day",
+  "2028-11-03": "Culture Day", "2028-11-23": "Labour Thanksgiving Day"
+};
+
+/* The month on screen, as the first of it. Starts on today's JST month. */
+var CAL_AT = null;
+
+function calMonthStart() {
+  if (CAL_AT) return CAL_AT;
+  var d = jstNow();
+  CAL_AT = new Date(d.getFullYear(), d.getMonth(), 1);
+  return CAL_AT;
+}
+function calShift(n) {
+  var m = calMonthStart();
+  CAL_AT = new Date(m.getFullYear(), m.getMonth() + n, 1);
+  renderCalendar();
+}
+function ymdOf(d) {
+  var p = function (v) { return (v < 10 ? "0" : "") + v; };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+/* The next day off, from today forward. This is the bit people actually want. */
+function nextHoliday() {
+  var today = jstDay(), keys = Object.keys(JP_HOLIDAYS).sort();
+  for (var i = 0; i < keys.length; i++) if (keys[i] >= today) {
+    return { day: keys[i], name: JP_HOLIDAYS[keys[i]] };
+  }
+  return null;
+}
+
+/* One bucket per ISO day. Tasks and deadlines are read from what the app already holds, so
+   opening the calendar costs nothing extra once you have been to Tasks or Projects. */
+function calEvents() {
+  var by = {}, mine = el("calMine") ? el("calMine").checked : false;
+  var meIni = PEOPLE[WHO] ? WHO : null;
+  var push = function (day, item) {
+    if (!day) return;
+    var k = String(day).slice(0, 10);
+    if (!by[k]) by[k] = [];
+    by[k].push(item);
+  };
+
+  (TASK_ROWS || []).forEach(function (t) {
+    if (t["Progress"] === "Delivered" || t["Progress"] === "Archived") return;
+    if (mine && meIni && assigneeOf(t) !== meIni) return;
+    var due = t["date:Due:start"];
+    if (!due) return;
+    push(due, { kind: "task", label: String(t["Tasks"] || "(untitled)"),
+                over: String(due).slice(0, 10) < jstDay(), href: notionUrl(t.url) });
+  });
+
+  (PROJ_ROWS || []).forEach(function (r) {
+    var dl = r["date:Deadline:start"];
+    if (!dl) return;
+    push(dl, { kind: "proj", label: projTitle(r), href: "#/projects?p=" + encodeURIComponent(projIdOf(r)) });
+  });
+
+  (MEET_ROWS || []).forEach(function (r) {
+    if (!r.day) return;
+    push(r.day, { kind: "meet", label: meetTitle(r), href: notionUrl(r.url) });
+  });
+
+  return by;
+}
+
+function renderCalendar() {
+  var body = el("calBody");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>The calendar is built ' +
+      "from YF OS through your own Notion connection.</p></div>";
+    return;
+  }
+
+  var start = calMonthStart();
+  var title = el("calTitle");
+  if (title) {
+    title.textContent = start.toLocaleDateString([], { month: "long", year: "numeric" });
+  }
+
+  /* The three sources load lazily elsewhere in the app, so the calendar asks for whichever
+     it has not got rather than assuming somebody visited those pages first. */
+  var need = [];
+  if (TASK_ROWS === null && typeof startTasks === "function") need.push(loadTasksForCal());
+  if (PROJ_ROWS === null && typeof loadProjects === "function") need.push(loadProjects());
+  if (MEET_ROWS === null) need.push(loadMeet());
+  if (need.length) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the month&hellip;</div>';
+    Promise.all(need.map(function (p) { return p.catch(function () {}); })).then(renderCalendar);
+    return;
+  }
+
+  var events = calEvents();
+  var today = jstDay();
+
+  // Monday-first, because the studio's week is - the check-in is Monday and the Pow-Wow Friday.
+  var dow = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var firstDow = (start.getDay() + 6) % 7;
+  var gridStart = new Date(start.getFullYear(), start.getMonth(), 1 - firstDow);
+
+  /* WHOLE WEEKS. This ran to 42 cells and skipped trailing out-of-month ones individually,
+     which for August 2026 left 36 - five complete rows and a one-cell stub hanging off the
+     bottom of a seven-column grid. How many weeks a month spans is arithmetic, so do the
+     arithmetic: the leading blanks plus the days, divided by seven, rounded up. */
+  var daysInMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
+  var weeks = Math.ceil((firstDow + daysInMonth) / 7);
+  var cells = "", shown = 0;
+  for (var i = 0; i < weeks * 7; i++) {
+    var d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+    var key = ymdOf(d);
+    var out = d.getMonth() !== start.getMonth();
+    var hol = JP_HOLIDAYS[key];
+    var items = events[key] || [];
+    if (!out) shown += items.length;
+
+    var top = items.slice(0, 3).map(function (it) {
+      return '<a class="calitem ' + it.kind + (it.over ? " over" : "") + '" href="' + esc(it.href) +
+        '"' + (it.href.indexOf("#") === 0 ? "" : ' target="_blank" rel="noopener noreferrer"') +
+        ' title="' + esc(it.label) + '">' + esc(it.label) + "</a>";
+    }).join("");
+
+    cells += '<div class="calday' + (out ? " out" : "") + (key === today ? " today" : "") +
+        (hol ? " hol" : "") + (items.length || hol ? "" : " empty") + '">' +
+      '<span class="n" data-dow="' + dow[(d.getDay() + 6) % 7] + " " +
+        d.toLocaleDateString([], { month: "short" }) + '">' + d.getDate() + "</span>" +
+      (hol ? '<span class="hol">' + esc(hol) + "</span>" : "") +
+      top +
+      (items.length > 3 ? '<span class="calmore">+' + (items.length - 3) + " more</span>" : "") +
+    "</div>";
+  }
+
+  body.innerHTML = '<div class="calgrid">' +
+    dow.map(function (d) { return '<div class="caldow">' + d + "</div>"; }).join("") +
+    cells + "</div>";
+
+  var count = el("calCount");
+  if (count) {
+    var nh = nextHoliday();
+    count.innerHTML = shown + " dated item" + (shown === 1 ? "" : "s") +
+      (nh ? ' &middot; next day off <b>' + esc(nh.name) + "</b> " + esc(shortDate(nh.day)) : "");
+  }
+  var leg = el("calLegend");
+  if (leg) {
+    leg.innerHTML = '<span><i class="task"></i>tasks</span><span><i class="proj"></i>deadlines</span>' +
+      '<span><i class="meet"></i>meetings</span><span><i class="hol"></i>holidays</span>';
+  }
+}
+
+/* Tasks load per person elsewhere; the calendar wants whatever the app already asked for
+   and does not issue its own person query. If nothing has been read yet, ask for the
+   current person's set the same way the Tasks page would. */
+function loadTasksForCal() {
+  if (typeof startTasks !== "function") return Promise.resolve();
+  try { startTasks(); } catch (e) {}
+  return Promise.resolve();
+}
+
+el("calPrev").addEventListener("click", function () { calShift(-1); });
+el("calNext").addEventListener("click", function () { calShift(1); });
+el("calToday").addEventListener("click", function () { CAL_AT = null; renderCalendar(); });
+el("calMine").addEventListener("change", renderCalendar);
+
+function paintCalStat() {
+  var st = el("stCal");
+  if (!st) return;
+  var nh = nextHoliday();
+  if (!nh) { st.innerHTML = '<span class="quiet">holiday table needs extending</span>'; return; }
+  var days = Math.round((Date.parse(nh.day + "T00:00:00Z") - Date.parse(jstDay() + "T00:00:00Z")) / 86400000);
+  st.innerHTML = days === 0
+    ? "<b>" + esc(nh.name) + "</b> - today"
+    : "<b>" + esc(nh.name) + "</b> in " + days + (days === 1 ? " day" : " days");
+}
+
+var _applyRouteCal = applyRoute;
+applyRoute = function (name) {
+  _applyRouteCal(name);
+  if (name === "calendar") renderCalendar();
+};
+
+/* ================================================================
+   PORTFOLIO
+   ================================================================ */
+VIEWS.portfolio = "v-portfolio";
+
+var PORTF_DS = "collection://2f6abe28-1d4c-8042-ac81-000b2e1b10cc";
+var Q_PORTF = 'SELECT url, "Name", "Portfolio Entry Status" AS st, "Client", "Year", "Region", ' +
+  '"Project Type", "Context", "Outcome", "Video", "GDrive Link (Project Folders)" AS drive, ' +
+  '"Brand Color" AS colour FROM "' + PORTF_DS + '" ORDER BY "Year" DESC LIMIT 300';
+
+var PORTF_ROWS = null;
+
+function loadPortf() {
+  if (!mcp || !SERVER) return Promise.resolve([]);
+  return mcp.callTool(SERVER, T_QUERY, sqlInput(PORTF_DS, Q_PORTF), { cache: { staleTime: 60000 } })
+    .then(rows)
+    .then(function (r) { PORTF_ROWS = r; return r; })
+    .catch(function () { PORTF_ROWS = PORTF_ROWS || []; return PORTF_ROWS; });
+}
+
+function pfStatusClass(st) {
+  return st === "Live" ? "live" : st === "In progress" ? "progress" : "other";
+}
+
+/* A hex from Notion is user input, and it goes straight into a style attribute. Anything
+   that is not exactly #rgb or #rrggbb is dropped rather than escaped-and-hoped. */
+function safeHex(v) {
+  return /^#[0-9a-fA-F]{3}$/.test(v || "") || /^#[0-9a-fA-F]{6}$/.test(v || "") ? v : null;
+}
+
+function fillPfStatuses() {
+  var sel = el("pfStatus");
+  if (!sel) return;
+  var keep = sel.value, seen = [];
+  (PORTF_ROWS || []).forEach(function (r) {
+    if (r.st && seen.indexOf(r.st) < 0) seen.push(r.st);
+  });
+  sel.innerHTML = '<option value="">Any status</option>' +
+    seen.sort().map(function (v) { return '<option>' + esc(v) + "</option>"; }).join("");
+  sel.value = keep;
+}
+
+function pfFiltered() {
+  var q = (el("pfSearch") ? el("pfSearch").value : "").trim().toLowerCase();
+  var st = el("pfStatus") ? el("pfStatus").value : "";
+  return (PORTF_ROWS || []).filter(function (r) {
+    if (st && r.st !== st) return false;
+    if (!q) return true;
+    var client = asList(r["Client"]).map(function (u) { return CLIENT_NAME[u] || ""; }).join(" ");
+    return ((r["Name"] || "") + " " + client + " " + (r["Region"] || "") + " " +
+            (r["Context"] || "")).toLowerCase().indexOf(q) >= 0;
+  });
+}
+
+function renderPortfolio() {
+  var body = el("pfBody");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>The portfolio is read ' +
+      "from YF OS through your own Notion connection.</p></div>";
+    return;
+  }
+  if (PORTF_ROWS === null) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the portfolio&hellip;</div>';
+    loadPortf().then(function () { fillPfStatuses(); renderPortfolio(); });
+    return;
+  }
+  var list = pfFiltered();
+  var count = el("pfCount");
+  if (count) count.textContent = list.length + " of " + (PORTF_ROWS || []).length;
+
+  if (!list.length) {
+    body.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>' +
+      ((PORTF_ROWS || []).length ? "Try fewer words or another status."
+        : "The portfolio is empty, which is unlikely - check the connector.") + "</p></div>";
+    return;
+  }
+
+  body.innerHTML = '<div class="pflist">' + list.map(function (r) {
+    var client = asList(r["Client"]).map(function (u) { return CLIENT_NAME[u] || ""; })
+      .filter(Boolean).join(", ");
+    var hex = safeHex(r.colour);
+    var types = asList(r["Project Type"]).join(", ");
+    // Context first, Outcome second: what it was beats what came of it when you are scanning.
+    var blurb = r["Context"] || r["Outcome"] || "";
+    return '<article class="pfcard"' + (hex ? ' style="border-left-color:' + hex + '"' : "") + ">" +
+      '<div class="pftop">' +
+        '<span class="pfstat ' + pfStatusClass(r.st) + '">' + esc(r.st || "no status") + "</span>" +
+        (types ? '<span class="chip">' + esc(types) + "</span>" : "") +
+        '<span class="pfwhen">' + esc(r["Year"] || "") + "</span>" +
+      "</div>" +
+      "<h3>" + esc(r["Name"] || "(untitled)") + "</h3>" +
+      (blurb ? '<p class="pfsum">' + esc(blurb) + "</p>" : "") +
+      '<div class="foot2">' +
+        (client ? "<span>" + esc(client) + "</span>" : "") +
+        (r["Region"] ? "<span>" + esc(r["Region"]) + "</span>" : "") +
+        (r["Video"] ? '<a href="' + esc(r["Video"]) + '" target="_blank" rel="noopener noreferrer">video</a>' : "") +
+        (r.drive ? '<a href="' + esc(r.drive) + '" target="_blank" rel="noopener noreferrer">files</a>' : "") +
+        '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">open</a>' +
+      "</div></article>";
+  }).join("") + "</div>";
+  cardClamps(body, "pfcard", "h3, .pfsum");
+}
+
+/* ================================================================
+   MEETINGS
+   ================================================================ */
+VIEWS.meetings = "v-meetings";
+
+var MEET_DS = "collection://1e1e2552-36c5-4b6a-b644-a49284fbd553";
+var Q_MEET = 'SELECT url, "Name", "AI summary" AS ai, "date:Date:start" AS day FROM "' + MEET_DS +
+  '" ORDER BY day DESC LIMIT 120';
+
+var MEET_ROWS = null;
+
+function loadMeet() {
+  if (!mcp || !SERVER) return Promise.resolve([]);
+  return mcp.callTool(SERVER, T_QUERY, sqlInput(MEET_DS, Q_MEET), { cache: { staleTime: 60000 } })
+    .then(rows)
+    .then(function (r) { MEET_ROWS = r; return r; })
+    .catch(function () { MEET_ROWS = MEET_ROWS || []; return MEET_ROWS; });
+}
+
+/* Meeting titles arrive with Notion's inline mention markup in them - a date mention comes
+   through as a <mention-date .../> tag wrapped in asterisks. Strip the tags and the
+   emphasis so the card shows a title rather than markup. */
+function meetTitle(r) {
+  return String(r["Name"] || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/\s+/g, " ")
+    .trim() || "(untitled meeting)";
+}
+
+/* The notetaker writes the summary as <br>-separated bullets and puts action items first.
+   That convention is the whole reason this page can lead with them. */
+function meetBullets(r) {
+  return String(r.ai || "").split(/<br\s*\/?>/i)
+    .map(function (b) { return b.replace(/^[\s-]+/, "").trim(); })
+    .filter(Boolean);
+}
+
+function meetActions(r) {
+  var b = meetBullets(r)[0] || "";
+  return /^action items?\s*:/i.test(b) ? b.replace(/^action items?\s*:\s*/i, "") : "";
+}
+
+/* NO COUNT. The notetaker keeps one checkbox per action in the page BODY, but the AI
+   summary property - the only part SQL can reach - flattens them into a single
+   comma-separated sentence, and commas appear inside individual actions too ("fix font and
+   UI issues, update solution stack"). Every split I tried gave a number that was
+   confidently wrong: four actions counted as one. A precise-looking wrong number is worse
+   than a label, so the badge says whether there are actions and the card shows them. */
+function meetHasActions(r) { return !!meetActions(r); }
+
+function mtFiltered() {
+  var q = (el("mtSearch") ? el("mtSearch").value : "").trim().toLowerCase();
+  var only = el("mtActions") ? el("mtActions").checked : false;
+  return (MEET_ROWS || []).filter(function (r) {
+    if (only && !meetActions(r)) return false;
+    if (!q) return true;
+    return (meetTitle(r) + " " + (r.ai || "")).toLowerCase().indexOf(q) >= 0;
+  });
+}
+
+function renderMeetings() {
+  var body = el("mtBody");
+  if (!body) return;
+  if (!mcp || !SERVER) {
+    body.innerHTML = '<div class="panel alert"><h2>No connector</h2><p>Meeting notes are read ' +
+      "from YF OS through your own Notion connection.</p></div>";
+    return;
+  }
+  if (MEET_ROWS === null) {
+    body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the notes&hellip;</div>';
+    loadMeet().then(renderMeetings);
+    return;
+  }
+  var list = mtFiltered();
+  var count = el("mtCount");
+  if (count) count.textContent = list.length + " of " + (MEET_ROWS || []).length;
+
+  if (!list.length) {
+    body.innerHTML = '<div class="panel"><h2>Nothing matches</h2><p>' +
+      ((MEET_ROWS || []).length ? "Try fewer words, or turn off the action-items filter."
+        : "No meeting notes on file.") + "</p></div>";
+    return;
+  }
+
+  body.innerHTML = '<div class="mtlist">' + list.map(function (r) {
+    var acts = meetActions(r);
+    var rest = meetBullets(r).slice(acts ? 1 : 0).join(" ");
+    return '<article class="mtcard">' +
+      '<div class="mttop">' +
+        '<span class="mtacts' + (acts ? "" : " none") + '">' +
+          (acts ? "action items" : "no actions") + "</span>" +
+        '<span class="mtwhen">' + esc(r.day ? shortDate(r.day) : "") + "</span>" +
+      "</div>" +
+      "<h3>" + esc(meetTitle(r)) + "</h3>" +
+      '<p class="mtsum">' + esc(acts || rest || "No summary written.") + "</p>" +
+      '<div class="foot2">' +
+        (acts && rest ? "<span>plus notes</span>" : "") +
+        '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">open the notes</a>' +
+      "</div></article>";
+  }).join("") + "</div>";
+  cardClamps(body, "mtcard", "h3, .mtsum");
+}
+
+/* One measured Read-more for both, and for anything added later. The app grew four copies
+   of this before anybody counted; this is the fifth and last new one. */
+function cardClamps(body, cardCls, sel) {
+  if (!body) return;
+  Array.prototype.forEach.call(body.querySelectorAll("." + cardCls), function (card) {
+    var old = card.querySelector(".inmore");
+    if (old) old.parentNode.removeChild(old);
+    if (card.classList.contains("open2")) return;
+    var over = false;
+    Array.prototype.forEach.call(card.querySelectorAll(sel), function (n) {
+      if (n.scrollHeight > n.clientHeight + 1) over = true;
+    });
+    if (!over) return;
+    var b = document.createElement("button");
+    b.className = "inmore"; b.type = "button"; b.textContent = "Read more";
+    var last = card.querySelector(".pfsum, .mtsum");
+    if (last && last.nextSibling) { card.insertBefore(b, last.nextSibling); } else { card.appendChild(b); }
+  });
+}
+
+document.addEventListener("click", function (ev) {
+  var b = ev.target.closest ? ev.target.closest(".pfcard .inmore, .mtcard .inmore") : null;
+  if (!b) return;
+  var card = b.closest(".pfcard, .mtcard");
+  if (!card) return;
+  card.classList.add("open2");
+  b.parentNode.removeChild(b);
+});
+
+["pfSearch", "pfStatus"].forEach(function (id) {
+  var e = el(id);
+  if (e) e.addEventListener(id === "pfSearch" ? "input" : "change", function () { renderPortfolio(); });
+});
+["mtSearch", "mtActions"].forEach(function (id) {
+  var e = el(id);
+  if (e) e.addEventListener(id === "mtSearch" ? "input" : "change", function () { renderMeetings(); });
+});
+el("pfRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(PORTF_DS, Q_PORTF)).catch(function () {})
+    .then(loadPortf).then(function () { fillPfStatuses(); renderPortfolio(); });
+});
+el("mtRefresh").addEventListener("click", function () {
+  if (!mcp || !SERVER) return;
+  mcp.invalidate(SERVER, T_QUERY, sqlInput(MEET_DS, Q_MEET)).catch(function () {})
+    .then(loadMeet).then(renderMeetings);
+});
+
+/* Home stats. Both count the thing you would act on rather than the total: what is ready
+   to publish, and how many meetings still have open actions on them. */
+function paintPortStat() {
+  var st = el("stPort");
+  if (!st) return;
+  if (!mcp || !SERVER) { st.innerHTML = '<span class="quiet">connector needed</span>'; return; }
+  loadPortf().then(function () {
+    var live = (PORTF_ROWS || []).filter(function (r) { return r.st === "Live"; }).length;
+    var wip = (PORTF_ROWS || []).filter(function (r) { return r.st === "In progress"; }).length;
+    st.innerHTML = "<b>" + live + "</b> live" + (wip ? ' &middot; <span class="flagged">' + wip + "</span> in progress" : "");
+  });
+}
+function paintMeetStat() {
+  var st = el("stMeet");
+  if (!st) return;
+  if (!mcp || !SERVER) { st.innerHTML = '<span class="quiet">connector needed</span>'; return; }
+  loadMeet().then(function () {
+    var withActs = (MEET_ROWS || []).filter(meetActions).length;
+    st.innerHTML = "<b>" + (MEET_ROWS || []).length + "</b> on file &middot; " + withActs + " with actions";
+  });
+}
+
+var _applyRoutePM = applyRoute;
+applyRoute = function (name) {
+  _applyRoutePM(name);
+  if (name === "portfolio") renderPortfolio();
+  if (name === "meetings") renderMeetings();
+};
+
+var _watchBuildsPM = watchBuilds;
+watchBuilds = function () {
+  var r = _watchBuildsPM();
+  paintPortStat();
+  paintMeetStat();
+  return r;
+};
+
+/* The next day off is a baked table, so it needs no connector and no wait - paint it now
+   rather than when the registry next ticks. */
+paintCalStat();
 
 /* ================================================================
    INBOX - writing to Claude from inside the app
