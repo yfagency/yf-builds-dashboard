@@ -351,12 +351,30 @@ input.pick {
 }
 .colophon .acts a:hover, .colophon .acts button:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
+/* Facts left, prose right. Stacked, the two paragraphs sat in a 560px column under a
+   full-width row of facts and left the entire right half of a 1140px block empty. The
+   facts are narrow by nature and the prose has a 72ch measure by necessity, so neither
+   fills the width alone - side by side, together they do.
+
+   1fr to 1.3fr: the prose gets the larger share because it is the part being read. */
+.colophon .lower {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 0 44px; border-top: 1px solid var(--rule-soft); padding-top: 16px;
+}
+@media (max-width: 780px) {
+  /* Two columns of 300px each is worse than one of 620. */
+  .colophon .lower { grid-template-columns: 1fr; gap: 18px; }
+}
+
 /* The facts as a label-over-value grid, which is the language the masthead gauges already
    speak - not a mono sentence with the values bolded inside it. A run-on line is why the
    commit subject was wrapping into the middle of "by ZF". */
 .colophon .facts {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-  gap: 14px 0; border-top: 1px solid var(--rule-soft); padding-top: 14px;
+  /* 150 rather than 112: in a 473px column the smaller minimum made FOUR tracks for three
+     facts, so version, status and by sat in the left three-quarters with an empty track
+     beside them. Three tracks, three facts, no gap on the end. */
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 0; align-content: start;
 }
 .colophon .facts .f { padding-right: 20px; min-width: 0; }
 .colophon .facts .k {
@@ -375,10 +393,11 @@ input.pick {
   color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   max-width: 100%; flex: 0 1 auto;
 }
+/* No rule and no top margin of its own any more - the grid above carries both, and a
+   second hairline inside the block was one of the things making it look busy. */
 .colophon .doing {
   font-size: 13px; color: var(--ink-2); max-width: 72ch;
-  margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule-soft);
-  line-height: 1.6;
+  margin: 0; line-height: 1.6;
 }
 
 /* ---- one clamp, used everywhere prose is optional ----
@@ -933,7 +952,11 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .conn table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
 .conn th, .conn td { text-align: left; padding: 5px 12px 5px 0; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
 .conn th { font-family: var(--sans); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 78ch; }
+/* 96ch, not 78. Clamped to two lines it was a 560px column stranded under a block that now
+   uses the full 1132, which read as a hole rather than as a measure. 96ch of 12.5px text
+   is about 690 - wide for reading, but this is a footnote scanned once, and it is only
+   ever two lines unless somebody opens it. */
+.foot { color: var(--muted); font-size: 12.5px; margin-top: 14px; max-width: 96ch; }
 
 
 /* ================================================================
@@ -3712,8 +3735,10 @@ function renderColophon(me) {
         (me.pageId ? '<button data-edit="' + esc(me.pageId) + '">Edit this entry</button>' : "") +
       "</div>" +
     "</div>" +
-    '<div class="facts">' + facts.join("") + "</div>" +
-    (me.notes ? '<p class="doing">' + esc(me.notes) + "</p>" : "");
+    '<div class="lower">' +
+      '<div class="facts">' + facts.join("") + "</div>" +
+      "<div>" + (me.notes ? '<p class="doing">' + esc(me.notes) + "</p>" : "") + "</div>" +
+    "</div>";
 
   // Redrawn from scratch above, so the toggle has to be rebuilt with it.
   if (typeof clampMore === "function") clampMore(box.querySelector(".doing"));
