@@ -830,10 +830,104 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
    PORTFOLIO, MEETINGS, CALENDAR - the three reference surfaces
    ================================================================ */
 
-.pflist, .mtlist {
+/* ---- portfolio: a pipeline, not a gallery ----
+   The five statuses are stages of one flow - Not started, In progress, Ready For Website,
+   Live - plus Refused, which is the only one that means somebody has to do something. So
+   the page is stages in that order with the actionable ones on top, and the two big
+   archival stages start closed. 191 entries in one flat grid was the problem. */
+.pfstage { margin-bottom: 22px; }
+.pfstage > summary {
+  display: flex; align-items: baseline; gap: 12px; cursor: pointer; list-style: none;
+  border-bottom: 1px solid var(--rule); padding-bottom: 9px; margin-bottom: 14px;
+}
+.pfstage > summary::-webkit-details-marker { display: none; }
+.pfstage > summary::before {
+  content: "\25B8"; color: var(--muted); font-size: 11px; transition: transform .12s ease;
+}
+.pfstage[open] > summary::before { transform: rotate(90deg); }
+.pfstage .sname {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.pfstage .scount { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.pfstage .swhy { font-size: 12px; color: var(--muted); margin-left: auto; text-align: right; }
+.pfstage.act > summary { border-bottom-color: var(--warn); }
+.pfstage.act .sname { color: var(--warn); }
+
+.pflist {
+  display: grid; gap: 14px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(max(260px, (100% - 28px) / 3), 1fr));
+}
+/* Its brand colour, as a band where a thumbnail would be. The images are Notion
+   attachments with no URL and the page is already 1.1MB, so 122 of them baked in as data
+   URIs was never on - but the colour IS data, and only entries that have reached Live or
+   Ready For Website carry one, which makes the band mean something on its own. */
+.pfband {
+  height: 54px; margin: -15px -18px 12px; border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: 1px solid var(--rule); position: relative; overflow: hidden;
+  background: var(--surface-2);
+}
+.pfband .wash { position: absolute; inset: 0; opacity: .22; }
+.pfband .cut { position: absolute; inset: 0; }
+.pfband .code {
+  position: absolute; left: 14px; bottom: 8px;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.mtlist {
   display: grid; gap: 14px; align-items: start;
   grid-template-columns: repeat(auto-fill, minmax(max(320px, (100% - 28px) / 3), 1fr));
 }
+
+/* ---- meetings: a day at a time ----
+   Cards side by side hid the thing people want, which is "what came out of Tuesday". One
+   heading per day, the meetings under it, and the action items as an actual list. */
+.mtday { margin-bottom: 26px; }
+.mtdate {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 12px;
+}
+.mtdate .d {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent);
+}
+.mtdate .n { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.mtmeet {
+  border-left: 2px solid var(--rule); padding: 0 0 0 16px; margin-bottom: 18px;
+}
+.mtmeet:last-child { margin-bottom: 0; }
+.mtmeet.hasacts { border-left-color: var(--accent); }
+.mtmeet h3 {
+  font-size: 14.5px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 8px;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.mtmeet h3 a { color: var(--muted); font-family: var(--mono); font-size: 10px;
+  letter-spacing: .08em; text-transform: uppercase; text-decoration: none;
+  border-bottom: 1px solid var(--rule); font-weight: 400; }
+.mtmeet h3 a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+/* Checkbox glyphs rather than real inputs: nothing here can be ticked, because the source
+   of truth is the meeting note in Notion. A control that does not control is a lie. */
+.mtacts2 { list-style: none; padding: 0; margin: 0 0 8px; }
+.mtacts2 li {
+  display: flex; gap: 9px; align-items: baseline;
+  font-size: 13.5px; color: var(--ink-2); line-height: 1.5; padding: 3px 0;
+}
+.mtacts2 li::before {
+  content: ""; flex: none; width: 11px; height: 11px; border-radius: 2px;
+  border: 1px solid var(--muted); transform: translateY(1px);
+}
+.mtnotes { margin: 0; }
+.mtnotes summary {
+  cursor: pointer; list-style: none; display: inline-block;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted); padding: 2px 0;
+}
+.mtnotes summary::-webkit-details-marker { display: none; }
+.mtnotes summary:hover { color: var(--accent); }
+.mtnotes ul { margin: 6px 0 0; padding-left: 18px; }
+.mtnotes li { font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 5px; }
+.mtnone { font-size: 13px; color: var(--muted); margin: 0 0 6px; }
 /* Same fixed card as Decisions and the Inbox. The rail is the entry's own brand colour,
    which is the one piece of visual identity this database actually holds as data - the
    images are Notion attachments the page cannot reach. */
@@ -8850,30 +8944,76 @@ function renderPortfolio() {
     return;
   }
 
-  body.innerHTML = '<div class="pflist">' + list.map(function (r) {
-    var client = asList(r["Client"]).map(function (u) { return CLIENT_NAME[u] || ""; })
-      .filter(Boolean).join(", ");
-    var hex = safeHex(r.colour);
-    var types = asList(r["Project Type"]).join(", ");
-    // Context first, Outcome second: what it was beats what came of it when you are scanning.
-    var blurb = r["Context"] || r["Outcome"] || "";
-    return '<article class="pfcard"' + (hex ? ' style="border-left-color:' + hex + '"' : "") + ">" +
-      '<div class="pftop">' +
-        '<span class="pfstat ' + pfStatusClass(r.st) + '">' + esc(r.st || "no status") + "</span>" +
-        (types ? '<span class="chip">' + esc(types) + "</span>" : "") +
-        '<span class="pfwhen">' + esc(r["Year"] || "") + "</span>" +
-      "</div>" +
-      "<h3>" + esc(r["Name"] || "(untitled)") + "</h3>" +
-      (blurb ? '<p class="pfsum">' + esc(blurb) + "</p>" : "") +
-      '<div class="foot2">' +
-        (client ? "<span>" + esc(client) + "</span>" : "") +
-        (r["Region"] ? "<span>" + esc(r["Region"]) + "</span>" : "") +
-        (r["Video"] ? '<a href="' + esc(r["Video"]) + '" target="_blank" rel="noopener noreferrer">video</a>' : "") +
-        (r.drive ? '<a href="' + esc(r.drive) + '" target="_blank" rel="noopener noreferrer">files</a>' : "") +
-        '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">open</a>' +
-      "</div></article>";
-  }).join("") + "</div>";
+  var byStage = {};
+  list.forEach(function (r) {
+    var k = r.st || "No status";
+    if (!byStage[k]) byStage[k] = [];
+    byStage[k].push(r);
+  });
+
+  /* Workflow order, actionable first. Refused is the only stage that means somebody has to
+     do something today, so it leads; Ready For Website is the one waiting on a publish.
+     Live and Not started are the two big archives and start closed - 126 of the 191 entries
+     are in those two, and opening the page into them is what made it a wall. */
+  var open = el("pfStatus") && el("pfStatus").value;
+  var stages = [
+    ["Refused / Feedback to Fix", true,  true,  "needs fixing before it can go back"],
+    ["Ready For Website",         true,  true,  "written and waiting to be published"],
+    ["In progress",               false, true,  "being written now"],
+    ["Live",                      false, false, "published on the site"],
+    ["Not started",               false, false, "no case study written yet"]
+  ];
+  Object.keys(byStage).forEach(function (k) {
+    var known = stages.some(function (st) { return st[0] === k; });
+    if (!known) stages.push([k, false, false, ""]);
+  });
+
+  body.innerHTML = stages.map(function (st) {
+    var name = st[0], rowsIn = byStage[name] || [];
+    if (!rowsIn.length) return "";
+    // A chosen filter overrides the defaults: if you asked for one stage, it opens.
+    var isOpen = open ? open === name : st[2];
+    return '<details class="pfstage' + (st[1] ? " act" : "") + '"' + (isOpen ? " open" : "") + ">" +
+      "<summary><span class=\"sname\">" + esc(name) + "</span>" +
+      '<span class="scount">' + rowsIn.length + "</span>" +
+      (st[3] ? '<span class="swhy">' + esc(st[3]) + "</span>" : "") + "</summary>" +
+      '<div class="pflist">' + rowsIn.map(pfCard).join("") + "</div></details>";
+  }).join("");
   cardClamps(body, "pfcard", "h3, .pfsum");
+}
+
+/* The band where a thumbnail would go. Two flat shapes in the entry's own brand colour -
+   enough to give the grid rhythm and to tell two cards apart at a glance, at zero page
+   weight. Entries with no colour get the plain surface, which is honest: only work that
+   has reached Live or Ready For Website has had a colour set. */
+function pfCard(r) {
+  var client = asList(r["Client"]).map(function (u) { return CLIENT_NAME[u] || ""; })
+    .filter(Boolean).join(", ");
+  var hex = safeHex(r.colour);
+  var types = asList(r["Project Type"]).join(", ");
+  // Context first, Outcome second: what it was beats what came of it when you are scanning.
+  var blurb = r["Context"] || r["Outcome"] || "";
+  var band = '<div class="pfband">' +
+    (hex ? '<div class="wash" style="background:' + hex + '"></div>' +
+           '<svg class="cut" viewBox="0 0 260 54" preserveAspectRatio="none" aria-hidden="true">' +
+             '<path d="M0 54 L96 12 L168 40 L260 0 L260 54 Z" fill="' + hex + '" opacity=".55"/>' +
+           "</svg>" : "") +
+    (r["Year"] ? '<span class="code">' + esc(r["Year"]) + (r["Region"] ? " " + String.fromCharCode(183) + " " + esc(r["Region"]) : "") + "</span>" : "") +
+    "</div>";
+  return '<article class="pfcard"' + (hex ? ' style="border-left-color:' + hex + '"' : "") + ">" +
+    band +
+    '<div class="pftop">' +
+      '<span class="pfstat ' + pfStatusClass(r.st) + '">' + esc(r.st || "no status") + "</span>" +
+      (types ? '<span class="chip">' + esc(types) + "</span>" : "") +
+    "</div>" +
+    "<h3>" + esc(r["Name"] || "(untitled)") + "</h3>" +
+    (blurb ? '<p class="pfsum">' + esc(blurb) + "</p>" : "") +
+    '<div class="foot2">' +
+      (client ? "<span>" + esc(client) + "</span>" : "") +
+      (r["Video"] ? '<a href="' + esc(r["Video"]) + '" target="_blank" rel="noopener noreferrer">video</a>' : "") +
+      (r.drive ? '<a href="' + esc(r.drive) + '" target="_blank" rel="noopener noreferrer">files</a>' : "") +
+      '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">open</a>' +
+    "</div></article>";
 }
 
 /* ================================================================
@@ -8906,12 +9046,29 @@ function meetTitle(r) {
     .trim() || "(untitled meeting)";
 }
 
-/* The notetaker writes the summary as <br>-separated bullets and puts action items first.
-   That convention is the whole reason this page can lead with them. */
+/* The notetaker writes the summary as bullets and puts action items first. That convention
+   is the whole reason this page can lead with them.
+
+   SPLIT ON BOTH. Notion's property view renders the breaks as <br>, which is what I wrote
+   against first - but the SQL connector returns the same field with real newlines, so the
+   original parser matched nothing and every summary came through as one long bullet. */
 function meetBullets(r) {
-  return String(r.ai || "").split(/<br\s*\/?>/i)
-    .map(function (b) { return b.replace(/^[\s-]+/, "").trim(); })
+  return String(r.ai || "").split(/<br\s*\/?>|\n/i)
+    .map(function (b) { return b.replace(/^[\s\u2022-]+/, "").trim(); })
     .filter(Boolean);
+}
+
+/* The action-items bullet is one sentence of comma-separated verb phrases:
+   "deliver agency showreel draft, replicate Blender automation, complete intern
+   evaluation, ...". Splitting on commas gives a real checklist. It is not perfect - an
+   item containing its own comma splits in two - but every item is still readable and
+   actionable, which is what a count could not manage. */
+function meetActionList(r) {
+  var a = meetActions(r);
+  if (!a) return [];
+  return a.replace(/\.$/, "").split(/,\s+/)
+    .map(function (x) { return x.replace(/^and\s+/i, "").trim(); })
+    .filter(function (x) { return x.length > 2; });
 }
 
 function meetActions(r) {
@@ -8961,23 +9118,42 @@ function renderMeetings() {
     return;
   }
 
-  body.innerHTML = '<div class="mtlist">' + list.map(function (r) {
-    var acts = meetActions(r);
-    var rest = meetBullets(r).slice(acts ? 1 : 0).join(" ");
-    return '<article class="mtcard">' +
-      '<div class="mttop">' +
-        '<span class="mtacts' + (acts ? "" : " none") + '">' +
-          (acts ? "action items" : "no actions") + "</span>" +
-        '<span class="mtwhen">' + esc(r.day ? shortDate(r.day) : "") + "</span>" +
-      "</div>" +
-      "<h3>" + esc(meetTitle(r)) + "</h3>" +
-      '<p class="mtsum">' + esc(acts || rest || "No summary written.") + "</p>" +
-      '<div class="foot2">' +
-        (acts && rest ? "<span>plus notes</span>" : "") +
-        '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">open the notes</a>' +
-      "</div></article>";
-  }).join("") + "</div>";
-  cardClamps(body, "mtcard", "h3, .mtsum");
+  /* By day, newest first. Three cards side by side answered "which meetings happened";
+     nobody was asking that. The question is "what came out of Tuesday", so the day is the
+     heading and the action items are the content. */
+  var byDay = [], seen = {};
+  list.forEach(function (r) {
+    var k = r.day || "undated";
+    if (!seen[k]) { seen[k] = []; byDay.push([k, seen[k]]); }
+    seen[k].push(r);
+  });
+
+  body.innerHTML = byDay.map(function (pair) {
+    var day = pair[0], meets = pair[1];
+    var acts = meets.reduce(function (a, m) { return a + meetActionList(m).length; }, 0);
+    return '<section class="mtday">' +
+      '<div class="mtdate"><span class="d">' +
+        esc(day === "undated" ? "No date" : longDate(day)) + "</span>" +
+        '<span class="n">' + meets.length + " meeting" + (meets.length === 1 ? "" : "s") +
+          (acts ? " " + String.fromCharCode(183) + " " + acts + " action" + (acts === 1 ? "" : "s") : "") +
+        "</span></div>" +
+      meets.map(function (r) {
+        var items = meetActionList(r);
+        var notes = meetBullets(r).slice(meetActions(r) ? 1 : 0);
+        return '<div class="mtmeet' + (items.length ? " hasacts" : "") + '">' +
+          "<h3>" + esc(meetTitle(r)) +
+            '<a href="' + esc(notionUrl(r.url)) + '" target="_blank" rel="noopener noreferrer">notes</a></h3>' +
+          (items.length
+            ? '<ul class="mtacts2">' + items.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>"
+            : '<p class="mtnone">No action items in the summary.</p>') +
+          (notes.length
+            ? '<details class="mtnotes"><summary>' + notes.length + " more from this meeting</summary><ul>" +
+              notes.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></details>"
+            : "") +
+        "</div>";
+      }).join("") +
+    "</section>";
+  }).join("");
 }
 
 /* One measured Read-more for both, and for anything added later. The app grew four copies
