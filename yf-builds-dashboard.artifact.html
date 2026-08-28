@@ -2521,6 +2521,44 @@ img, svg { max-width: 100%; }
         </a>
       </section>
 
+      <section data-block="briefing-plate">
+        <a class="plate" href="#/briefing">
+          <!-- Briefing, drawn: three columns of headlines, which is the shape of the page -
+               Global, Japan, Radar. Nothing else in the set is columnar, and it needs to be:
+               with eight plates the hue is doing less work than it did with six, so the
+               composition has to carry the difference. -->
+          <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Three columns of headlines, the shape of the briefing">
+            <rect width="320" height="200" fill="var(--surface-2)"/>
+            <rect width="320" height="200" fill="#A8C93F" opacity=".08"/>
+            <rect x="34" y="46" width="26" height="5" rx="2.5" fill="#A8C93F"/>
+            <rect x="34" y="62" width="72" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="34" y="74" width="58" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="34" y="92" width="44" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
+            <rect x="120" y="34" width="1" height="132" fill="var(--ink)" opacity=".10"/>
+            <rect x="136" y="46" width="22" height="5" rx="2.5" fill="#A8C93F"/>
+            <rect x="136" y="62" width="80" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="136" y="74" width="46" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="136" y="92" width="52" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
+            <rect x="222" y="34" width="1" height="132" fill="var(--ink)" opacity=".10"/>
+            <rect x="238" y="46" width="28" height="5" rx="2.5" fill="#A8C93F"/>
+            <rect x="238" y="62" width="60" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="238" y="74" width="70" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="238" y="92" width="40" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
+            <rect x="34" y="124" width="72" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="34" y="136" width="52" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="136" y="124" width="64" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="136" y="136" width="76" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="238" y="124" width="68" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="238" y="136" width="46" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+          </svg>
+          <div class="body">
+            <h2>Briefing</h2>
+            <p class="what">Fifteen stories every morning at 07:00 JST, chosen for YF rather than for the news.</p>
+            <p class="stat" id="stBrief"><span class="quiet">reading the archive&hellip;</span></p>
+          </div>
+        </a>
+      </section>
+
       <section data-block="builds-plate">
         <a class="plate" href="#/builds">
           <!-- Builds, drawn: three builds stacked front-to-back, the newest one forward and
@@ -4366,12 +4404,19 @@ var BLOCKS = [
   { block: "projects-plate",  section: "projects",  weight: 6 },
   { block: "decisions-plate", section: "decisions", weight: 6 },
   { block: "inbox-plate",     section: "inbox",     weight: 6 },
+  { block: "briefing-plate",  section: "briefing",  weight: 6 },
   { block: "builds-plate",    section: "builds",    weight: 5 },
   { block: "dev-plate",       section: "dev",       weight: 5 }
 ];
-/* Briefing keeps its band and gets no plate. The band already shows three real stories,
-   which is more than a door to the same place could say - demoting it to a plate would
-   trade live content for a picture. */
+/* Briefing owns TWO blocks - the band at 7 and a door at 6 - which is the same thing Tasks
+   does with its lead strip and its plate, and for the same stated reason: a summary and a
+   door are different jobs.
+
+   I argued against this on 2026-08-25 and was wrong. The argument - that the band shows
+   three real stories, which is more than a picture of the same place could say - was only
+   ever an argument against REPLACING the band with a plate. It is a good one, and the band
+   is still here. It was never an argument against having both, and presenting it as though
+   it were left Briefing the only section in the nav with no door among the others. */
 
 function tierFor(w) {
   return w >= 9 ? "lead" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
@@ -8244,6 +8289,24 @@ watchBuilds = function () {
   return r;
 };
 
+/* The briefing plate counts today's stories, because the number people actually want from
+   that page is whether there is one waiting. Read out of BRIEF_ROWS, which the band has
+   already fetched - the door costs no query of its own. */
+function paintBriefStat() {
+  var st = el("stBrief");
+  if (!st) return;
+  if (!mcp || !SERVER) { st.innerHTML = '<span class="quiet">connector needed</span>'; return; }
+  if (typeof BRIEF_ROWS === "undefined" || BRIEF_ROWS === null) return;   // leave the placeholder
+
+  var days = briefDays();
+  if (!days.length) { st.innerHTML = '<span class="quiet">nothing archived</span>'; return; }
+  var newest = days[0];
+  var n = BRIEF_ROWS.filter(function (r) { return r["date:Date:start"] === newest; }).length;
+  var today = newest === jstDay();
+  st.innerHTML = "<b>" + n + "</b> " + (n === 1 ? "story" : "stories") + " " +
+    (today ? "today" : '<span class="flagged">' + esc(shortDate(newest)) + "</span>");
+}
+
 /* ================================================================
    THE PULSE - evidence that the automations are alive
    ================================================================ */
@@ -8495,6 +8558,7 @@ var _renderDigestPulse = renderDigest;
 renderDigest = function () {
   var r = _renderDigestPulse.apply(null, arguments);
   renderPulse();
+  paintBriefStat();
   return r;
 };
 
