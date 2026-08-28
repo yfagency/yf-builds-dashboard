@@ -1,12 +1,14 @@
 <title>YF Bridge</title>
 <!-- PUBLISH SETTINGS, recorded here because they cannot be read back off the live page.
-     favicon: hammer-and-wrench, U+1F6E0 U+FE0F. Settled by ZF 2026-08-21 - pass exactly
-     this on every republish and never substitute another emoji; the team finds this tab by
-     its icon. Pass nothing for capabilities or contract: omitting them carries the stored
+
+     THE FAVICON IS NOT WRITTEN HERE ON PURPOSE. tools/check-artifact.ps1 prints it on
+     every run and is the single place that states it. It was restated in four files, one
+     of which drifted to the wrong emoji and told people so for a week - a copy can go
+     stale, a pointer cannot. Run the check before you publish and it will tell you.
+
+     Pass nothing for capabilities or contract: omitting them carries the stored
      declaration forward ({mcp} on contract 0.2.7). Full protocol in the dashboard repo's
      README under "Before you publish". -->
-<!-- The emoji is written as a codepoint rather than a literal because this file is kept
-     pure ASCII, which tools/check-artifact.ps1 enforces. -->
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -88,7 +90,12 @@ h1 {
   font-size: clamp(34px, 4.6vw, 50px); font-weight: 600;
   letter-spacing: -.045em; line-height: .96;
 }
-.slash { color: var(--accent); font-weight: 400; padding: 0 .06em; }
+/* inline-block because a transform does nothing to an inline element - the joy easter egg
+   flips these, and it needs something to flip. */
+.slash {
+  color: var(--accent); font-weight: 400; padding: 0 .06em;
+  display: inline-block; transition: transform .45s ease, color .45s ease;
+}
 .eyebrow .slash { padding: 0 .3em; }
 .tagline { color: var(--muted); font-size: 14.5px; max-width: 54ch; margin: 14px 0 0; line-height: 1.5; }
 .mast-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 4px; }
@@ -539,13 +546,20 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .suhalf .btn.tiny { margin-top: 12px; }
 
 .suday { margin-bottom: 20px; }
+/* The date heads its row group rather than sitting in it as a card. */
 .sudate {
-  display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  display: block; grid-column: 1 / -1;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--muted);
   border-bottom: 1px solid var(--rule); padding-bottom: 7px; margin-bottom: 4px;
 }
-.superson { padding: 13px 0; border-bottom: 1px solid var(--rule-soft); }
-.superson:last-child { border-bottom: 0; }
+/* A card, not a list row. The row version - padding 13px 0 with a hairline underneath, and
+   a :last-child rule stripping that hairline - was still declared further down the sheet
+   and being silently overridden. Both are gone; a card carries all four sides itself. */
+.superson {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 14px 16px 16px;
+}
 .suwho { display: flex; align-items: baseline; gap: 9px; margin-bottom: 7px; }
 .suwho .ini {
   font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .06em;
@@ -557,7 +571,8 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
   color: var(--muted); border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px;
 }
-.sucols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* One column: the two halves sit inside a card now, not across a full-width row. */
+.sucols { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .sucol .ck {
   display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--rule); margin-bottom: 5px;
@@ -573,10 +588,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   padding: 18px 20px; margin-bottom: 20px;
 }
 .dclist { display: flex; flex-direction: column; gap: 12px; }
-.dcard {
-  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
-  padding: 15px 18px 17px;
-}
+
 /* Superseded entries stay readable but stop competing - the log is a history, so an entry
    that no longer applies is still worth finding, just not worth reading first. */
 .dcard.stale { opacity: .62; }
@@ -588,12 +600,16 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 
    The height is a budget: one meta row, two lines of title, four of summary, one row of
    tags. Anything past that is behind Read more. */
-.dcard { display: flex; flex-direction: column; height: 272px; overflow: hidden; }
+.dcard {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 15px 18px 17px; position: relative;
+  display: flex; flex-direction: column; height: 272px; overflow: hidden;
+}
 .dcard h3, .dcsum {
   display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
 }
-.dcard h3 { -webkit-line-clamp: 2; line-clamp: 2; }
-.dcsum { -webkit-line-clamp: 4; line-clamp: 4; flex: none; }
+.dcard h3 { -webkit-line-clamp: 2; line-clamp: 2; font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; line-height: 1.35; margin-bottom: 7px; }
+.dcsum { -webkit-line-clamp: 4; line-clamp: 4; flex: none; font-size: 13.5px; color: var(--ink-2); margin: 0 0 9px; line-height: 1.55; }
 /* Tags sit on the floor of the card, so they line up across the row instead of floating
    wherever the summary happened to end. */
 .dcard .chips { margin-top: auto; padding-top: 10px; }
@@ -609,7 +625,9 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 .dcard.open h3, .dcard.open .dcsum {
   display: block; -webkit-line-clamp: unset; line-clamp: unset;
 }
-.dctop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+/* The right padding is clearance for the pin group, which is positioned against the card
+   rather than laid out in this row. */
+.dctop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; padding-right: 58px; }
 .dcat {
   font-family: var(--mono); font-size: 9.5px; letter-spacing: .09em; text-transform: uppercase;
   padding: 2px 7px; border-radius: 3px; border: 1px solid transparent;
@@ -623,10 +641,8 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 .dcsrc { margin-left: auto; }
 .dcstale { color: var(--warn); text-transform: uppercase; letter-spacing: .09em; }
-.dcard h3 { font-size: 15.5px; font-weight: 600; letter-spacing: -.02em; line-height: 1.35; margin-bottom: 7px; }
 .dcard h3 a { color: var(--ink); text-decoration: none; }
 .dcard h3 a:hover { color: var(--accent); }
-.dcsum { font-size: 13.5px; color: var(--ink-2); margin: 0 0 9px; line-height: 1.55; }
 #dcSearch { flex: 1 1 260px; min-width: 180px; }
 
 /* ---- everything is a card grid ----
@@ -638,19 +654,8 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
   display: grid; gap: 14px; align-items: start;
   grid-template-columns: repeat(auto-fill, minmax(max(320px, (100% - 28px) / 3), 1fr));
 }
-/* The date is a heading for its row group, not a card in it. */
-.sudate { grid-column: 1 / -1; }
-.superson {
-  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
-  padding: 14px 16px 16px;
-}
-/* The list version stripped the last row's rule so the group did not end on a line. A card
-   needs all four sides, so put it back - otherwise the last card in every day loses its
-   bottom edge. */
-.superson:last-child { border-bottom: 1px solid var(--rule); }
 /* Your own card keeps the accent rail it had as a row. */
 .superson.me { border-left: 2px solid var(--accent); }
-.sucols { grid-template-columns: 1fr; gap: 10px; }
 
 /* ================================================================
    INBOX
@@ -824,7 +829,6 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
    The home page's job is to route, so it is mostly negative space and
    two large targets. The masthead is allowed to be big here and only
    here; every section view gets a compact one instead. */
-.home-mast { position: relative; margin-bottom: 34px; }
 .home-mast h1 {
   font-size: clamp(40px, 7vw, 76px); font-weight: 600;
   letter-spacing: -.05em; line-height: .94;
@@ -837,6 +841,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
    now, so it needs real width and real layout. Wraps to one column at 900px, where a
    clamp()ed 76px h1 leaves nothing beside it. */
 .home-mast {
+  position: relative; margin-bottom: 34px;
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 44px; flex-wrap: wrap;
 }
@@ -1036,8 +1041,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 /* The diagonal is YF's mark, and this file's own documentation warns twice that it is
    U+2571 and not a backslash. Typing "joy" flips every one of them the wrong way round
    for a moment. That is the whole feature: the studio's footnote, told as a joke.
-   inline-block because a transform does nothing to an inline element. */
-.slash { display: inline-block; transition: transform .45s ease, color .45s ease; }
+   The inline-block and the transition that make it possible live on .slash itself. */
 body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 
 /* ---- ZF's own check strip ----
@@ -1210,16 +1214,22 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
    at 9 and a plate at 5 down in the grid, because a summary and a door
    are different jobs. That is why blocks, not sections, carry weights.
 
-   A section's DESTINATION carries a separate weight in PAGES, because
-   how much the home page shouts about something is a different question
-   from how much chrome its own page deserves. Briefing is the case that
-   proves it: a 7 on the home page, a 3 as a page.
+   How much chrome a section's OWN page gets is a separate question, and
+   it is answered by hand: each view carries chrome-full, chrome-compact
+   or chrome-minimal as a class in the markup.
 
-     7-10  chrome-full     masthead, tagline, controls
-     4-6   chrome-compact  heading and one line
-     1-3   chrome-minimal  heading only, no tagline, no display type
+     chrome-full     masthead, tagline, controls
+     chrome-compact  heading and one line
+     chrome-minimal  heading only, no tagline, no display type
 
-   The order of blocks on the home page is computed from the weights at
+   There used to be a PAGES map here said to drive that automatically.
+   It never did - it was written twice and read by nothing, and this
+   paragraph described a mechanism that did not exist for a week while
+   people followed it. Removed 2026-08-28 rather than wired up: three
+   classes chosen once per section is not a problem worth a second
+   weight system.
+
+   The order of blocks on the home page IS computed from the weights at
    render time, not written into the markup. Change a number in
    BLOCKS and the page rearranges itself.
    ================================================================ */
@@ -1782,8 +1792,7 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
    floating it over one would just cover the text. */
 .card, .dcard { position: relative; }
 .card > .card-top .pingrp, .dcard .pingrp { position: absolute; top: 10px; right: 10px; z-index: 2; }
-/* so the source stamp never runs under the group */
-.dctop { padding-right: 58px; }
+/* Clearance for that group lives on .dctop itself, with the rest of its padding. */
 
 /* Pins on the home strip: a second row under the summary, inside the same bar. */
 .lead-pins {
@@ -1988,7 +1997,6 @@ body.has-reel .wrap { padding-bottom: 76px; }
 /* Mono strings - commit subjects, URLs, ids - are the worst offenders because they
    contain no spaces to break at. */
 .line .sha, .mono, code, kbd, .conn td, .linkfall input { overflow-wrap: anywhere; }
-.linkfall input { min-width: 0; }
 #search, .controls select, .controls input { min-width: 0; }
 img, svg { max-width: 100%; }
 
@@ -4197,19 +4205,17 @@ applyRoute(routeName() || "home");
    VISUAL PRIORITY + TASK INTELLIGENCE - added 2026-08-21
 
    BLOCKS is the whole layout argument, in one place: every block on the
-   home page, and how loudly it should speak (1-10). PAGES carries the
-   separate weight for each section's own destination, because those are
-   different questions - Briefing is a 7 on the home page and a 3 as a
-   page. The ladder that turns a number into a treatment is documented
-   in the stylesheet.
+   home page, and how loudly it should speak (1-10). The ladder that
+   turns a number into a treatment is documented in the stylesheet.
 
    A section may own several blocks. Tasks owns two: the lead strip at 9
    and a plate at 5, because a summary and a door are different jobs.
 
-   To add a section: add a BLOCKS entry, add a PAGES weight, add markup
-   carrying data-block="{block}" inside #homeStack, give the view an id
-   of v-{section}, add a nav link with data-nav="{section}", and
-   register VIEWS.{section}. Order and treatment follow from the weight.
+   To add a section: add a BLOCKS entry, add markup carrying
+   data-block="{block}" inside #homeStack, give the view an id of
+   v-{section} and one of the three chrome- classes, add a nav link with
+   data-nav="{section}", and register VIEWS.{section}. Home-page order
+   follows from the weight; the page's own chrome is the class you chose.
    Nothing else in this file needs to know about it.
 
    (Braces, not angle brackets, on purpose - check-artifact.ps1 counts
@@ -4234,7 +4240,6 @@ var BLOCKS = [
 /* Briefing keeps its band and gets no plate. The band already shows three real stories,
    which is more than a door to the same place could say - demoting it to a plate would
    trade live content for a picture. */
-var PAGES = { standup: 5, tasks: 6, projects: 7, decisions: 5, inbox: 5, briefing: 3, builds: 7 };
 
 function tierFor(w) {
   return w >= 9 ? "lead" : w >= 7 ? "band" : w >= 5 ? "plate" : w >= 3 ? "strip" : "none";
@@ -5506,7 +5511,6 @@ function wireDevForm() {
 
 /* ---- wiring ---- */
 VIEWS.dev = "v-dev";
-PAGES.dev = 5;
 
 var _applyRouteB = applyRoute;
 applyRoute = function (name) {

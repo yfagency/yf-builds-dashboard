@@ -164,4 +164,5 @@ if __name__ == "__main__":
     capture(live, jpg)
     inject(live, jpg)
     print("\nNow republish the artifact so the team sees it:")
-    print("  same URL, favicon is the hammer and wrench U+1F6E0 - settled, never substitute")
+    print("  same URL. For the favicon run tools/check-artifact.ps1 - it prints the one")
+    print("  canonical value. Never guess it and never substitute another emoji.")

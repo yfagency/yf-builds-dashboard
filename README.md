@@ -147,9 +147,15 @@ org, which publishing requires at all:
 
 ### Rendering locally
 
-`tools/refresh-thumbnails.ps1` and `tools/add-thumbnail.py` still work and are unchanged in
-behaviour, but they are fallbacks now — for checking a capture on your own machine before CI
-takes it. Everything below about their quirks still holds.
+`tools/add-thumbnail.py` still works and is unchanged, but it is a fallback now — for
+checking a capture on your own machine before CI takes it, or for adding one build without
+churning the other twenty data URIs.
+
+`tools/refresh-thumbnails.ps1` was retired on 2026-08-28. It rendered from a slug list a
+human maintained, in a repo only two people can push to, which is exactly how
+`yf-operating-model-visualization` and `yf-brand-os-visuals` both shipped with hazard
+tiles. The workflow derives the list from GitHub instead. Recover it from git history if you
+ever need to read it; do not bring it back.
 
 ### Adding a single build
 
@@ -457,11 +463,11 @@ team's bookmark keeps working:
 
 - URL: `https://claude.ai/code/artifact/89f3d2c0-86ef-4561-8c51-2778f38aad48`
 - **Favicon: 🛠️ — SETTLED by ZF, 2026-08-21. Do not substitute anything else, ever.**
-  Hammer and wrench, `U+1F6E0 U+FE0F`. Pass exactly this on every publish. It is stored as
-  platform metadata and cannot be read back off the live page, which is why it lives here
-  and why `tools/check-artifact.ps1` prints it on every run: no session should ever have to
-  ask, guess, or raise it with ZF again. An earlier version of this file said ⚡; that was
-  wrong and is now void.
+  Run `tools/check-artifact.ps1` before publishing and it prints the value; that script is
+  the ONE place that states it. Do not copy the codepoint into another file: it is platform
+  metadata that cannot be read back off the live page, and it was restated in four files,
+  one of which drifted to the wrong emoji and told people so for a week. An earlier version
+  of this file said the lightning bolt; that was wrong and is now void.
 - Pass **nothing** for `capabilities` or `contract`. Omitting them carries the stored
   declaration forward — currently `{mcp}` on contract `0.2.7`. Passing `capabilities`
   explicitly would replace it, and `{}` would clear it and break the page's Notion access.
@@ -497,19 +503,19 @@ element staying visible because an author `display: flex` beats the UA styleshee
 near-empty row on every card. **Never commit the merged preview file** - it contains a
 stub that fakes the registry.
 
-### When the PowerShell script renders nothing
+### When a local render produces nothing
 
-If every build reports `did not render - skipped`, the Chrome calls are being blocked, and
-the cause depends on how the script was started. Verified 2026-08-21 on ZF-PC:
+Kept because the cause is not obvious and it will bite the next person. Verified
+2026-08-21 on ZF-PC, against the PowerShell renderer that has since been retired, but the
+sandbox behaviour is the same for anything that shells out to Chrome:
 
 - **Run by a person in a terminal:** works.
-- **Run by Claude as a child process** (`powershell -File tools/refresh-thumbnails.ps1`):
-  every screenshot fails. The child gets a stricter sandbox than the session's own shell,
-  and Chrome's file writes are blocked inside it. The same Chrome command line, with the
-  same flags and the same output path, succeeds when Claude runs it directly in its
-  PowerShell tool rather than through a spawned script.
+- **Run by Claude as a child process** (`powershell -File <script>`): every screenshot
+  fails. The child gets a stricter sandbox than the session's own shell, and Chrome's file
+  writes are blocked inside it. The same Chrome command line, with the same flags and the
+  same output path, succeeds when Claude runs it directly in its PowerShell tool rather
+  than through a spawned script.
 
-So when Claude needs to refresh thumbnails, it should run the render loop and the `THUMBS`
-injection **inline** rather than invoking this script, or use `tools/add-thumbnail.py`
-where Python is available. The script's abort is correct behaviour either way: it refuses
-to rewrite the page from an empty render set.
+This is why `tools/add-thumbnail.py` drives Chrome over the DevTools protocol instead:
+CDP returns the image as base64 over the wire and Python does the writing, which the
+sandbox permits. It is also why the real path is CI, where none of this applies.

@@ -93,12 +93,62 @@ try {
   if (git status --porcelain $Html) { $warn.Add("$Html has uncommitted changes - commit them so the repo matches what you publish") }
 } catch { $warn.Add("could not check git state: $($_.Exception.Message)") }
 
+# --- duplicate CSS selectors --------------------------------------------------------
+#
+# The same selector declared twice at the top level of a <style> block. The later one
+# wins silently, which is how `.chip` - the tag AND the identity button - spent a week
+# rendering every tag in the app as a 999px identity pill with the wrong font and an
+# avatar's worth of padding. It was found by screenshot, and so were `.plates`,
+# `.dcard .chips` and the pinned-card hover. Eleven more were sitting in the sheet when
+# this check was written on 2026-08-28.
+#
+# Two rules for the same selector is not always a bug, but it is never necessary: merge
+# them. If a later declaration is meant to override an earlier one, that is a different
+# selector - add the class or the context that makes it so.
+#
+# Only TOP-LEVEL rules count. A repeat inside @media is the whole point of @media, so
+# depth is tracked by counting braces rather than by matching a closing line.
+$dupFail = @()
+$inStyle = $false; $depth = 0; $seen = @{}
+for ($i = 0; $i -lt $lines.Count; $i++) {
+  $t = $lines[$i]
+  if ($t -match '<style>')  { $inStyle = $true;  $depth = 0; continue }
+  if ($t -match '</style>') { $inStyle = $false; continue }
+  if (-not $inStyle) { continue }
+  $noComment = $t -replace '/\*.*?\*/', ''
+  $trim = $noComment.Trim()
+  if ($depth -eq 0 -and $trim -match '^([^@/}][^{}]*?)\s*\{') {
+    $sel = ($Matches[1] -replace '\s+', ' ').Trim()
+    if ($sel -ne '') {
+      if (-not $seen.ContainsKey($sel)) { $seen[$sel] = @() }
+      $seen[$sel] += ($i + 1)
+    }
+  }
+  $depth += ([regex]::Matches($noComment, '\{')).Count
+  $depth -= ([regex]::Matches($noComment, '\}')).Count
+  if ($depth -lt 0) { $depth = 0 }
+}
+foreach ($k in ($seen.Keys | Sort-Object)) {
+  if ($seen[$k].Count -gt 1) {
+    $dupFail += ("selector declared {0}x: {1}  (lines {2}) - merge them" -f $seen[$k].Count, $k, ($seen[$k] -join ", "))
+  }
+}
+foreach ($d in $dupFail) { $fail.Add($d) }
+
 # --- report ------------------------------------------------------------------------
 "thumbnails in page : $($inPage.Count)"
 "thumbnails on disk : $(@($onDisk).Count)"
-# The favicon is the one publish input nobody can look up: it is platform metadata, not
-# part of the file. Printing it here means every session that runs this check is told the
-# answer, so it never has to be guessed or escalated. Settled by ZF 2026-08-21.
+# THE CANONICAL STATEMENT OF THE FAVICON. Do not restate the value anywhere else - point
+# at this line instead.
+#
+# It is the one publish input nobody can look up: platform metadata, not part of the file.
+# Printing it here means every session that runs this check is told the answer, so it never
+# has to be guessed or escalated. Settled by ZF 2026-08-21.
+#
+# It was also stated in the README, in the artifact's own header comment and in
+# tools/add-thumbnail.py. One of those drifted to the wrong emoji and told people so for a
+# week before anyone noticed. Four copies is four chances to be wrong; a pointer cannot go
+# stale. Fixed 2026-08-28.
 "favicon to publish : hammer-and-wrench  U+1F6E0 U+FE0F   (never substitute)"
 ""
 foreach ($w in $warn) { Write-Host "WARN  $w" -ForegroundColor Yellow }
