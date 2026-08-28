@@ -1894,10 +1894,28 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
 .card > .card-top .pingrp, .dcard .pingrp { position: absolute; top: 10px; right: 10px; z-index: 2; }
 /* Clearance for that group lives on .dctop itself, with the rest of its padding. */
 
-/* Pins on the home strip: a second row under the summary, inside the same bar. */
-.lead-pins {
-  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+/* The strip's bottom row: pins left, automations right, one hairline for both. The rule
+   used to belong to .lead-pins, which meant it appeared only when something was pinned -
+   so the pulse would have arrived with no line above it. */
+.lead-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px 22px; flex-wrap: wrap;
   border-top: 1px solid var(--rule-soft); padding: 10px 18px 12px;
+}
+.lead-pins { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.lead-pulse { margin-left: auto; }
+/* Inline in here rather than stacked: the strip is dense and a label over a value would
+   make it three rows deep. */
+.lead-pulse .pulse { gap: 0 18px; }
+.lead-pulse .beat {
+  display: flex; align-items: baseline; gap: 7px;
+  padding: 0; margin: 0; border-right: 0; min-width: 0;
+}
+.lead-pulse .k { display: inline; margin: 0; font-size: 9px; }
+.lead-pulse .v { font-size: 11.5px; }
+@media (max-width: 640px) {
+  /* Below the pins rather than beside them, and left-aligned with everything else. */
+  .lead-pulse { margin-left: 0; }
 }
 /* BASELINE, not centre. The chip holds a 9px all-caps mono tag next to a 12.5px sans
    label, and centring their boxes centres the leading rather than the letters: measured,
@@ -2310,7 +2328,13 @@ img, svg { max-width: 100%; }
             </div>
             <p class="lead-counts" id="taskCounts"><span class="lead-who" id="taskWho"></span></p>
           </a>
-          <div class="lead-pins" id="leadPins" hidden></div>
+          <!-- Pins and pulse share the strip's bottom row: pins on the left, because they
+               are yours and you put them there, and the automations on the right, because
+               they are background until they are not. Either side can be empty. -->
+          <div class="lead-foot" id="leadFoot" hidden>
+            <div class="lead-pins" id="leadPins" hidden></div>
+            <div class="lead-pulse" id="leadPulse" hidden><div class="pulse" id="pulse"></div></div>
+          </div>
         </div>
       </section>
 
@@ -2470,11 +2494,6 @@ img, svg { max-width: 100%; }
         </a>
       </section>
 
-      <section data-block="pulse">
-        <div class="tier-strip">
-          <div class="pulse" id="pulse"></div>
-        </div>
-      </section>
 
       <section data-block="inbox-plate">
         <a class="plate" href="#/inbox">
@@ -4338,12 +4357,10 @@ applyRoute(routeName() || "home");
 var BLOCKS = [
   { block: "tasks-lead",     section: "tasks",    weight: 9 },
   { block: "briefing",       section: "briefing", weight: 7 },
-  /* A 4, so it lands in the strip tier: a hairline and a row of figures, at the foot of
-     the page below the doors. The ladder puts strips last by construction - anything
-     between the briefing at 7 and the plates at 6 would have to be a 6 itself, and would
-     then be pulled into the plate grid as a card. Last is right anyway: this is a thing
-     you should be able to ignore for weeks and read in one glance on the day it matters. */
-  { block: "pulse",           section: "home",      weight: 4 },
+  /* The pulse has no block of its own. It began as a 4 at the foot of the page, which the
+     ladder puts last by construction - and last is where you never look. It lives in the
+     lead strip's bottom row now, beside the pins, which is the one part of this page
+     everybody reads. ZF asked for it there and was right. */
   { block: "daily-plate",     section: "standup",   weight: 6 },
   { block: "tasks-plate",     section: "tasks",     weight: 6 },
   { block: "projects-plate",  section: "projects",  weight: 6 },
@@ -6426,8 +6443,9 @@ function renderLeadPins() {
   var host = el("leadPins");
   if (!host) return;
   var show = PINS.slice(0, 3);
-  if (!show.length) { host.hidden = true; host.innerHTML = ""; return; }
+  if (!show.length) { host.hidden = true; host.innerHTML = ""; leadFoot(); return; }
   host.hidden = false;
+  leadFoot();
   host.innerHTML = show.map(function (p) {
     var label = p.t, href = "#/tasks";
     if (p.k === "b") {
@@ -8313,10 +8331,9 @@ function pulseInbox() {
 function renderPulse() {
   var box = el("pulse");
   if (!box) return;
-  /* The SECTION, not the strip inside it. A hidden strip inside a visible section leaves
-     the section's 30px of stack gap behind as a hole, and .tier-strip's border-top draws a
-     stray hairline across it. */
-  var host = box.closest("[data-block]") || box.closest(".tier-strip");
+  /* Its OWN wrapper. This used to hide the nearest [data-block], which was right when the
+     pulse was a block of its own and would now hide the entire tasks lead strip with it. */
+  var host = el("leadPulse");
   if (!mcp || !SERVER) { if (host) host.hidden = true; return; }
   if (host) host.hidden = false;
 
@@ -8337,11 +8354,20 @@ function renderPulse() {
   var inb = pulseInbox();
   if (inb) cells.push(inb);
 
-  if (!cells.length) { if (host) host.hidden = true; return; }
+  if (!cells.length) { if (host) host.hidden = true; leadFoot(); return; }
   box.innerHTML = cells.map(function (c) {
     return '<div class="beat"><span class="k">' + esc(c.k) + "</span>" +
       '<span class="v ' + esc(c.cls) + '">' + esc(c.txt) + "</span></div>";
   }).join("");
+  leadFoot();
+}
+
+/* The row carries the hairline, so it has to disappear when neither half has anything -
+   otherwise the strip ends on a rule with nothing under it. */
+function leadFoot() {
+  var foot = el("leadFoot"), pins = el("leadPins"), pulse = el("leadPulse");
+  if (!foot) return;
+  foot.hidden = (!pins || pins.hidden) && (!pulse || pulse.hidden);
 }
 
 /* ================================================================
@@ -8459,6 +8485,18 @@ watchBuilds = function () {
     return orig.apply(null, arguments).then(function (r) { renderPulse(); return r; });
   };
 });
+
+/* The briefing arrives through a watchTool with no promise to hang off, and renderDigest
+   is the one thing that always runs when it lands. Without this the briefing beat was
+   absent for the whole session: the pulse painted before BRIEF_ROWS existed, correctly
+   said nothing about a job it had not read, and was never asked again. Which made a job
+   that had genuinely failed look identical to one nobody had checked. */
+var _renderDigestPulse = renderDigest;
+renderDigest = function () {
+  var r = _renderDigestPulse.apply(null, arguments);
+  renderPulse();
+  return r;
+};
 
 /* Arriving on the page has to draw it. Every other section decorates applyRoute for this;
    the inbox was hooked only to watchBuilds, which fires when the REGISTRY changes - so
