@@ -7383,8 +7383,32 @@ var DL_DS = "collection://79e8eda0-63bc-4a4a-badd-b981004c6f3c";
 var Q_REEL_DL = 'SELECT url, "Entry", "Category", "Source", "date:Date:start" FROM "' + DL_DS +
   '" ORDER BY "date:Date:start" DESC LIMIT 12';
 var REEL_DL_ROWS = null;
+/* Off by default for PS, on by default for everybody else.
+
+   The DEFAULT is only what happens before anybody has chosen. A stored preference wins in
+   both directions, which is why the two buttons write "on" and "off" explicitly rather
+   than writing one value and removing the key - absent, on and off are three different
+   states here, and collapsing the first two would mean PS could never turn it on and have
+   it stick.
+
+   Keyed on initials rather than a person id so it reads as what it is: a per-person
+   default, listed in one place. */
+var REEL_DEFAULT_OFF = { PS: 1 };
+
+function reelPref() {
+  try { return localStorage.getItem("yfbridge.reel"); } catch (e) { return null; }
+}
+function reelDefaultOn() {
+  var me = PEOPLE[WHO];
+  return !(me && REEL_DEFAULT_OFF[me.ini]);
+}
+
 var REEL_ON = true;
-try { REEL_ON = localStorage.getItem("yfbridge.reel") !== "off"; } catch (e) {}
+function resolveReel() {
+  var pref = reelPref();
+  REEL_ON = pref === "on" ? true : pref === "off" ? false : reelDefaultOn();
+}
+resolveReel();
 
 /* Relative time, coarse on purpose: the reel is glanceable, and "3d" carries as much
    as a timestamp would at this size. */
@@ -7656,8 +7680,11 @@ var _rebuildTasksReel = rebuildTasks;
 rebuildTasks = function () { _rebuildTasksReel(); renderReel(); };
 var _renderDigestReel = renderDigest;
 renderDigest = function () { _renderDigestReel(); renderReel(); };
+/* Switching person re-resolves the default - so ZF handing the browser to PS hides it, and
+   PS switching to the team view brings it back. A stored preference is untouched by this;
+   resolveReel checks it first. */
 var _renderReelOnWho = setWho;
-setWho = function (id, name) { _renderReelOnWho(id, name); renderReel(); };
+setWho = function (id, name) { _renderReelOnWho(id, name); resolveReel(); renderReel(); };
 var _watchBuildsReel = watchBuilds;
 watchBuilds = function () { var r = _watchBuildsReel(); startReel(); return r; };
 var _renderReelBuilds = render;
