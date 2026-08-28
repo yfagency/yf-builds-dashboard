@@ -381,6 +381,26 @@ input.pick {
   line-height: 1.6;
 }
 
+/* ---- one clamp, used everywhere prose is optional ----
+   The colophon's description and every page's closing footnote are reference text: worth
+   having, not worth reading twice. Two lines and a toggle, so the page ends on a control
+   rather than on a paragraph.
+
+   A TOGGLE, not the one-way "Read more" the build cards use. Those reveal a note you asked
+   to see on one card; this is a footnote you will collapse again the moment you have
+   checked the thing you opened it for. */
+.clampable {
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+  -webkit-line-clamp: 2; line-clamp: 2;
+}
+.clampable.open { display: block; -webkit-line-clamp: unset; line-clamp: unset; }
+.moretog {
+  display: block; background: none; border: 0; padding: 4px 0 0; margin: 0; cursor: pointer;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--muted);
+}
+.moretog:hover { color: var(--accent); }
+
 /* states */
 .panel {
   background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius);
@@ -3694,6 +3714,9 @@ function renderColophon(me) {
     "</div>" +
     '<div class="facts">' + facts.join("") + "</div>" +
     (me.notes ? '<p class="doing">' + esc(me.notes) + "</p>" : "");
+
+  // Redrawn from scratch above, so the toggle has to be rebuilt with it.
+  if (typeof clampMore === "function") clampMore(box.querySelector(".doing"));
 }
 
 function render() {
@@ -8436,6 +8459,53 @@ function paintBriefStat() {
     (today ? "today" : '<span class="flagged">' + esc(shortDate(newest)) + "</span>");
 }
 
+/* ---- clamping optional prose ----
+   The app had three near-identical copies of this by 2026-08-28 - build notes, Decisions
+   cards, the Inbox - which is the shape of thing the duplicate-declaration gate exists to
+   catch, just spread across functions instead of names. This is the one new callers use.
+
+   Measured after render and again once the webfonts land, because the wrap depends on the
+   real font and a toggle offered on a paragraph that already fits is a control that does
+   nothing. */
+function clampMore(node) {
+  if (!node || !node.parentNode) return;
+  var wrap = node.parentNode;
+  var next = node.nextSibling;
+  if (next && next.className === "moretog") { wrap.removeChild(next); }
+
+  node.classList.add("clampable");
+  var wasOpen = node.classList.contains("open");
+  node.classList.remove("open");
+  if (node.scrollHeight <= node.clientHeight + 1) {
+    // Genuinely short. Leave it unclamped rather than clamped-but-identical, so it is not
+    // silently truncated the day somebody edits it in Notion and nobody re-checks.
+    node.classList.remove("clampable");
+    return;
+  }
+
+  var b = document.createElement("button");
+  b.className = "moretog";
+  b.type = "button";
+  var paint = function () {
+    b.textContent = node.classList.contains("open") ? "Show less" : "Read more";
+  };
+  b.addEventListener("click", function () { node.classList.toggle("open"); paint(); });
+  if (wasOpen) node.classList.add("open");
+  paint();
+  wrap.insertBefore(b, node.nextSibling);
+}
+
+/* Every closing footnote on every page, plus the colophon's description. Run on each route
+   change because a clamp can only be measured while the element is on screen - a hidden
+   view reports a scrollHeight of zero and would never grow a toggle. */
+function clampProse() {
+  var v = el(VIEWS[routeName()] || "");
+  if (v) {
+    Array.prototype.forEach.call(v.querySelectorAll(".foot"), clampMore);
+  }
+  clampMore(document.querySelector(".colophon .doing"));
+}
+
 /* ================================================================
    THE PULSE - evidence that the automations are alive
    ================================================================ */
@@ -8654,7 +8724,9 @@ applyRoute = function (name) {
   paintStamps();
   paintNudge();
   renderPulse();
+  clampProse();
 };
+try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(clampProse); } catch (e) {}
 
 var _setWhoNudge = setWho;
 setWho = function (id, name) { _setWhoNudge(id, name); paintNudge(); };
