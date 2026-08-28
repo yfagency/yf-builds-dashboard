@@ -332,24 +332,54 @@ input.pick {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--muted); display: block; margin-bottom: 10px;
 }
-.colophon .body {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  gap: 20px; flex-wrap: wrap;
+
+/* Title left, actions right, on ONE line. They used to be the two ends of a flex row that
+   also contained the description - justify-content:space-between with align-items:flex-end,
+   which pinned the links to the bottom of whatever the paragraph's height happened to be
+   and left a hole the size of the paragraph beside them. The links belong next to the name
+   of the thing they act on. */
+.colophon .head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px 24px; flex-wrap: wrap; margin-bottom: 14px;
 }
-.colophon h2 { font-size: 19px; font-weight: 600; letter-spacing: -.025em; margin-bottom: 5px; }
-.colophon .facts {
-  font-family: var(--mono); font-size: 11.5px; color: var(--muted);
-  display: flex; flex-wrap: wrap; gap: 4px 14px;
-}
-.colophon .facts b { color: var(--ink-2); font-weight: 500; }
-.colophon .doing { font-size: 13px; color: var(--ink-2); max-width: 66ch; margin: 8px 0 0; }
-.colophon .acts { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.colophon h2 { font-size: 19px; font-weight: 600; letter-spacing: -.025em; }
+.colophon .acts { display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; }
 .colophon .acts a, .colophon .acts button {
   background: none; border: 0; padding: 0; cursor: pointer;
   font-family: var(--sans); font-size: 12.5px; font-weight: 500; color: var(--muted);
   text-decoration: none; border-bottom: 1px solid var(--rule);
 }
 .colophon .acts a:hover, .colophon .acts button:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* The facts as a label-over-value grid, which is the language the masthead gauges already
+   speak - not a mono sentence with the values bolded inside it. A run-on line is why the
+   commit subject was wrapping into the middle of "by ZF". */
+.colophon .facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 14px 0; border-top: 1px solid var(--rule-soft); padding-top: 14px;
+}
+.colophon .facts .f { padding-right: 20px; min-width: 0; }
+.colophon .facts .k {
+  display: block; font-family: var(--mono); font-size: 9.5px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+}
+.colophon .facts .v {
+  font-family: var(--mono); font-size: 12.5px; color: var(--ink-2);
+  display: block; min-width: 0;
+}
+/* The commit takes the whole row: a sha and a subject line will not fit a 128px column,
+   and truncating a commit message mid-word to make it fit is worse than giving it space. */
+.colophon .facts .f.wide { grid-column: 1 / -1; padding-right: 0; }
+.colophon .facts .f.wide .v { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.colophon .facts .sub {
+  color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%; flex: 0 1 auto;
+}
+.colophon .doing {
+  font-size: 13px; color: var(--ink-2); max-width: 72ch;
+  margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule-soft);
+  line-height: 1.6;
+}
 
 /* states */
 .panel {
@@ -3622,31 +3652,48 @@ function renderColophon(me) {
   if (!me) { box.hidden = true; box.innerHTML = ""; return; }
   box.hidden = false;
   var dl = zipUrl(me.repo, me.branch, me.path), gh = browseUrl(me.repo, me.branch, me.path);
+  var fact = function (k, v, cls) {
+    return '<div class="f' + (cls ? " " + cls : "") + '"><span class="k">' + k + "</span>" + v + "</div>";
+  };
   var facts = [];
-  if (me.version) facts.push("<span>version <b>" + esc(me.version) + "</b></span>");
-  if (me.status) facts.push("<span>status <b>" + esc(me.status) + "</b></span>");
-  if (me.builder || me.committer) facts.push("<span>by <b>" + esc(me.builder || me.committer) + "</b></span>");
+  if (me.version) facts.push(fact("version", '<span class="v">' + esc(me.version) + "</span>"));
+  if (me.status) facts.push(fact("status", '<span class="v">' + esc(me.status) + "</span>"));
+  if (me.builder || me.committer) {
+    facts.push(fact("by", '<span class="v">' + esc(me.builder || me.committer) + "</span>"));
+  }
   if (me.commitDate) {
-    facts.push('<span>last commit <b title="' + esc(stamp(me.commitDate)) + '">' + esc(ago(me.commitDate)) + "</b>" +
-      (me.commit ? " &middot; " + esc(me.commit) : "") + "</span>");
+    /* The sha and the subject arrive as one string - "de6e7bc - Thumbnails: render X" - so
+       split them and let the subject be the part that truncates. A sha you cannot read in
+       full is useless; a subject you cannot read in full is still a hint, and the title
+       carries all of it. */
+    var sha = "", subject = "";
+    if (me.commit) {
+      /* The registry writes an em dash between the sha and the subject. Escaped as
+         \u2014 rather than typed, because this file is kept pure ASCII. */
+      var m = String(me.commit).match(/^(\S+)\s*[-\u2014]\s*([\s\S]*)$/);
+      if (m) { sha = m[1]; subject = m[2]; } else { sha = String(me.commit); }
+    }
+    facts.push(fact("last commit",
+      '<span class="v"><span title="' + esc(stamp(me.commitDate)) + '">' + esc(ago(me.commitDate)) + "</span>" +
+        (sha ? '<span class="sha">' + esc(sha) + "</span>" : "") +
+        (subject ? '<span class="sub" title="' + esc(subject) + '">' + esc(subject) + "</span>" : "") +
+      "</span>", "wide"));
   } else if (me.repo) {
-    facts.push("<span>commit <b>not synced yet</b></span>");
+    facts.push(fact("last commit", '<span class="v">not synced yet</span>', "wide"));
   }
 
   box.innerHTML =
     '<span class="stamp">This dashboard</span>' +
-    '<div class="body">' +
-      "<div>" +
-        "<h2>" + esc(me.name) + "</h2>" +
-        '<div class="facts">' + facts.join("") + "</div>" +
-        (me.notes ? '<p class="doing">' + esc(me.notes) + "</p>" : "") +
-      "</div>" +
+    '<div class="head">' +
+      "<h2>" + esc(me.name) + "</h2>" +
       '<div class="acts">' +
         (dl ? '<a href="' + esc(dl) + '">Download the source</a>' : "") +
         (gh ? '<a href="' + esc(gh) + '">GitHub &amp; history</a>' : "") +
         (me.pageId ? '<button data-edit="' + esc(me.pageId) + '">Edit this entry</button>' : "") +
       "</div>" +
-    "</div>";
+    "</div>" +
+    '<div class="facts">' + facts.join("") + "</div>" +
+    (me.notes ? '<p class="doing">' + esc(me.notes) + "</p>" : "");
 }
 
 function render() {
