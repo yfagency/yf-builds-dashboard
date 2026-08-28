@@ -8933,9 +8933,17 @@ function renderPortfolio() {
   }
   if (PORTF_ROWS === null) {
     body.innerHTML = '<div class="panel"><span class="spin"></span>Loading the portfolio&hellip;</div>';
-    loadPortf().then(function () { fillPfStatuses(); renderPortfolio(); });
+    loadPortf().then(renderPortfolio);
     return;
   }
+  /* Filled HERE, on every render, rather than only after a cold load - which is what it
+     used to do, and why the select was empty in practice. paintPortStat() on the home page
+     reads the portfolio to count what is live, so by the time anybody clicks through,
+     PORTF_ROWS is already warm and the cold branch never runs. Exactly the shape of the
+     Decisions Source bug: a path that only executes in a state real usage does not reach.
+     Builds has always got this right - fillFilters() and render() are called together on
+     every data event - so this now matches it. */
+  fillPfStatuses();
   var list = pfFiltered();
   var count = el("pfCount");
   if (count) count.textContent = list.length + " of " + (PORTF_ROWS || []).length;
@@ -9199,7 +9207,7 @@ document.addEventListener("click", function (ev) {
 el("pfRefresh").addEventListener("click", function () {
   if (!mcp || !SERVER) return;
   mcp.invalidate(SERVER, T_QUERY, sqlInput(PORTF_DS, Q_PORTF)).catch(function () {})
-    .then(loadPortf).then(function () { fillPfStatuses(); renderPortfolio(); });
+    .then(loadPortf).then(renderPortfolio);
 });
 el("mtRefresh").addEventListener("click", function () {
   if (!mcp || !SERVER) return;
