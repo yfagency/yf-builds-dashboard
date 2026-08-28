@@ -44,7 +44,26 @@ This is the one kind you can take from end to end, and it is the reason the inbo
    - `url`: `https://claude.ai/code/artifact/89f3d2c0-86ef-4561-8c51-2778f38aad48`
    - `favicon`: the hammer-and-wrench, U+1F6E0 U+FE0F. **Settled by ZF 2026-08-21 - never substitute another emoji.**
    - Pass **nothing** for `capabilities` or `contract`; omitting them carries the stored declaration forward.
-6. Answer with what rendered, and put the commit URL in `Ref`.
+6. **Write the dashboard's own registry row.** You have just moved its HEAD, and you are
+   the only thing that knows. The GitHub-to-Notion sync runs hourly, so without this the
+   dashboard's own commit line is up to an hour behind the page you are looking at - and it
+   is the row people check first, because it is the one that changes most. Read the current
+   HEAD and update `collection://10d63098-3c9a-44a2-83fb-a98ce261eea1` where
+   `Repo URL = 'https://github.com/yfagency/yf-builds-dashboard'`:
+
+       "Commit"                       = "<short sha> - <commit subject>"
+       "Last Committer"               = the git author name
+       "date:Last Commit:start"       = the author date, ISO 8601
+       "date:Last Commit:is_datetime" = 1        <- the INTEGER, not the string
+
+   Those three columns are machine-owned and the sync is their usual writer; doing its job
+   for one row at the moment that row changes is the point, not a trespass. Never touch any
+   other column, and never do this for a repo you did not just push to.
+
+   Notion's date property keeps the MINUTE, not the second - git's seconds are dropped on
+   the way in, which is expected and not worth correcting.
+
+7. Answer with what rendered, and put the commit URL in `Ref`.
 
 If the build has no live Pages URL, that is the real answer: say the thumbnail cannot be rendered because there is nothing to photograph, and that the build needs publishing first.
 
@@ -79,3 +98,4 @@ One line per row: who asked, what it was, what you did. Then stop.
 - **Cadence.** Fifteen minutes is the intent. It is a queue people watch, and an hour of silence makes it feel broken.
 - **An empty queue must cost nothing.** One SELECT, then stop. Do not read the repo, do not check the artifact, do not tidy anything.
 - **The republish is the whole unlock.** Before this, every thumbnail that failed to render was a message to ZF and a wait. Now it is a row.
+- **Any republish updates the dashboard's registry row**, not only a thumbnail one. If a Fix or a Build ends in a republish, do step 3.6 for that too - the row should describe the page that is actually live.
