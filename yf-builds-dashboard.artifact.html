@@ -2526,30 +2526,47 @@ img, svg { max-width: 100%; }
           <!-- Briefing, drawn: three columns of headlines, which is the shape of the page -
                Global, Japan, Radar. Nothing else in the set is columnar, and it needs to be:
                with eight plates the hue is doing less work than it did with six, so the
-               composition has to carry the difference. -->
+               composition has to carry the difference.
+
+               THE GRID, because the first version was drawn by eye and it showed. Margins
+               of 32 both sides; three columns of 72 with a 20 gutter, so 32+72+20+72+20+72
+               lands exactly on 288 and leaves 32 on the right. Dividers sit in the middle
+               of each gutter, at 114 and 206, whose midpoint is 160 - the centre of the
+               image. Every bar starts on its column's left edge and none exceeds 72, and
+               each column carries one near-full-width bar so the three read as equal.
+               Vertically the block runs 55 to 145, centred on 100, and the dividers run
+               40 to 160 about the same centre.
+
+               The dividers sit on the half-pixel because a 1-wide rect at 114 covers 114
+               to 115, which put the pair's midpoint at 160.5 rather than 160. Half a pixel
+               is not much and was still the reason the whole thing read as off its axis. -->
           <svg class="art" viewBox="0 0 320 200" role="img" aria-label="Three columns of headlines, the shape of the briefing">
             <rect width="320" height="200" fill="var(--surface-2)"/>
             <rect width="320" height="200" fill="#A8C93F" opacity=".08"/>
-            <rect x="34" y="46" width="26" height="5" rx="2.5" fill="#A8C93F"/>
-            <rect x="34" y="62" width="72" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
-            <rect x="34" y="74" width="58" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
-            <rect x="34" y="92" width="44" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
-            <rect x="120" y="34" width="1" height="132" fill="var(--ink)" opacity=".10"/>
-            <rect x="136" y="46" width="22" height="5" rx="2.5" fill="#A8C93F"/>
-            <rect x="136" y="62" width="80" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
-            <rect x="136" y="74" width="46" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
-            <rect x="136" y="92" width="52" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
-            <rect x="222" y="34" width="1" height="132" fill="var(--ink)" opacity=".10"/>
-            <rect x="238" y="46" width="28" height="5" rx="2.5" fill="#A8C93F"/>
-            <rect x="238" y="62" width="60" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
-            <rect x="238" y="74" width="70" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
-            <rect x="238" y="92" width="40" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
-            <rect x="34" y="124" width="72" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
-            <rect x="34" y="136" width="52" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
-            <rect x="136" y="124" width="64" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
-            <rect x="136" y="136" width="76" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
-            <rect x="238" y="124" width="68" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
-            <rect x="238" y="136" width="46" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+
+            <rect x="113.5" y="40" width="1" height="120" fill="var(--ink)" opacity=".10"/>
+            <rect x="205.5" y="40" width="1" height="120" fill="var(--ink)" opacity=".10"/>
+
+            <rect x="32" y="55" width="26" height="5" rx="2.5" fill="#A8C93F"/>
+            <rect x="32" y="71" width="72" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="32" y="83" width="52" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="32" y="101" width="40" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
+            <rect x="32" y="129" width="62" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="32" y="141" width="44" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+
+            <rect x="124" y="55" width="22" height="5" rx="2.5" fill="#A8C93F"/>
+            <rect x="124" y="71" width="60" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="124" y="83" width="44" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="124" y="101" width="50" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
+            <rect x="124" y="129" width="56" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="124" y="141" width="72" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+
+            <rect x="216" y="55" width="28" height="5" rx="2.5" fill="#A8C93F"/>
+            <rect x="216" y="71" width="72" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="216" y="83" width="56" height="5" rx="2.5" fill="var(--ink)" opacity=".30"/>
+            <rect x="216" y="101" width="36" height="4" rx="2" fill="var(--ink)" opacity=".14"/>
+            <rect x="216" y="129" width="48" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
+            <rect x="216" y="141" width="60" height="4" rx="2" fill="var(--ink)" opacity=".16"/>
           </svg>
           <div class="body">
             <h2>Briefing</h2>
