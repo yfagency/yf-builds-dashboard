@@ -43,9 +43,151 @@
   --warn-soft: rgba(217, 130, 43, .14);
   --crit-soft: rgba(232, 92, 79, .14);
 
+  /* Four things that were hardcoded dark and would have inverted wrongly on a light
+     ground. Everything else in the sheet is either a token already or a translucent tint
+     of ok/warn/crit/accent, which reads correctly on any of these. */
+  --chrome: rgba(10, 10, 11, .78);        /* the ground under a pin button, over artwork */
+  --dim: rgba(0, 0, 0, .18);              /* a calendar day outside the month */
+  --edge: rgba(243, 240, 233, .19);       /* the brighter border on a pinned card */
+  --shimmer: rgba(243, 240, 233, .055);   /* the sweep across a skeleton */
+
   --shadow: none;
   --radius: 4px;
 }
+
+/* The swatch row in the profile sheet. Each button previews its own palette by being
+   painted in it, which is the only honest way to show a theme in a list. */
+.themerow { border-top: 1px solid var(--rule); margin-top: 16px; padding-top: 14px; }
+.themes { display: flex; gap: 8px; flex-wrap: wrap; }
+.themebtn {
+  flex: 1 1 96px; cursor: pointer; text-align: left;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 9px 10px 10px; font-family: var(--sans);
+}
+.themebtn:hover { border-color: var(--muted); }
+.themebtn[aria-pressed="true"] { border-color: var(--accent); }
+.themebtn .sw { display: flex; gap: 3px; margin-bottom: 7px; }
+.themebtn .sw i { width: 14px; height: 14px; border-radius: 3px; display: block; }
+.themebtn .nm { display: block; font-size: 12.5px; font-weight: 600; }
+.themebtn .ds { display: block; font-size: 10.5px; margin-top: 1px; }
+
+/* ================================================================
+   THEMES
+
+   The stylesheet used to open by saying this was single-theme "by
+   intent, not omission" - the palette lifted from the builds the
+   dashboard lists so it sat inside YF's visual language rather than
+   framing it in an admin skin. That argument was for the DEFAULT, and
+   Studio is still the default and still that palette. It was never an
+   argument against letting somebody read the thing in daylight, or
+   against a legible ground when the app is being screen-recorded for
+   the operations video.
+
+   A theme is a set of token overrides and nothing else. No component
+   knows a theme exists. Adding a fifth is a block of tokens here.
+   ================================================================ */
+
+/* PAPER - for daylight, print-outs and projectors. Not an inversion: the ink stays warm
+   and the accent darkens, because #EBB20C on white is barely legible at 11px. */
+:root[data-theme="paper"] {
+  color-scheme: light;
+  --paper: #FBFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F1EFEA;
+  --rule: rgba(20, 20, 19, .14);
+  --rule-soft: rgba(20, 20, 19, .07);
+  --ink: #141413;
+  --ink-2: rgba(20, 20, 19, .76);
+  --muted: rgba(20, 20, 19, .64);   /* .48 measured 3.24 against this ground - worse than the dark theme it is meant to be an alternative to */
+
+  --accent: #8A6008;                /* #A8760A measured 3.99 on white; the accent carries small text */
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(138, 96, 8, .13);
+
+  --ok: #1F7A45;
+  --warn: #92500F;
+  --crit: #B23A2E;
+  --ok-soft: rgba(31, 122, 69, .11);
+  --warn-soft: rgba(168, 91, 18, .12);
+  --crit-soft: rgba(178, 58, 46, .11);
+
+  --chrome: rgba(255, 255, 255, .86);
+  --dim: rgba(20, 20, 19, .05);
+  --edge: rgba(20, 20, 19, .26);
+  --shimmer: rgba(20, 20, 19, .05);
+  --shadow: 0 1px 2px rgba(20, 20, 19, .06);
+}
+
+/* BLUEPRINT - the same dark weight, cooled. Studio's yellow on a blue ground goes muddy,
+   so the accent moves to a cyan that belongs there. */
+:root[data-theme="blueprint"] {
+  color-scheme: dark;
+  --paper: #080C14;
+  --surface: #0D131E;
+  --surface-2: #131C2A;
+  --rule: rgba(198, 220, 255, .12);
+  --rule-soft: rgba(198, 220, 255, .07);
+  --ink: #E4EDFB;
+  --ink-2: rgba(228, 237, 251, .76);
+  --muted: rgba(228, 237, 251, .46);
+
+  --accent: #4FC3E8;
+  --accent-ink: #061019;
+  --accent-soft: rgba(79, 195, 232, .14);
+
+  --ok: #4FD196;
+  --warn: #E0A24A;
+  --crit: #F2705F;
+  --ok-soft: rgba(79, 209, 150, .13);
+  --warn-soft: rgba(224, 162, 74, .14);
+  --crit-soft: rgba(242, 112, 95, .14);
+
+  --chrome: rgba(8, 12, 20, .8);
+  --dim: rgba(0, 0, 0, .22);
+  --edge: rgba(198, 220, 255, .22);
+  --shimmer: rgba(198, 220, 255, .06);
+  --shadow: none;
+}
+
+/* CONTRAST - for screen recording and projectors, where the studio palette's low-contrast
+   greys vanish. Pure black ground, full-strength ink, brighter rules. Not a "high contrast
+   accessibility mode" and does not claim to be one - it is a legibility setting. */
+:root[data-theme="contrast"] {
+  color-scheme: dark;
+  --paper: #000000;
+  --surface: #0B0B0C;
+  --surface-2: #17171A;
+  --rule: rgba(255, 255, 255, .26);
+  --rule-soft: rgba(255, 255, 255, .14);
+  --ink: #FFFFFF;
+  --ink-2: rgba(255, 255, 255, .92);
+  --muted: rgba(255, 255, 255, .66);
+
+  --accent: #FFC521;
+  --accent-ink: #000000;
+  --accent-soft: rgba(255, 197, 33, .18);
+
+  --ok: #56E08A;
+  --warn: #FF9E3D;
+  --crit: #FF6B5C;
+  --ok-soft: rgba(86, 224, 138, .18);
+  --warn-soft: rgba(255, 158, 61, .18);
+  --crit-soft: rgba(255, 107, 92, .18);
+
+  --chrome: rgba(0, 0, 0, .85);
+  --dim: rgba(255, 255, 255, .05);
+  --edge: rgba(255, 255, 255, .4);
+  --shimmer: rgba(255, 255, 255, .09);
+  --shadow: none;
+}
+
+/* The identity frame and the pinned star read the person's hue against the ground. On
+   Paper the four hues were picked for a near-black background and two of them - the
+   off-white and the gold - disappear on white, so they darken here and nowhere else. */
+:root[data-theme="paper"][data-me="ZF"] { --me: #6B7078; }
+:root[data-theme="paper"][data-me="BB"] { --me: #A8760A; }
+:root[data-theme="paper"][data-me="JK"] { --me: #7B4FD1; }
+:root[data-theme="paper"][data-me="PS"] { --me: #C4501C; }
 * { box-sizing: border-box; }
 /* An author `display` beats the UA stylesheet's [hidden] rule, so anything laid out with
    flex stays visible when JS hides it. This is the line that makes `hidden` mean hidden. */
@@ -454,7 +596,7 @@ kbd, code { font-family: var(--mono); font-size: 12.5px; background: var(--surfa
 }
 .sk::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(243, 240, 233, .055), transparent);
+  background: linear-gradient(90deg, transparent, var(--shimmer), transparent);
   transform: translateX(-100%);
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -990,7 +1132,7 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 }
 /* Days outside the month stay in the grid rather than being blanked, so the weeks keep
    their shape - but they recede. */
-.calday.out { background: rgba(0, 0, 0, .18); }
+.calday.out { background: var(--dim); }
 .calday.out .n { color: var(--rule); }
 .calday.today { background: var(--accent-soft); }
 .calday.today .n { color: var(--accent); font-weight: 600; }
@@ -1819,7 +1961,7 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
    which silently killed the hover on exactly the cards you use most. The hover has to be
    restated at the same depth. Any future resting-state rule on .plate needs the same
    treatment, or it will take the hover with it. */
-.plateslot.fav > .plate { border-color: rgba(243, 240, 233, .19); }
+.plateslot.fav > .plate { border-color: var(--edge); }
 .plateslot.fav > .plate:hover { border-color: var(--accent); }
 
 /* ---- tier: strip (3-4) ---- */
@@ -2142,7 +2284,7 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
   flex: none; cursor: pointer; padding: 0;
   display: flex; align-items: center; justify-content: center;
   width: 21px; height: 21px; border-radius: 4px;
-  background: rgba(10, 10, 11, .78); color: var(--muted);
+  background: var(--chrome); color: var(--muted);
   border: 1px solid var(--rule);
   font-family: var(--sans); font-size: 12px; line-height: 1;
 }
@@ -3365,6 +3507,13 @@ img, svg { max-width: 100%; }
     <p class="quiet">So Bridge opens on your tasks instead of everyone's. Asked once, then remembered in this browser &mdash; it is a local preference, not a login, and it changes nothing in Notion.</p>
 
     <div class="whogrid" id="whoGrid"></div>
+
+    <!-- In the profile sheet because it is the same kind of setting: a local preference,
+         remembered per browser, that changes nothing anybody else sees. -->
+    <div class="themerow">
+      <p class="label" style="margin:0 0 8px">Theme</p>
+      <div class="themes" id="themes"></div>
+    </div>
 
     <div class="whoother">
       <p class="quiet" style="margin:0 0 8px;font-size:12.5px">Someone else? Bridge only tracks tasks for the four above, so you'll get the team view &mdash; but your name is still used when you check a build out.</p>
@@ -5791,6 +5940,71 @@ function renderChip() {
   av.innerHTML = avatarFor(WHO, 26);
   who.textContent = WHO === WHO_ALL ? "Team" : whoInitials(WHO);
 }
+
+/* ================================================================
+   THEMES
+
+   Same mechanism as the identity hue, one level up: an attribute on
+   the root element, and the stylesheet does the rest. No component
+   knows a theme exists, which is why adding one is a block of tokens
+   and a row in this list rather than a change anywhere else.
+
+   Local to the browser, like the person and the pins. Nothing about a
+   theme is anybody else's business.
+   ================================================================ */
+var THEMES = [
+  ["", "Studio", "the default", ["#0A0A0B", "#F3F0E9", "#EBB20C"]],
+  ["paper", "Paper", "for daylight", ["#FBFAF7", "#141413", "#A8760A"]],
+  ["blueprint", "Blueprint", "cooler", ["#080C14", "#E4EDFB", "#4FC3E8"]],
+  ["contrast", "Contrast", "for recording", ["#000000", "#FFFFFF", "#FFC521"]]
+];
+
+function currentTheme() {
+  try { return localStorage.getItem("yfbridge.theme") || ""; } catch (e) { return ""; }
+}
+
+function applyTheme(id) {
+  var r = document.documentElement;
+  if (id) { r.setAttribute("data-theme", id); } else { r.removeAttribute("data-theme"); }
+  try { localStorage.setItem("yfbridge.theme", id || ""); } catch (e) {}
+}
+
+function renderThemes() {
+  var box = el("themes");
+  if (!box) return;
+  var cur = currentTheme();
+  box.innerHTML = THEMES.map(function (t) {
+    /* Each button is painted in the palette it selects - the swatches are the actual token
+       values, and the button's own ground and ink are too. A theme list that is all one
+       colour tells you nothing. */
+    var bg = t[3][0], ink = t[3][1], acc = t[3][2];
+    return '<button class="themebtn" type="button" data-theme-set="' + esc(t[0]) + '"' +
+      ' aria-pressed="' + (cur === t[0]) + '"' +
+      ' style="background:' + bg + ";color:" + ink + '">' +
+      '<span class="sw">' +
+        '<i style="background:' + bg + ';border:1px solid ' + ink + '33"></i>' +
+        '<i style="background:' + ink + '"></i>' +
+        '<i style="background:' + acc + '"></i>' +
+      "</span>" +
+      '<span class="nm">' + esc(t[1]) + "</span>" +
+      '<span class="ds" style="color:' + acc + '">' + esc(t[2]) + "</span>" +
+    "</button>";
+  }).join("");
+}
+
+document.addEventListener("click", function (e) {
+  var b = e.target.closest ? e.target.closest("[data-theme-set]") : null;
+  if (!b) return;
+  applyTheme(b.getAttribute("data-theme-set"));
+  renderThemes();
+});
+
+/* Applied before anything renders, so the page never flashes the default first. */
+applyTheme(currentTheme());
+renderThemes();
+
+var _openWhoTheme = openWho;
+openWho = function () { _openWhoTheme(); renderThemes(); };
 
 /* Painting the hue is one attribute and one variable on the root element; every rule that
    uses it is in the stylesheet. Doing it here rather than per-component is what makes it
