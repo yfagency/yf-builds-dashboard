@@ -657,6 +657,19 @@ table.tbl td:first-child { color: var(--ink); font-weight: 500; padding-right: 2
 /* Your own card keeps the accent rail it had as a row. */
 .superson.me { border-left: 2px solid var(--accent); }
 
+/* ---- the write check readout ---- */
+.wclist { margin: 10px 0 0; }
+.wcrow {
+  display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  padding: 7px 0; border-bottom: 1px solid var(--rule-soft);
+}
+.wcrow:last-child { border-bottom: 0; }
+.wcrow .n { font-size: 13px; font-weight: 600; color: var(--ink); min-width: 168px; }
+.wcrow .t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); flex: 1 1 220px; }
+.wcrow.good .t { color: var(--ok); }
+.wcrow.bad .t   { color: var(--crit); }
+.wcrow.weak .t  { color: var(--muted); }
+
 /* ---- what overturned this ----
    "Still applies: no" was a dead end: you could see an entry had been overturned and not
    by what. The link is shown whether or not the entry is dead, with different words for
@@ -5389,11 +5402,37 @@ function renderDev() {
           "leaderboard does not move. Clears on reload.</small></span>" +
           '<button class="btn" id="grPractice">Turn practice on</button></div>' +
 
-        '<p class="formmsg" id="grMsg"></p></section>';
+        '<div class="gr"><span class="what">Compact duplicate rows' +
+          "<small>countOpen and savePlay both decided create-vs-update from rows they had " +
+          "not read yet, so most page loads created a blank row that already existed - " +
+          "seven for ZF on one day. That cause is fixed; this clears what it left. The " +
+          "row with the highest score for each person-day is kept, which is the same one " +
+          "the leaderboard already shows, and the rest are zeroed. Notion has no delete, " +
+          "so they stay as blanks - but unambiguous ones.</small></span>" +
+          '<button class="btn" id="grDupes">Find duplicates</button></div>' +
+
+        '<p class="formmsg" id="grMsg"></p></section>' +
+
+        '<section class="dcard2"><h3>Write check</h3>' +
+        '<p class="sub">Every write this app makes, tried as <b>' +
+          esc(PEOPLE[WHO] ? PEOPLE[WHO].name : "nobody - pick a person first") + "</b>. " +
+        "Notion refuses a select value that is not already an option and the connector will " +
+        "not create one, which is how the Decisions form shipped broken: it worked in the " +
+        "team view, where the per-person Source is omitted entirely, and failed the moment " +
+        "anybody picked their own name. This tries the real values." + "</p>" +
+        '<div class="gr"><span class="what">Run it' +
+          "<small>Writes to one sentinel row per database, reused rather than created each " +
+          "time, and blanked again afterwards. Tasks is checked READ-ONLY - it holds the " +
+          "team's real work and a sentinel task would show up in somebody's list.</small></span>" +
+          '<button class="btn" id="wcRun">Check writes</button></div>' +
+        '<div id="wcOut"></div>' +
+        '<p class="formmsg" id="wcMsg"></p></section>';
 
       body.innerHTML = '<div class="devgrid">' + html + "</div>";
       wireDevForm();
       wireGameReset();
+      wireDupes();
+      if (el("wcRun")) el("wcRun").addEventListener("click", runWriteCheck);
     });
 }
 
@@ -5467,6 +5506,190 @@ function rollCode(day) {
       .then(function () { return step(i + 1); });
   };
   return step(0).then(refreshPlay).then(function () { return next; });
+}
+
+/* ================================================================
+   THE WRITE CHECK
+
+   Not a unit test - a real write, with the real values, as the real
+   person. The bug it exists for could only ever appear that way: a
+   select value the page sends that the database does not have as an
+   option, on a code path that only runs when somebody is signed in.
+
+   One sentinel row per database, found by its title and reused, so
+   this can be run daily without the debris the compaction button
+   further up exists to clear.
+   ================================================================ */
+var WC_MARK = "Bridge write check - ignore";
+
+function wcFindRow(rows, titleKey) {
+  for (var i = 0; i < (rows || []).length; i++) {
+    if (String(rows[i][titleKey] || "").indexOf(WC_MARK) === 0) return rows[i];
+  }
+  return null;
+}
+
+/* Create if missing, update if present, then report. The point is the PROPERTIES: they are
+   the same literals the real form sends, per person. */
+function wcWrite(label, ds, query, titleKey, props) {
+  return mcp.invalidate(SERVER, T_QUERY, sqlInput(ds, query)).catch(function () {})
+    .then(function () { return mcp.callTool(SERVER, T_QUERY, sqlInput(ds, query)); })
+    .then(rows)
+    .then(function (rs) {
+      var existing = wcFindRow(rs, titleKey);
+      var id = existing ? pageIdFrom(existing.url) : null;
+      if (id) {
+        return mcp.callTool(SERVER, T_UPDATE, { page_id: id, command: "update_properties", properties: props });
+      }
+      return mcp.callTool(SERVER, T_CREATE, {
+        parent: { type: "data_source_id", data_source_id: ds.replace("collection://", "") },
+        pages: [{ properties: props }]
+      });
+    })
+    .then(function () { return { label: label, ok: true }; },
+          function (e) {
+            var x = explain(e);
+            return { label: label, ok: false, why: (x.head || "rejected") + (x.body ? " - " + x.body : "") };
+          });
+}
+
+function runWriteCheck() {
+  var msg = el("wcMsg"), out = el("wcOut"), btn = el("wcRun");
+  if (!msg) return;
+  var say = function (t, cls) { msg.className = "formmsg" + (cls ? " " + cls : ""); msg.innerHTML = t; };
+  if (!mcp || !SERVER) { say("No connector.", "bad"); return; }
+  var me = PEOPLE[WHO];
+  if (!me) { say("Pick a person first - the whole point is the per-person values.", "bad"); return; }
+
+  btn.disabled = true; btn.textContent = "Checking";
+  say('<span class="spin"></span>Writing');
+  out.innerHTML = "";
+
+  var day = jstDay(), ini = me.ini;
+  var jobs = [
+    wcWrite("Bridge Standup", STAND_DS, Q_STAND, "Entry", {
+      "Entry": WC_MARK, "Person": ini, "Source": "Bridge",
+      "date:Day:start": day, "date:Day:is_datetime": 0
+    }),
+    wcWrite("Bridge Inbox", INBOX_DS, Q_INBOX, "Ask", {
+      "Ask": WC_MARK, "From": ini, "Kind": "Other", "Status": "Wont do", "Source": "Bridge",
+      "Body": "Written by the write check on #/dev. Not a request.",
+      "date:Sent:start": day, "date:Sent:is_datetime": 0
+    }),
+    wcWrite("Decisions & Learnings", DL_DS, Q_DL, "Entry", {
+      "Entry": WC_MARK, "Category": "Context update",
+      // The value that was rejected. This is the whole reason the check exists.
+      "Source": ini + " - Bridge", "Still applies": "__NO__",
+      "Summary": "Written by the write check on #/dev. Marked as no longer applying so it " +
+                 "sits at the bottom of the log rather than in the way.",
+      "date:Date:start": day, "date:Date:is_datetime": 0
+    })
+  ];
+
+  Promise.all(jobs).then(function (res) {
+    /* Tasks is read-only on purpose: it is the team's real work, and a sentinel task would
+       appear in somebody's Today. So the check is weaker and says so - it can only confirm
+       the options the page offers are ones the database has actually seen. */
+    var seen = {};
+    (TASK_ROWS || []).forEach(function (t) {
+      if (t["Planning"]) seen["P:" + t["Planning"]] = 1;
+      if (t["Progress"]) seen["G:" + t["Progress"]] = 1;
+    });
+    var missing = [];
+    if (TASK_ROWS) {
+      PLAN_OPTS.forEach(function (o) { if (!seen["P:" + o]) missing.push("Planning: " + o); });
+      PROG_OPTS.forEach(function (o) { if (!seen["G:" + o]) missing.push("Progress: " + o); });
+    }
+    res.push({
+      label: "YF OS Tasks", ok: true, weak: true,
+      note: !TASK_ROWS ? "not read yet - open #/tasks first"
+        : missing.length ? "unused options, cannot confirm from data: " + missing.join(", ")
+        : "every option the page offers appears in the data"
+    });
+
+    var bad = res.filter(function (r) { return !r.ok; });
+    out.innerHTML = '<div class="wclist">' + res.map(function (r) {
+      var cls = !r.ok ? "bad" : r.weak ? "weak" : "good";
+      var txt = !r.ok ? r.why : r.weak ? r.note : "wrote and read back";
+      return '<div class="wcrow ' + cls + '"><span class="n">' + esc(r.label) + "</span>" +
+        '<span class="t">' + esc(txt) + "</span></div>";
+    }).join("") + "</div>";
+
+    btn.disabled = false; btn.textContent = "Check writes";
+    say(bad.length ? bad.length + " write path" + (bad.length === 1 ? "" : "s") + " would fail for " + esc(me.name)
+                   : "Every write path works for " + esc(me.name) + ".",
+        bad.length ? "bad" : "good");
+  });
+}
+
+/* ================================================================
+   COMPACTING BRIDGE PLAY
+   ================================================================ */
+
+/* Same person, same day, more than one row. The keeper is the highest score, which is
+   exactly the row standings() already collapses to - so compaction cannot change a single
+   number on the leaderboard. That is the property that makes it safe to run. */
+function playDupes() {
+  var by = {}, out = [];
+  (PLAY_ROWS || []).forEach(function (r) {
+    var k = r["Person"] + "|" + r.day;
+    if (!by[k]) by[k] = [];
+    by[k].push(r);
+  });
+  Object.keys(by).forEach(function (k) {
+    var g = by[k];
+    if (g.length < 2) return;
+    var keep = g[0];
+    g.forEach(function (r) { if ((+r["Score"] || 0) > (+keep["Score"] || 0)) keep = r; });
+    // Opens are summed nowhere, but they are a real count, so carry them onto the keeper
+    // rather than throwing them away with the blanks.
+    var opens = 0;
+    g.forEach(function (r) { opens += (+r["Opens"] || 0); });
+    out.push({ key: k, keep: keep, drop: g.filter(function (r) { return r !== keep; }), opens: opens });
+  });
+  return out;
+}
+
+function wireDupes() {
+  var btn = el("grDupes"), msg = el("grMsg");
+  if (!btn) return;
+  var say = function (t, cls) { msg.className = "formmsg" + (cls ? " " + cls : ""); msg.innerHTML = t; };
+
+  btn.addEventListener("click", function () {
+    if (!mcp || !SERVER) { say("No connector.", "bad"); return; }
+    if (PLAY_ROWS === null) { say("Rows not read yet.", "bad"); return; }
+    var groups = playDupes();
+    if (!groups.length) { say("No duplicates. Every person-day has exactly one row.", "good"); return; }
+    var n = groups.reduce(function (a, g) { return a + g.drop.length; }, 0);
+
+    // Shown before anything is written. A tool that blanks rows should say which, first.
+    if (btn.getAttribute("data-armed") !== "1") {
+      btn.setAttribute("data-armed", "1");
+      btn.textContent = "Compact " + n + " row" + (n === 1 ? "" : "s");
+      btn.className = "btn danger";
+      say("<b>" + n + " duplicate row" + (n === 1 ? "" : "s") + "</b> across " + groups.length +
+          " person-day" + (groups.length === 1 ? "" : "s") + ": " +
+          esc(groups.map(function (g) { return g.key.replace("|", " ") + " x" + (g.drop.length + 1); }).join(", ")) +
+          ". The highest-scoring row in each is kept - the same one the leaderboard shows - " +
+          "so no number moves. Press again to write.");
+      return;
+    }
+
+    btn.disabled = true;
+    say('<span class="spin"></span>Compacting');
+    var flat = [];
+    groups.forEach(function (g) { g.drop.forEach(function (r) { flat.push(r); }); });
+    blankRows(flat).then(function (done) {
+      btn.disabled = false;
+      btn.removeAttribute("data-armed");
+      btn.textContent = "Find duplicates";
+      btn.className = "btn";
+      say("Compacted " + done + " row" + (done === 1 ? "" : "s") + ". The leaderboard is unchanged.", "good");
+    }, function (e) {
+      btn.disabled = false;
+      say("Could not compact: " + (explain(e).head || "unknown"), "bad");
+    });
+  });
 }
 
 function wireGameReset() {
