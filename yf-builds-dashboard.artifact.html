@@ -2114,6 +2114,13 @@ body.joy .slash { transform: scaleX(-1); color: var(--ok); }
   color: var(--accent); margin-bottom: 3px;
 }
 .devpanel > .sub { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; line-height: 1.45; }
+/* A way out to the database itself. Underlined rather than only coloured, because it sits
+   inside a grey paragraph where colour alone would read as emphasis rather than as a link. */
+.devpanel .dblink {
+  color: var(--ink-2); text-decoration: none;
+  border-bottom: 1px solid var(--rule); padding-bottom: 1px;
+}
+.devpanel .dblink:hover { color: var(--accent); border-bottom-color: var(--accent); }
 .devpanel.wide { grid-column: 1 / -1; }
 
 /* A check is a claim plus a verdict. The verdict colour is the only colour in the
@@ -6292,7 +6299,8 @@ function renderDev() {
       }).join("");
       var rowCount = (PLAY_ROWS || []).length;
       html += '<section class="devpanel wide"><h2>Game data</h2>' +
-        '<p class="sub">Bridge Play holds one row per person per JST day. ' +
+        '<p class="sub"><a class="dblink" href="' + PLAY_DB_URL + '" target="_blank" ' +
+          'rel="noopener noreferrer">Bridge Play</a> holds one row per person per JST day. ' +
         '<b>Notion has no delete</b>, so a reset writes zeros over a row rather than removing it - ' +
         'the row stays in the database, and the previous numbers are gone for good. ' +
         'The leaderboard sums, so zeroed rows read as a clean slate. ' +
@@ -7891,6 +7899,13 @@ function greeting() {
    republish the whole page per score.
    ================================================================ */
 var PLAY_DS = "collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88";
+
+/* The database as a PAGE you can open, which is a different id from PLAY_DS. That one
+   addresses the data source the SQL runs against and does not resolve as a URL - pasting it
+   into a browser gets you nothing, which is a trap worth naming here rather than rediscovering.
+   Read off the connector on 2026-08-31, and written in the www.notion.so form for the same
+   reason notionUrl() uses it: app.notion.com/<id> is a 404. */
+var PLAY_DB_URL = "https://www.notion.so/be485a926c254ac4b5d64776507df534";
 var Q_PLAY = 'SELECT url, "Person", "date:Day:start" AS day, "Opens", "Played", "Score", ' +
   '"Guesses", "Took", "Salt" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
 
