@@ -3771,6 +3771,37 @@ var BUILDS    = "collection://10d63098-3c9a-44a2-83fb-a98ce261eea1";
 var BUILDS_DS = "10d63098-3c9a-44a2-83fb-a98ce261eea1";
 var CLIENTS   = "collection://44f6ebf3-d835-4dc8-b3e1-263e47021b6e";
 
+/* ---- the same databases, as pages a person can open ----
+
+   Every id above addresses a DATA SOURCE - the thing SQL runs against. None of them
+   resolve as a URL: paste one into a browser and you get nothing. The page id is a
+   separate number, and the portfolio shows how sharp that edge is:
+
+     data source  2f6abe28-1d4c-8042-ac81-000b2e1b10cc
+     page         2f6abe281d4c8038b5d0f7540a293031
+
+   Alike enough to look like a typo, different enough to 404. So they are written out
+   rather than derived, all read off the connector on 2026-08-31.
+
+   www.notion.so form for the same reason notionUrl() uses it: app.notion.com/<id> is a 404,
+   measured 2026-08-21. */
+var DB_URLS = {
+  play:      "https://www.notion.so/be485a926c254ac4b5d64776507df534",
+  sched:     "https://www.notion.so/f9f91a7fed95446c80ac873e1b345b84",
+  decisions: "https://www.notion.so/b26dd53ea88d48fb9bfbeb3d3b81c82d",
+  portfolio: "https://www.notion.so/2f6abe281d4c8038b5d0f7540a293031",
+  projects:  "https://www.notion.so/52606bf5a72b4327a78bd3f236703cef"
+};
+
+/* A panel names the database it is about; this makes that name the way in. Falls back to
+   plain text for a key that is not in the map, so a mistyped key loses the link rather than
+   rendering a broken one. */
+function dbLink(key, label) {
+  if (!DB_URLS[key]) return esc(label);
+  return '<a class="dblink" href="' + DB_URLS[key] + '" target="_blank" ' +
+    'rel="noopener noreferrer">' + esc(label) + "</a>";
+}
+
 
 var Q_BUILDS = 'SELECT url, "Name", "Repo URL", "Branch", "Path", "Live URL", "Builder", "Status", ' +
   '"Latest Version", "Tech Stack", "Client", "Project", "Notes", "Last Updated", "Commit", ' +
@@ -6242,7 +6273,8 @@ function renderDev() {
         }).join("");
       }
       html += '<section class="devpanel"><h2>Unbilled</h2>' +
-        '<p class="sub">Projects sitting in Ready to invoice, oldest first.</p>' + money + "</section>";
+        '<p class="sub">' + dbLink("projects", "Projects") +
+        " sitting in Ready to invoice, oldest first.</p>" + money + "</section>";
 
       // --- portfolio pipeline ---
       var pf = "";
@@ -6258,7 +6290,8 @@ function renderDev() {
         pf += chk("idle", "Not started", "No portfolio entry written yet.", (by["Not started"] || 0) + "");
       }
       html += '<section class="devpanel"><h2>Portfolio</h2>' +
-        '<p class="sub">The pipeline behind the two weekday Slack alerts and the weekly Webflow sync.</p>' + pf + "</section>";
+        '<p class="sub">The ' + dbLink("portfolio", "Portfolio") +
+        " pipeline behind the two weekday Slack alerts and the weekly Webflow sync.</p>" + pf + "</section>";
 
       // --- the registry, labelled as claims ---
       var reg = "";
@@ -6277,11 +6310,13 @@ function renderDev() {
           }).join("");
       }
       html += '<section class="devpanel wide"><h2>Scheduled tasks registry</h2>' +
-        '<p class="sub">Every documented automation, Active first.</p>' + reg + "</section>";
+        '<p class="sub">Every documented automation in ' + dbLink("sched", "Scheduled Tasks") +
+        ", Active first.</p>" + reg + "</section>";
 
       // --- write to the KB ---
       html += '<section class="devpanel wide"><h2>Log a decision</h2>' +
-        '<p class="sub">Writes straight into Decisions &amp; Learnings, so a thought had on a phone gets recorded instead of lost. ' +
+        '<p class="sub">Writes straight into ' + dbLink("decisions", "Decisions & Learnings") +
+        ", so a thought had on a phone gets recorded instead of lost. " +
         'Source is stamped with this environment automatically.</p>' +
         '<div class="field"><span class="label">Entry</span>' +
         '<input type="text" id="dlEntry" placeholder="What was decided, in one line" maxlength="200"></div>' +
@@ -6299,8 +6334,8 @@ function renderDev() {
       }).join("");
       var rowCount = (PLAY_ROWS || []).length;
       html += '<section class="devpanel wide"><h2>Game data</h2>' +
-        '<p class="sub"><a class="dblink" href="' + PLAY_DB_URL + '" target="_blank" ' +
-          'rel="noopener noreferrer">Bridge Play</a> holds one row per person per JST day. ' +
+        '<p class="sub">' + dbLink("play", "Bridge Play") +
+          " holds one row per person per JST day. " +
         '<b>Notion has no delete</b>, so a reset writes zeros over a row rather than removing it - ' +
         'the row stays in the database, and the previous numbers are gone for good. ' +
         'The leaderboard sums, so zeroed rows read as a clean slate. ' +
@@ -7900,12 +7935,6 @@ function greeting() {
    ================================================================ */
 var PLAY_DS = "collection://a4e41bd8-be65-4f23-9f6a-8f3edd0dae88";
 
-/* The database as a PAGE you can open, which is a different id from PLAY_DS. That one
-   addresses the data source the SQL runs against and does not resolve as a URL - pasting it
-   into a browser gets you nothing, which is a trap worth naming here rather than rediscovering.
-   Read off the connector on 2026-08-31, and written in the www.notion.so form for the same
-   reason notionUrl() uses it: app.notion.com/<id> is a 404. */
-var PLAY_DB_URL = "https://www.notion.so/be485a926c254ac4b5d64776507df534";
 var Q_PLAY = 'SELECT url, "Person", "date:Day:start" AS day, "Opens", "Played", "Score", ' +
   '"Guesses", "Took", "Salt" FROM "' + PLAY_DS + '" ORDER BY day DESC LIMIT 400';
 
