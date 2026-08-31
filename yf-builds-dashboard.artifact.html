@@ -7810,6 +7810,34 @@ function dayShift(iso, n) {
   var p = function (v) { return (v < 10 ? "0" : "") + v; };
   return d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" + p(d.getUTCDate());
 }
+/* ---- the working week ----
+   The puzzle is a weekday thing (ZF, 2026-08-31): no code at weekends, and a streak counts
+   working days, so Friday to Monday is unbroken rather than a two-day hole that resets
+   everyone to one every Monday morning.
+
+   Read off the JST calendar day like everything else about the game, so the week turns over
+   at Tokyo midnight and means the same thing to everyone in the studio. Noon UTC in the
+   Date is only there to keep the weekday away from a rounding edge. */
+function isWeekend(iso) {
+  var t = ymd(iso);
+  if (!t) return false;
+  var w = new Date(Date.UTC(t.y, t.m - 1, t.d, 12)).getUTCDay();
+  return w === 0 || w === 6;
+}
+
+/* The working day before this one: Monday steps back to Friday. Bounded so a bad date can
+   never spin forever. */
+function prevWeekday(iso) {
+  var d = dayShift(iso, -1);
+  for (var i = 0; i < 7 && d && isWeekend(d); i++) d = dayShift(d, -1);
+  return d;
+}
+
+/* Whether there is a code to crack right now. Separate from playable(), which asks whether
+   the game can run for this person at all - the board still reads at weekends, and wanting
+   to see where you finished the week is exactly a Saturday thing to want. */
+function playOpen() { return !isWeekend(jstDay()); }
+
 function greeting() {
   var h = jstNow().getHours();
   var part = h < 5 ? "Still up" : h < 11 ? "Morning" : h < 17 ? "Afternoon" : h < 22 ? "Evening" : "Late one";
@@ -7951,9 +7979,21 @@ function standings() {
     if (d.day === today) s.guesses = d.guesses;
   });
   Object.keys(by).forEach(function (k) {
-    var s = by[k], cur = s.played[today] ? today : (s.played[yest] ? yest : null);
+    var s = by[k];
+    /* Weekdays only. Walking calendar days meant a weekend always broke the chain, so
+       everybody reset to 1 on Monday and the number measured very little. Stepping Monday
+       back to Friday makes it a count of working days in a row, which is the thing people
+       thought it already was.
+
+       Starting point: the latest weekday, so at a weekend the streak holds at Friday's
+       value rather than reading zero for two days. Then the same "or the one before" grace
+       the calendar version had, so a day you have not got to yet does not look like a day
+       you missed. */
+    var last = isWeekend(today) ? prevWeekday(today) : today;
+    var before = prevWeekday(last);
+    var cur = s.played[last] ? last : (s.played[before] ? before : null);
     var n = 0;
-    while (cur && s.played[cur]) { n++; cur = dayShift(cur, -1); }
+    while (cur && s.played[cur]) { n++; cur = prevWeekday(cur); }
     s.streak = n;
   });
   return Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) {
@@ -8147,6 +8187,11 @@ function renderPlayBox() {
   }
 
   if (GB_BOARD) { renderBoardView(stat); return; }
+
+  /* Closed Saturday and Sunday. Practice mode is deliberately still allowed: it writes
+     nothing and cannot touch a streak, and it is the only way to look at the game's own
+     behaviour on a day nobody can play. */
+  if (!PLAY_FREE && !playOpen()) { showClosed(stat); return; }
 
   var day = jstDay(), r = rowFor(myIni(), day), salt = saltFor(day);
   // A rolled salt is as good as a new day: the code in front of the player is not the code
@@ -8349,6 +8394,20 @@ function showResult(score, guesses, already, stat) {
     '<div class="gb-acts"><button class="btn" id="gbBoard">View board</button></div>';
   el("gbBoard").addEventListener("click", function () { GB_BOARD = true; renderPlayBox(); });
 }
+/* The weekend face of the box. Same shape as showResult - a title, a line, and the way
+   through to the board - because it is the same box in a different state, not a new thing.
+   It still carries the stat line, so your streak is visible on the days you cannot add
+   to it. */
+function showClosed(stat) {
+  el("playBox").innerHTML =
+    gbTop("Back on Monday", stat) +
+    '<p class="final">No code at weekends</p>' +
+    '<p class="verdict">Streaks count working days, so this one is not a gap. ' +
+      "The next code lands Monday at midnight JST.</p>" +
+    '<div class="gb-acts"><button class="btn" id="gbBoard">View board</button></div>';
+  el("gbBoard").addEventListener("click", function () { GB_BOARD = true; renderPlayBox(); });
+}
+
 /* Writing the result. A viewer without Notion write access simply does not get recorded -
    the game is not worth a red banner over. */
 function savePlay(score, guesses, took) {
