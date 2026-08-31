@@ -7811,9 +7811,11 @@ function dayShift(iso, n) {
   return d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1) + "-" + p(d.getUTCDate());
 }
 /* ---- the working week ----
-   The puzzle is a weekday thing (ZF, 2026-08-31): no code at weekends, and a streak counts
-   working days, so Friday to Monday is unbroken rather than a two-day hole that resets
-   everyone to one every Monday morning.
+   The puzzle is a working-day thing (ZF, 2026-08-31): no code when the studio is shut, and
+   a streak counts working days, so Friday to Monday is unbroken rather than a two-day hole
+   that resets everyone to one every Monday morning. Public holidays extended it the same
+   afternoon - the studio is in Tokyo, and a national holiday is no more a missed day than a
+   Sunday is.
 
    Read off the JST calendar day like everything else about the game, so the week turns over
    at Tokyo midnight and means the same thing to everyone in the studio. Noon UTC in the
@@ -7825,18 +7827,40 @@ function isWeekend(iso) {
   return w === 0 || w === 6;
 }
 
-/* The working day before this one: Monday steps back to Friday. Bounded so a bad date can
-   never spin forever. */
-function prevWeekday(iso) {
+/* The same JP_HOLIDAYS table the calendar marks days off with - one list, so the game and
+   the calendar can never disagree about what a working day is. Guarded because it is
+   declared further down the file than this is, and a lookup on undefined would throw if
+   anything ever calls this during the top-to-bottom pass.
+
+   It runs to the end of 2028. After that every day reads as a working one, which is the
+   safe direction to fail: the game stays open and a streak can still be earned, rather than
+   the studio being locked out by a table nobody remembered to extend. */
+function holidayOn(iso) {
+  return (typeof JP_HOLIDAYS !== "undefined" && JP_HOLIDAYS && JP_HOLIDAYS[iso]) || null;
+}
+
+/* A day the studio is shut: weekend or public holiday. Everything below asks this rather
+   than asking about weekends. */
+function isOffDay(iso) { return isWeekend(iso) || !!holidayOn(iso); }
+
+/* The working day either side of this one. Monday steps back over the weekend; the Friday
+   before Golden Week steps forward over the lot. Bounded at a fortnight so a bad date can
+   never spin forever - the longest real run of days off in the table is five. */
+function prevWorkday(iso) {
   var d = dayShift(iso, -1);
-  for (var i = 0; i < 7 && d && isWeekend(d); i++) d = dayShift(d, -1);
+  for (var i = 0; i < 14 && d && isOffDay(d); i++) d = dayShift(d, -1);
+  return d;
+}
+function nextWorkday(iso) {
+  var d = dayShift(iso, 1);
+  for (var i = 0; i < 14 && d && isOffDay(d); i++) d = dayShift(d, 1);
   return d;
 }
 
 /* Whether there is a code to crack right now. Separate from playable(), which asks whether
-   the game can run for this person at all - the board still reads at weekends, and wanting
+   the game can run for this person at all - the board still reads on a day off, and wanting
    to see where you finished the week is exactly a Saturday thing to want. */
-function playOpen() { return !isWeekend(jstDay()); }
+function playOpen() { return !isOffDay(jstDay()); }
 
 function greeting() {
   var h = jstNow().getHours();
@@ -7980,20 +8004,20 @@ function standings() {
   });
   Object.keys(by).forEach(function (k) {
     var s = by[k];
-    /* Weekdays only. Walking calendar days meant a weekend always broke the chain, so
-       everybody reset to 1 on Monday and the number measured very little. Stepping Monday
-       back to Friday makes it a count of working days in a row, which is the thing people
-       thought it already was.
+    /* Working days only. Walking calendar days meant a weekend always broke the chain, so
+       everybody reset to 1 on Monday and the number measured very little. Stepping over
+       weekends and public holidays makes it a count of working days in a row, which is the
+       thing people thought it already was.
 
-       Starting point: the latest weekday, so at a weekend the streak holds at Friday's
-       value rather than reading zero for two days. Then the same "or the one before" grace
-       the calendar version had, so a day you have not got to yet does not look like a day
-       you missed. */
-    var last = isWeekend(today) ? prevWeekday(today) : today;
-    var before = prevWeekday(last);
+       Starting point: the latest working day, so on a day off the streak holds at its last
+       earned value rather than reading zero until the studio opens again. Then the same "or
+       the one before" grace the calendar version had, so a day you have not got to yet does
+       not look like a day you missed. */
+    var last = isOffDay(today) ? prevWorkday(today) : today;
+    var before = prevWorkday(last);
     var cur = s.played[last] ? last : (s.played[before] ? before : null);
     var n = 0;
-    while (cur && s.played[cur]) { n++; cur = prevWeekday(cur); }
+    while (cur && s.played[cur]) { n++; cur = prevWorkday(cur); }
     s.streak = n;
   });
   return Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) {
@@ -8188,9 +8212,9 @@ function renderPlayBox() {
 
   if (GB_BOARD) { renderBoardView(stat); return; }
 
-  /* Closed Saturday and Sunday. Practice mode is deliberately still allowed: it writes
-     nothing and cannot touch a streak, and it is the only way to look at the game's own
-     behaviour on a day nobody can play. */
+  /* Closed at weekends and on public holidays. Practice mode is deliberately still allowed:
+     it writes nothing and cannot touch a streak, and it is the only way to look at the
+     game's own behaviour on a day nobody can play. */
   if (!PLAY_FREE && !playOpen()) { showClosed(stat); return; }
 
   var day = jstDay(), r = rowFor(myIni(), day), salt = saltFor(day);
@@ -8394,16 +8418,24 @@ function showResult(score, guesses, already, stat) {
     '<div class="gb-acts"><button class="btn" id="gbBoard">View board</button></div>';
   el("gbBoard").addEventListener("click", function () { GB_BOARD = true; renderPlayBox(); });
 }
-/* The weekend face of the box. Same shape as showResult - a title, a line, and the way
+/* The day-off face of the box. Same shape as showResult - a title, a line, and the way
    through to the board - because it is the same box in a different state, not a new thing.
-   It still carries the stat line, so your streak is visible on the days you cannot add
-   to it. */
+   It still carries the stat line, so your streak is visible on the days you cannot add to
+   it.
+
+   It names the actual holiday rather than saying "closed", because a box that tells you it
+   is Mountain Day is worth reading and one that says "no code today" is not. And it names
+   the day the next code lands rather than always saying Monday, which would have been wrong
+   every time a holiday moved it. */
 function showClosed(stat) {
+  var today = jstDay(), hol = holidayOn(today);
+  var back = nextWorkday(today), t = ymd(back || "");
+  var backName = t ? WEEKDAYS[new Date(Date.UTC(t.y, t.m - 1, t.d, 12)).getUTCDay()] : "the next working day";
   el("playBox").innerHTML =
-    gbTop("Back on Monday", stat) +
-    '<p class="final">No code at weekends</p>' +
+    gbTop(hol ? esc(hol) : "Back on " + esc(backName), stat) +
+    '<p class="final">' + (hol ? "No code on public holidays" : "No code at weekends") + "</p>" +
     '<p class="verdict">Streaks count working days, so this one is not a gap. ' +
-      "The next code lands Monday at midnight JST.</p>" +
+      "The next code lands " + esc(backName) + " at midnight JST.</p>" +
     '<div class="gb-acts"><button class="btn" id="gbBoard">View board</button></div>';
   el("gbBoard").addEventListener("click", function () { GB_BOARD = true; renderPlayBox(); });
 }
