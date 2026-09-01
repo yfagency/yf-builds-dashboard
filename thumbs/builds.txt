@@ -3,7 +3,9 @@
 # tools/render-thumbnails.mjs rewrites this every run. It is a RECORD of which builds
 # were tiled, not the list that decides. The list is derived from GitHub: every repo in
 # the yfagency org whose description starts with [YF Build] and whose Pages URL answers
-# 200. Adding a slug here does nothing; removing one does nothing.
+# 200 — plus any build that has a supplied still in thumbs/<slug>.jpg but no Pages URL,
+# which is how a build that cannot be a live page (a hosted script, a service, an asset
+# pack) gets a tile. Adding a slug here does nothing; removing one does nothing.
 #
 # It used to be the input, and that is exactly how yf-operating-model-visualization and
 # yf-brand-os-visuals both shipped with hazard tiles — published correctly, registered
@@ -30,3 +32,4 @@ yf-web-builds-index
 yf-web-concept
 yfkk-landing-mvp
 yf-logo-loop
+yf-work-filter
