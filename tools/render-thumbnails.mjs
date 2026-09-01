@@ -129,7 +129,19 @@ function orderSlugs(discovered) {
   // clause is what stops a transient 404 during a Pages deploy from dropping a good tile.
   const kept = previous.filter((s) => found.has(s) || onDisk.has(s));
   const added = discovered.filter((s) => !previous.includes(s));
-  return { order: [...kept, ...added], added, onDisk };
+
+  // Supplied stills. A build that cannot be a live page — a hosted script, a service, an
+  // asset pack — has no Pages URL, so discovery drops it and it can never reach `added`.
+  // Without this clause it could not enter `order` at all, and `inject` only walks `order`:
+  // committing thumbs/<slug>.jpg for such a build did NOTHING, silently, forever. That is
+  // the same shape as the builds.txt failure above — a documented step with no code behind
+  // it. Only slugs that ALREADY have an image qualify, so this can never push a slug into
+  // `toRender` and send headless Chrome at a URL that 404s.
+  const supplied = [...onDisk]
+    .filter((s) => !previous.includes(s) && !found.has(s))
+    .sort();
+
+  return { order: [...kept, ...added, ...supplied], added, supplied, onDisk };
 }
 
 // ---------------------------------------------------------------- render
@@ -165,13 +177,20 @@ async function render(browser, slug) {
 // Inject from DISK, not from what rendered this run. A run where some captures failed used
 // to replace the whole THUMBS map with only its successes, silently deleting working
 // thumbnails — six of fourteen renders failed on 2026-08-21 and wiped five good images.
-function inject(order, { dryRun = false } = {}) {
+//
+// Keying: a live build is keyed by its Pages URL, a build without one by its bare repo
+// slug. The dashboard's thumbFor() tries slug first and Live URL second, so both resolve —
+// but keying a build that has no Pages URL by liveUrl() produces a 404 string that no card
+// ever looks up, which is the second reason a supplied still stayed invisible. Pass `live`
+// so this decision is explicit rather than reaching for module state.
+function inject(order, { dryRun = false, live = new Set() } = {}) {
   const entries = [];
   const missing = [];
   for (const slug of order) {
     if (!existsSync(jpgPath(slug))) { missing.push(slug); continue; }
     const b64 = readFileSync(jpgPath(slug)).toString("base64");
-    entries.push(`"${liveUrl(slug)}":"data:image/jpeg;base64,${b64}"`);
+    const key = live.has(slug) ? liveUrl(slug) : slug;
+    entries.push(`"${key}":"data:image/jpeg;base64,${b64}"`);
   }
   if (entries.length === 0) throw new Error(`No thumbnails on disk — refusing to touch ${HTML}`);
 
@@ -191,7 +210,9 @@ function writeList(order) {
     "# tools/render-thumbnails.mjs rewrites this every run. It is a RECORD of which builds",
     "# were tiled, not the list that decides. The list is derived from GitHub: every repo in",
     "# the yfagency org whose description starts with [YF Build] and whose Pages URL answers",
-    "# 200. Adding a slug here does nothing; removing one does nothing.",
+    "# 200 — plus any build that has a supplied still in thumbs/<slug>.jpg but no Pages URL,",
+    "# which is how a build that cannot be a live page (a hosted script, a service, an asset",
+    "# pack) gets a tile. Adding a slug here does nothing; removing one does nothing.",
     "#",
     "# It used to be the input, and that is exactly how yf-operating-model-visualization and",
     "# yf-brand-os-visuals both shipped with hazard tiles — published correctly, registered",
@@ -207,7 +228,9 @@ console.log(`discovering [YF Build] repos in ${ORG}/`);
 const discovered = await discover();
 if (discovered.length === 0) throw new Error("Discovery found no live builds — aborting rather than emptying the page.");
 
-const { order, added, onDisk } = orderSlugs(discovered);
+const { order, added, supplied, onDisk } = orderSlugs(discovered);
+const LIVE = new Set(discovered);
+if (supplied.length) console.log(`supplied stills (no live page): ${supplied.join(", ")}`);
 console.log(`\n${order.length} builds tracked, ${added.length} new: ${added.join(", ") || "none"}`);
 
 const toRender = forceAll
@@ -219,7 +242,7 @@ const toRender = forceAll
 // there is work. That is what makes a 2-hourly schedule cheap enough to be the primary
 // path, so nobody needs a manual trigger they may not have permission to pull.
 if (process.env.PLAN_ONLY) {
-  const plan = inject(order, { dryRun: true });
+  const plan = inject(order, { dryRun: true, live: LIVE });
   const work = toRender.length > 0 || plan.changed;
   console.log(`\nplan: render [${toRender.join(", ") || "nothing"}], page ${plan.changed ? "would change" : "already current"}`);
   if (process.env.GITHUB_OUTPUT) {
@@ -260,10 +283,12 @@ if (toRender.length) {
 }
 
 writeList(order);
-const { count, missing, changed } = inject(order);
+const { count, missing, changed } = inject(order, { live: LIVE });
 console.log(`\ninjected ${count} thumbnails into ${HTML}${changed ? "" : " (no change)"}`);
 
-const orphans = [...onDisk].filter((s) => !discovered.includes(s));
+// A supplied still is not an orphan — it is in `order` deliberately and is the only route
+// onto the dashboard for a build with no Pages URL. Flag only images nothing tracks.
+const orphans = [...onDisk].filter((s) => !discovered.includes(s) && !order.includes(s));
 if (orphans.length) console.log(`orphaned images (no live build): ${orphans.join(", ")}`);
 if (missing.length) console.log(`STILL MISSING: ${missing.join(", ")}`);
 
